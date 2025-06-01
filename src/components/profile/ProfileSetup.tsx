@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type EducationLevel = Database['public']['Enums']['education_level'];
+type GenderType = Database['public']['Enums']['gender_type'];
 
 const ProfileSetup = () => {
   const { user } = useAuth();
@@ -20,10 +24,10 @@ const ProfileSetup = () => {
     last_name: '',
     bio: '',
     occupation: '',
-    education: '',
+    education: '' as EducationLevel,
     location_city: '',
     location_state: '',
-    interested_in: ['male', 'female'],
+    interested_in: ['male', 'female'] as GenderType[],
     age_min: 18,
     age_max: 35,
   });
@@ -38,17 +42,17 @@ const ProfileSetup = () => {
       const { error } = await supabase
         .from('profiles')
         .insert({
-          email: user.email!,
+          id: user.id,
           first_name: profileData.first_name,
           last_name: profileData.last_name,
           date_of_birth: '1990-01-01', // We'll need to collect this properly
-          gender: 'prefer_not_to_say', // We'll need to collect this properly
+          gender: 'prefer_not_to_say' as GenderType,
           bio: profileData.bio,
           occupation: profileData.occupation,
-          education: profileData.education as any,
+          education: profileData.education || undefined,
           location_city: profileData.location_city,
           location_state: profileData.location_state,
-          interested_in: profileData.interested_in as any,
+          interested_in: profileData.interested_in,
           age_min: profileData.age_min,
           age_max: profileData.age_max,
         });
@@ -133,7 +137,10 @@ const ProfileSetup = () => {
               </div>
               <div>
                 <Label htmlFor="education">Education</Label>
-                <Select value={profileData.education} onValueChange={(value) => setProfileData({ ...profileData, education: value })}>
+                <Select 
+                  value={profileData.education} 
+                  onValueChange={(value: EducationLevel) => setProfileData({ ...profileData, education: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select education level" />
                   </SelectTrigger>
