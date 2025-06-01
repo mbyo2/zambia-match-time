@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,49 +16,17 @@ const ProfileSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     bio: '',
     occupation: '',
     education: '',
-    locationCity: '',
-    locationState: '',
-    maxDistance: 50,
-    ageMin: 18,
-    ageMax: 99,
-    heightCm: '',
-    interestedIn: ['male', 'female'] as string[],
-    relationshipGoals: ['casual'] as string[],
-    interests: [] as string[],
+    location_city: '',
+    location_state: '',
+    interested_in: ['male', 'female'],
+    age_min: 18,
+    age_max: 35,
   });
-
-  const handleInterestedInChange = (value: string, checked: boolean) => {
-    if (checked) {
-      setProfileData({
-        ...profileData,
-        interestedIn: [...profileData.interestedIn, value]
-      });
-    } else {
-      setProfileData({
-        ...profileData,
-        interestedIn: profileData.interestedIn.filter(item => item !== value)
-      });
-    }
-  };
-
-  const handleRelationshipGoalsChange = (value: string, checked: boolean) => {
-    if (checked) {
-      setProfileData({
-        ...profileData,
-        relationshipGoals: [...profileData.relationshipGoals, value]
-      });
-    } else {
-      setProfileData({
-        ...profileData,
-        relationshipGoals: profileData.relationshipGoals.filter(item => item !== value)
-      });
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,27 +38,23 @@ const ProfileSetup = () => {
       const { error } = await supabase
         .from('profiles')
         .insert({
-          id: user.id,
           email: user.email!,
-          first_name: profileData.firstName,
-          last_name: profileData.lastName,
-          date_of_birth: user.user_metadata.date_of_birth,
-          gender: user.user_metadata.gender,
-          interested_in: profileData.interestedIn,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          date_of_birth: '1990-01-01', // We'll need to collect this properly
+          gender: 'prefer_not_to_say', // We'll need to collect this properly
           bio: profileData.bio,
           occupation: profileData.occupation,
           education: profileData.education as any,
-          location_city: profileData.locationCity,
-          location_state: profileData.locationState,
-          max_distance: profileData.maxDistance,
-          age_min: profileData.ageMin,
-          age_max: profileData.ageMax,
-          height_cm: profileData.heightCm ? parseInt(profileData.heightCm) : null,
-          relationship_goals: profileData.relationshipGoals,
-          interests: profileData.interests,
+          location_city: profileData.location_city,
+          location_state: profileData.location_state,
+          interested_in: profileData.interested_in as any,
+          age_min: profileData.age_min,
+          age_max: profileData.age_max,
         });
 
       if (error) {
+        console.error('Profile creation error:', error);
         toast({
           title: "Error",
           description: error.message,
@@ -102,8 +65,11 @@ const ProfileSetup = () => {
           title: "Success",
           description: "Profile created successfully!",
         });
+        // The parent component will handle the redirect
+        window.location.reload();
       }
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -115,135 +81,125 @@ const ProfileSetup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 p-4">
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Complete Your Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={profileData.firstName}
-                    onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={profileData.lastName}
-                    onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                  />
-                </div>
-              </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
+            Complete Your Profile
+          </CardTitle>
+          <CardDescription>Tell us about yourself to get started</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell us about yourself..."
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  rows={3}
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={profileData.first_name}
+                  onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })}
+                  required
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="occupation">Occupation</Label>
-                  <Input
-                    id="occupation"
-                    value={profileData.occupation}
-                    onChange={(e) => setProfileData({ ...profileData, occupation: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="education">Education</Label>
-                  <Select value={profileData.education} onValueChange={(value) => setProfileData({ ...profileData, education: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select education level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high_school">High School</SelectItem>
-                      <SelectItem value="some_college">Some College</SelectItem>
-                      <SelectItem value="bachelors">Bachelor's Degree</SelectItem>
-                      <SelectItem value="masters">Master's Degree</SelectItem>
-                      <SelectItem value="phd">PhD</SelectItem>
-                      <SelectItem value="trade_school">Trade School</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="locationCity">City</Label>
-                  <Input
-                    id="locationCity"
-                    value={profileData.locationCity}
-                    onChange={(e) => setProfileData({ ...profileData, locationCity: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="locationState">State</Label>
-                  <Input
-                    id="locationState"
-                    value={profileData.locationState}
-                    onChange={(e) => setProfileData({ ...profileData, locationState: e.target.value })}
-                  />
-                </div>
-              </div>
-
               <div>
-                <Label>Interested In</Label>
-                <div className="flex flex-wrap gap-4 mt-2">
-                  {['male', 'female', 'non_binary', 'other'].map((gender) => (
-                    <div key={gender} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`interested-${gender}`}
-                        checked={profileData.interestedIn.includes(gender)}
-                        onCheckedChange={(checked) => handleInterestedInChange(gender, checked as boolean)}
-                      />
-                      <Label htmlFor={`interested-${gender}`} className="capitalize">
-                        {gender.replace('_', ' ')}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={profileData.last_name}
+                  onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })}
+                />
               </div>
+            </div>
 
+            <div>
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                placeholder="Tell people about yourself..."
+                value={profileData.bio}
+                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Relationship Goals</Label>
-                <div className="flex flex-wrap gap-4 mt-2">
-                  {['casual', 'serious', 'friendship', 'networking'].map((goal) => (
-                    <div key={goal} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`goal-${goal}`}
-                        checked={profileData.relationshipGoals.includes(goal)}
-                        onCheckedChange={(checked) => handleRelationshipGoalsChange(goal, checked as boolean)}
-                      />
-                      <Label htmlFor={`goal-${goal}`} className="capitalize">
-                        {goal}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input
+                  id="occupation"
+                  value={profileData.occupation}
+                  onChange={(e) => setProfileData({ ...profileData, occupation: e.target.value })}
+                />
               </div>
+              <div>
+                <Label htmlFor="education">Education</Label>
+                <Select value={profileData.education} onValueChange={(value) => setProfileData({ ...profileData, education: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select education level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high_school">High School</SelectItem>
+                    <SelectItem value="some_college">Some College</SelectItem>
+                    <SelectItem value="bachelors">Bachelor's Degree</SelectItem>
+                    <SelectItem value="masters">Master's Degree</SelectItem>
+                    <SelectItem value="phd">PhD</SelectItem>
+                    <SelectItem value="trade_school">Trade School</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating Profile...' : 'Complete Profile'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={profileData.location_city}
+                  onChange={(e) => setProfileData({ ...profileData, location_city: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="state">State</Label>
+                <Input
+                  id="state"
+                  value={profileData.location_state}
+                  onChange={(e) => setProfileData({ ...profileData, location_state: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="ageMin">Minimum Age</Label>
+                <Input
+                  id="ageMin"
+                  type="number"
+                  min="18"
+                  max="99"
+                  value={profileData.age_min}
+                  onChange={(e) => setProfileData({ ...profileData, age_min: parseInt(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ageMax">Maximum Age</Label>
+                <Input
+                  id="ageMax"
+                  type="number"
+                  min="18"
+                  max="99"
+                  value={profileData.age_max}
+                  onChange={(e) => setProfileData({ ...profileData, age_max: parseInt(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Creating Profile...' : 'Complete Profile'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
