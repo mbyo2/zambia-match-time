@@ -38,6 +38,39 @@ export type Database = {
           },
         ]
       }
+      daily_limits: {
+        Row: {
+          boosts_used: number | null
+          created_at: string | null
+          date: string | null
+          id: string
+          super_likes_used: number | null
+          swipes_used: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          boosts_used?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          super_likes_used?: number | null
+          swipes_used?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          boosts_used?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          super_likes_used?: number | null
+          swipes_used?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string | null
@@ -195,6 +228,45 @@ export type Database = {
           {
             foreignKeyName: "profile_videos_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          view_type: string | null
+          viewed_id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          view_type?: string | null
+          viewed_id: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          view_type?: string | null
+          viewed_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_viewed_id_fkey"
+            columns: ["viewed_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_views_viewer_id_fkey"
+            columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -423,6 +495,45 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       verification_requests: {
         Row: {
           created_at: string | null
@@ -463,7 +574,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_daily_swipe_limit: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
+      get_user_subscription_tier: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["subscription_tier"]
+      }
+      increment_swipe_count: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       education_level:
@@ -482,6 +604,7 @@ export type Database = {
         | "prefer_not_to_say"
       message_type: "text" | "image" | "voice" | "video"
       relationship_goal: "casual" | "serious" | "friendship" | "networking"
+      subscription_tier: "free" | "basic" | "premium" | "elite"
       swipe_action: "like" | "pass" | "super_like"
       verification_status: "pending" | "verified" | "rejected"
     }
@@ -617,6 +740,7 @@ export const Constants = {
       ],
       message_type: ["text", "image", "voice", "video"],
       relationship_goal: ["casual", "serious", "friendship", "networking"],
+      subscription_tier: ["free", "basic", "premium", "elite"],
       swipe_action: ["like", "pass", "super_like"],
       verification_status: ["pending", "verified", "rejected"],
     },

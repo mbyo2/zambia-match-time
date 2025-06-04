@@ -3,8 +3,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ProfileSetup from './profile/ProfileSetup';
 import DiscoverPage from './discover/DiscoverPage';
+import SubscriptionPage from './subscription/SubscriptionPage';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Heart, MessageCircle } from 'lucide-react';
+import { LogOut, User, Heart, MessageCircle, Crown } from 'lucide-react';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -65,8 +66,9 @@ const MainApp = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 pb-20">
         {currentTab === 'discover' && <DiscoverPage />}
+        {currentTab === 'subscription' && <SubscriptionPage />}
         {/* Other tabs will be implemented later */}
       </main>
 
@@ -89,6 +91,15 @@ const MainApp = () => {
           >
             <MessageCircle size={20} />
             <span className="text-xs">Matches</span>
+          </Button>
+
+          <Button
+            variant={currentTab === 'subscription' ? 'default' : 'ghost'}
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => setCurrentTab('subscription')}
+          >
+            <Crown size={20} />
+            <span className="text-xs">Premium</span>
           </Button>
           
           <Button
