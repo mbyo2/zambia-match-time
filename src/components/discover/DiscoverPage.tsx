@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, X, Star, Crown } from 'lucide-react';
+import { Heart, X, Star, Crown, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import SwipeCard from './SwipeCard';
+import SearchFilters from './SearchFilters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Profile {
@@ -18,6 +19,18 @@ interface Profile {
   location_city?: string;
   location_state?: string;
   date_of_birth: string;
+  height_cm?: number;
+  interests?: string[];
+  relationship_goals?: string[];
+}
+
+interface SearchPreferences {
+  age_range: { min: number; max: number };
+  distance: number;
+  education_levels: string[];
+  interests: string[];
+  relationship_goals: string[];
+  height_range: { min: number; max: number };
 }
 
 const DiscoverPage = () => {
@@ -27,21 +40,76 @@ const DiscoverPage = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchPreferences, setSearchPreferences] = useState<SearchPreferences>({
+    age_range: { min: 18, max: 99 },
+    distance: 50,
+    education_levels: [],
+    interests: [],
+    relationship_goals: [],
+    height_range: { min: 150, max: 200 }
+  });
 
   useEffect(() => {
     if (user) {
-      fetchProfiles();
+      loadSearchPreferences();
     }
   }, [user]);
 
-  const fetchProfiles = async () => {
+  useEffect(() => {
+    if (user && !showFilters) {
+      fetchProfiles();
+    }
+  }, [user, searchPreferences, showFilters]);
+
+  const loadSearchPreferences = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
+        .select('search_preferences')
+        .eq('id', user?.id)
+        .single();
+
+      if (data?.search_preferences) {
+        setSearchPreferences(data.search_preferences);
+      }
+    } catch (error) {
+      console.error('Error loading search preferences:', error);
+    }
+  };
+
+  const fetchProfiles = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('profiles')
         .select('*')
         .neq('id', user?.id)
-        .eq('is_active', true)
-        .limit(10);
+        .eq('is_active', true);
+
+      // Apply age filter
+      const currentYear = new Date().getFullYear();
+      const minBirthYear = currentYear - searchPreferences.age_range.max;
+      const maxBirthYear = currentYear - searchPreferences.age_range.min;
+      
+      query = query
+        .gte('date_of_birth', `${minBirthYear}-01-01`)
+        .lte('date_of_birth', `${maxBirthYear}-12-31`);
+
+      // Apply height filter if specified
+      if (searchPreferences.height_range.min > 0) {
+        query = query.gte('height_cm', searchPreferences.height_range.min);
+      }
+      if (searchPreferences.height_range.max < 220) {
+        query = query.lte('height_cm', searchPreferences.height_range.max);
+      }
+
+      // Apply education filter
+      if (searchPreferences.education_levels.length > 0) {
+        query = query.in('education', searchPreferences.education_levels);
+      }
+
+      const { data, error } = await query.limit(20);
 
       if (error) {
         console.error('Error fetching profiles:', error);
@@ -51,7 +119,27 @@ const DiscoverPage = () => {
           variant: "destructive",
         });
       } else {
-        setProfiles(data || []);
+        // Filter by interests and relationship goals in memory
+        let filteredProfiles = data || [];
+        
+        if (searchPreferences.interests.length > 0) {
+          filteredProfiles = filteredProfiles.filter(profile => 
+            profile.interests?.some(interest => 
+              searchPreferences.interests.includes(interest)
+            )
+          );
+        }
+
+        if (searchPreferences.relationship_goals.length > 0) {
+          filteredProfiles = filteredProfiles.filter(profile => 
+            profile.relationship_goals?.some(goal => 
+              searchPreferences.relationship_goals.includes(goal)
+            )
+          );
+        }
+
+        setProfiles(filteredProfiles);
+        setCurrentIndex(0);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -125,6 +213,11 @@ const DiscoverPage = () => {
     }
   };
 
+  const handleFiltersChange = (filters: SearchPreferences) => {
+    setSearchPreferences(filters);
+    setShowFilters(false);
+  };
+
   // Show upgrade prompt if out of swipes
   if (subscription.remainingSwipes === 0 && subscription.tier === 'free') {
     return (
@@ -158,6 +251,17 @@ const DiscoverPage = () => {
     );
   }
 
+  if (showFilters) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
+        <SearchFilters 
+          onFiltersChange={handleFiltersChange}
+          onClose={() => setShowFilters(false)}
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
@@ -175,9 +279,15 @@ const DiscoverPage = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">That's everyone for now! 🎉</h2>
           <p className="text-gray-600 mb-6">Check back later for more profiles</p>
-          <Button onClick={fetchProfiles}>
-            Refresh
-          </Button>
+          <div className="space-x-4">
+            <Button onClick={fetchProfiles}>
+              Refresh
+            </Button>
+            <Button variant="outline" onClick={() => setShowFilters(true)}>
+              <Filter className="h-4 w-4 mr-2" />
+              Adjust Filters
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -187,14 +297,19 @@ const DiscoverPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex flex-col items-center justify-center p-4">
-      {/* Swipes counter for free users */}
-      {subscription.tier === 'free' && (
-        <div className="mb-4 text-center">
+      {/* Filter button and swipes counter */}
+      <div className="mb-4 flex items-center justify-between w-full max-w-sm">
+        <Button variant="outline" size="sm" onClick={() => setShowFilters(true)}>
+          <Filter className="h-4 w-4 mr-2" />
+          Filters
+        </Button>
+        
+        {subscription.tier === 'free' && (
           <p className="text-sm text-gray-600">
             {subscription.remainingSwipes} swipes remaining today
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="relative">
         <SwipeCard 

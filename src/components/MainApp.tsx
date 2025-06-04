@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ProfileSetup from './profile/ProfileSetup';
 import DiscoverPage from './discover/DiscoverPage';
+import MatchesPage from './matches/MatchesPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Heart, MessageCircle, Crown } from 'lucide-react';
@@ -68,8 +70,9 @@ const MainApp = () => {
       {/* Main Content */}
       <main className="flex-1 pb-20">
         {currentTab === 'discover' && <DiscoverPage />}
+        {currentTab === 'matches' && <MatchesPage />}
         {currentTab === 'subscription' && <SubscriptionPage />}
-        {/* Other tabs will be implemented later */}
+        {/* Profile tab will be implemented later */}
       </main>
 
       {/* Bottom Navigation */}
