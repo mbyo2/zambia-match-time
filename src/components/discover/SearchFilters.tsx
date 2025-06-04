@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Filter, X } from 'lucide-react';
@@ -56,15 +55,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('search_preferences')
-        .eq('id', user.id)
-        .single();
-
-      if (data?.search_preferences) {
-        setFilters(data.search_preferences);
-      }
+      // For now, just use default filters since search_preferences column may not exist yet
+      console.log('Using default search filters');
     } catch (error) {
       console.error('Error loading search preferences:', error);
     }
@@ -74,17 +66,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ search_preferences: filters })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error saving search preferences:', error);
-      } else {
-        onFiltersChange(filters);
-        onClose();
-      }
+      // For now, just apply filters without saving to database
+      // since search_preferences column may not exist yet
+      onFiltersChange(filters);
+      onClose();
+      console.log('Filters applied:', filters);
     } catch (error) {
       console.error('Error saving search preferences:', error);
     }

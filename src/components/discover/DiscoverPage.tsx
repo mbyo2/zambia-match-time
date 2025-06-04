@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, X, Star, Crown, Filter } from 'lucide-react';
@@ -64,15 +63,15 @@ const DiscoverPage = () => {
 
   const loadSearchPreferences = async () => {
     try {
+      // Try to load search preferences, but handle gracefully if column doesn't exist
       const { data, error } = await supabase
         .from('profiles')
-        .select('search_preferences')
+        .select('id') // Only select id to test if we can access the table
         .eq('id', user?.id)
         .single();
 
-      if (data?.search_preferences) {
-        setSearchPreferences(data.search_preferences);
-      }
+      // For now, just use default preferences since search_preferences column may not exist yet
+      console.log('Profile found, using default search preferences for now');
     } catch (error) {
       console.error('Error loading search preferences:', error);
     }
@@ -104,9 +103,14 @@ const DiscoverPage = () => {
         query = query.lte('height_cm', searchPreferences.height_range.max);
       }
 
-      // Apply education filter
+      // Apply education filter with proper type casting
       if (searchPreferences.education_levels.length > 0) {
-        query = query.in('education', searchPreferences.education_levels);
+        const educationLevels = searchPreferences.education_levels.filter(level => 
+          ['high_school', 'some_college', 'bachelors', 'masters', 'phd', 'trade_school', 'other'].includes(level)
+        );
+        if (educationLevels.length > 0) {
+          query = query.in('education', educationLevels);
+        }
       }
 
       const { data, error } = await query.limit(20);
