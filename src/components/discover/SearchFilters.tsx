@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Filter, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Filter, X, Save, Trash2 } from 'lucide-react';
 
 interface SearchPreferences {
   age_range: { min: number; max: number };
@@ -18,21 +20,35 @@ interface SearchPreferences {
   height_range: { min: number; max: number };
 }
 
+interface SavedSearch {
+  id: string;
+  name: string;
+  search_criteria: SearchPreferences;
+  is_default: boolean;
+}
+
 interface SearchFiltersProps {
   onFiltersChange: (filters: SearchPreferences) => void;
   onClose: () => void;
+  initialFilters?: SearchPreferences;
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose }) => {
+const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose, initialFilters }) => {
   const { user } = useAuth();
-  const [filters, setFilters] = useState<SearchPreferences>({
-    age_range: { min: 18, max: 99 },
-    distance: 50,
-    education_levels: [],
-    interests: [],
-    relationship_goals: [],
-    height_range: { min: 150, max: 200 }
-  });
+  const { toast } = useToast();
+  const [filters, setFilters] = useState<SearchPreferences>(
+    initialFilters || {
+      age_range: { min: 18, max: 99 },
+      distance: 50,
+      education_levels: [],
+      interests: [],
+      relationship_goals: [],
+      height_range: { min: 150, max: 200 }
+    }
+  );
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [newSearchName, setNewSearchName] = useState('');
+  const [showSaveForm, setShowSaveForm] = useState(false);
 
   const educationOptions = [
     'high_school', 'some_college', 'bachelors', 'masters', 'phd', 'trade_school', 'other'
@@ -48,32 +64,112 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
   ];
 
   useEffect(() => {
-    loadSavedFilters();
+    if (user) {
+      loadSavedSearches();
+    }
   }, [user]);
 
-  const loadSavedFilters = async () => {
+  const loadSavedSearches = async () => {
     if (!user) return;
 
     try {
-      // For now, just use default filters since search_preferences column may not exist yet
-      console.log('Using default search filters');
+      const { data, error } = await supabase
+        .from('saved_searches')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading saved searches:', error);
+      } else {
+        setSavedSearches(data || []);
+      }
     } catch (error) {
-      console.error('Error loading search preferences:', error);
+      console.error('Error loading saved searches:', error);
     }
   };
 
-  const saveFilters = async () => {
-    if (!user) return;
+  const saveSearch = async () => {
+    if (!user || !newSearchName.trim()) return;
 
     try {
-      // For now, just apply filters without saving to database
-      // since search_preferences column may not exist yet
-      onFiltersChange(filters);
-      onClose();
-      console.log('Filters applied:', filters);
+      const { error } = await supabase
+        .from('saved_searches')
+        .insert({
+          user_id: user.id,
+          name: newSearchName.trim(),
+          search_criteria: filters
+        });
+
+      if (error) {
+        console.error('Error saving search:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save search",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Search Saved!",
+          description: `"${newSearchName}" has been saved`,
+        });
+        setNewSearchName('');
+        setShowSaveForm(false);
+        loadSavedSearches();
+      }
     } catch (error) {
-      console.error('Error saving search preferences:', error);
+      console.error('Error saving search:', error);
     }
+  };
+
+  const loadSavedSearch = (savedSearch: SavedSearch) => {
+    setFilters(savedSearch.search_criteria);
+    toast({
+      title: "Search Loaded",
+      description: `"${savedSearch.name}" filters applied`,
+    });
+  };
+
+  const deleteSavedSearch = async (searchId: string) => {
+    try {
+      const { error } = await supabase
+        .from('saved_searches')
+        .delete()
+        .eq('id', searchId);
+
+      if (error) {
+        console.error('Error deleting saved search:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete search",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Search Deleted",
+          description: "Saved search has been removed",
+        });
+        loadSavedSearches();
+      }
+    } catch (error) {
+      console.error('Error deleting saved search:', error);
+    }
+  };
+
+  const applyFilters = async () => {
+    onFiltersChange(filters);
+    onClose();
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      age_range: { min: 18, max: 99 },
+      distance: 50,
+      education_levels: [],
+      interests: [],
+      relationship_goals: [],
+      height_range: { min: 150, max: 200 }
+    });
   };
 
   const updateFilters = (key: keyof SearchPreferences, value: any) => {
@@ -87,7 +183,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Filter size={20} />
@@ -98,6 +194,32 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
         </Button>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Saved Searches */}
+        {savedSearches.length > 0 && (
+          <div>
+            <Label className="text-sm font-medium">Saved Searches</Label>
+            <div className="mt-2 space-y-2">
+              {savedSearches.map((search) => (
+                <div key={search.id} className="flex items-center justify-between p-2 border rounded">
+                  <button
+                    onClick={() => loadSavedSearch(search)}
+                    className="text-sm text-left hover:text-pink-600 flex-1"
+                  >
+                    {search.name}
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteSavedSearch(search.id)}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Age Range */}
         <div>
           <Label className="text-sm font-medium">Age Range</Label>
@@ -223,11 +345,40 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFiltersChange, onClose 
           </div>
         </div>
 
+        {/* Save Search */}
+        <div>
+          {showSaveForm ? (
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter search name..."
+                value={newSearchName}
+                onChange={(e) => setNewSearchName(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveSearch}>
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowSaveForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setShowSaveForm(true)}>
+              <Save className="h-4 w-4 mr-2" />
+              Save This Search
+            </Button>
+          )}
+        </div>
+
         <div className="flex gap-2">
-          <Button onClick={saveFilters} className="flex-1">
+          <Button onClick={applyFilters} className="flex-1">
             Apply Filters
           </Button>
-          <Button variant="outline" onClick={onClose} className="flex-1">
+          <Button variant="outline" onClick={resetFilters}>
+            Reset
+          </Button>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
         </div>

@@ -301,6 +301,7 @@ export type Database = {
           relationship_goals:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          search_preferences: Json | null
           updated_at: string | null
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
@@ -333,6 +334,7 @@ export type Database = {
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          search_preferences?: Json | null
           updated_at?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
@@ -365,6 +367,7 @@ export type Database = {
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          search_preferences?: Json | null
           updated_at?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
@@ -411,6 +414,44 @@ export type Database = {
           {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_searches: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          search_criteria: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          search_criteria: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          search_criteria?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -574,9 +615,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_distance: {
+        Args: { lat1: number; lon1: number; lat2: number; lon2: number }
+        Returns: number
+      }
       check_daily_swipe_limit: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      get_compatible_profiles: {
+        Args: {
+          user_uuid: string
+          max_distance?: number
+          age_min?: number
+          age_max?: number
+          filter_education_levels?: string[]
+          filter_interests?: string[]
+          filter_relationship_goals?: string[]
+          height_min?: number
+          height_max?: number
+        }
+        Returns: {
+          id: string
+          first_name: string
+          bio: string
+          occupation: string
+          education: string
+          location_city: string
+          location_state: string
+          date_of_birth: string
+          height_cm: number
+          interests: string[]
+          relationship_goals: string[]
+          distance_km: number
+          compatibility_score: number
+        }[]
       }
       get_user_subscription_tier: {
         Args: { user_uuid: string }

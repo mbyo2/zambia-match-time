@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, X, Star, Crown, Filter } from 'lucide-react';
@@ -63,15 +64,21 @@ const DiscoverPage = () => {
 
   const loadSearchPreferences = async () => {
     try {
-      // Try to load search preferences, but handle gracefully if column doesn't exist
       const { data, error } = await supabase
         .from('profiles')
-        .select('id') // Only select id to test if we can access the table
+        .select('search_preferences')
         .eq('id', user?.id)
         .single();
 
-      // For now, just use default preferences since search_preferences column may not exist yet
-      console.log('Profile found, using default search preferences for now');
+      if (error) {
+        console.error('Error loading search preferences:', error);
+        return;
+      }
+
+      if (data?.search_preferences) {
+        setSearchPreferences(data.search_preferences);
+        console.log('Loaded search preferences:', data.search_preferences);
+      }
     } catch (error) {
       console.error('Error loading search preferences:', error);
     }
@@ -79,6 +86,39 @@ const DiscoverPage = () => {
 
   const fetchProfiles = async () => {
     setIsLoading(true);
+    try {
+      // Use the advanced matching function for better results
+      const { data, error } = await supabase.rpc('get_compatible_profiles', {
+        user_uuid: user?.id,
+        max_distance: searchPreferences.distance,
+        age_min: searchPreferences.age_range.min,
+        age_max: searchPreferences.age_range.max,
+        filter_education_levels: searchPreferences.education_levels,
+        filter_interests: searchPreferences.interests,
+        filter_relationship_goals: searchPreferences.relationship_goals,
+        height_min: searchPreferences.height_range.min,
+        height_max: searchPreferences.height_range.max
+      });
+
+      if (error) {
+        console.error('Error fetching compatible profiles:', error);
+        // Fallback to basic query if advanced matching fails
+        await fetchBasicProfiles();
+      } else {
+        console.log('Found compatible profiles:', data?.length || 0);
+        setProfiles(data || []);
+        setCurrentIndex(0);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      // Fallback to basic query
+      await fetchBasicProfiles();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchBasicProfiles = async () => {
     try {
       let query = supabase
         .from('profiles')
@@ -105,9 +145,11 @@ const DiscoverPage = () => {
 
       // Apply education filter with proper type casting
       if (searchPreferences.education_levels.length > 0) {
+        const validEducationLevels = ['high_school', 'some_college', 'bachelors', 'masters', 'phd', 'trade_school', 'other'] as const;
         const educationLevels = searchPreferences.education_levels.filter(level => 
-          ['high_school', 'some_college', 'bachelors', 'masters', 'phd', 'trade_school', 'other'].includes(level)
-        );
+          validEducationLevels.includes(level as any)
+        ) as typeof validEducationLevels[number][];
+        
         if (educationLevels.length > 0) {
           query = query.in('education', educationLevels);
         }
@@ -147,8 +189,6 @@ const DiscoverPage = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -217,8 +257,25 @@ const DiscoverPage = () => {
     }
   };
 
-  const handleFiltersChange = (filters: SearchPreferences) => {
+  const handleFiltersChange = async (filters: SearchPreferences) => {
     setSearchPreferences(filters);
+    
+    // Save preferences to database
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ search_preferences: filters })
+        .eq('id', user?.id);
+
+      if (error) {
+        console.error('Error saving search preferences:', error);
+      } else {
+        console.log('Search preferences saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving search preferences:', error);
+    }
+    
     setShowFilters(false);
   };
 
@@ -261,6 +318,7 @@ const DiscoverPage = () => {
         <SearchFilters 
           onFiltersChange={handleFiltersChange}
           onClose={() => setShowFilters(false)}
+          initialFilters={searchPreferences}
         />
       </div>
     );
