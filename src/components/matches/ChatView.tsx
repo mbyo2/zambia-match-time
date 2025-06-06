@@ -3,9 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import MessageInput from '@/components/messaging/MessageInput';
+import TypingIndicator from '@/components/messaging/TypingIndicator';
+import MessageReactions from '@/components/messaging/MessageReactions';
 
 interface Message {
   id: string;
@@ -13,6 +15,8 @@ interface Message {
   sender_id: string;
   created_at: string;
   is_read: boolean;
+  message_type: 'text' | 'image' | 'voice' | 'video';
+  reactions?: { emoji: string; count: number; userReacted: boolean }[];
 }
 
 interface ChatViewProps {
@@ -24,14 +28,17 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (match?.conversation?.id) {
       fetchMessages();
       subscribeToMessages();
+      subscribeToTypingIndicators();
     }
   }, [match]);
 
@@ -91,6 +98,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         },
         (payload) => {
           setMessages(prev => [...prev, payload.new as Message]);
+          
+          // Mark new messages as read if they're not from current user
+          if (payload.new.sender_id !== user?.id) {
+            markMessagesAsRead();
+          }
         }
       )
       .subscribe();
@@ -100,8 +112,27 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     };
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
+  const subscribeToTypingIndicators = () => {
+    const channel = supabase
+      .channel(`typing_${match.conversation.id}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const otherUsersTyping = Object.values(state).some((presences: any) => 
+          presences.some((presence: any) => 
+            presence.user_id !== user?.id && presence.typing
+          )
+        );
+        setOtherUserTyping(otherUsersTyping);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const sendMessage = async (content: string, messageType: 'text' | 'image' = 'text') => {
+    if (!content.trim() || !user) return;
 
     try {
       const { error } = await supabase
@@ -109,8 +140,8 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         .insert({
           conversation_id: match.conversation.id,
           sender_id: user.id,
-          content: newMessage.trim(),
-          message_type: 'text'
+          content: content.trim(),
+          message_type: messageType
         });
 
       if (error) {
@@ -123,17 +154,44 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         return;
       }
 
-      setNewMessage('');
+      // Update conversation's last_message_at
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', match.conversation.id);
+
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+  const handleTyping = (typing: boolean) => {
+    setIsTyping(typing);
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
     }
+
+    // Send typing indicator via presence
+    const channel = supabase.channel(`typing_${match.conversation.id}`);
+    channel.track({ user_id: user?.id, typing });
+
+    if (typing) {
+      // Auto-stop typing after 3 seconds
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        channel.track({ user_id: user?.id, typing: false });
+      }, 3000);
+    }
+  };
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    // This would need a message_reactions table in a real implementation
+    toast({
+      title: "Feature coming soon!",
+      description: "Message reactions will be available in the next update.",
+    });
   };
 
   if (isLoading) {
@@ -167,7 +225,12 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             )}
           </div>
           
-          <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+          <div>
+            <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+            {otherUserTyping && (
+              <span className="text-xs text-green-500">typing...</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -183,48 +246,62 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
               key={message.id}
               className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
             >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.sender_id === user?.id
-                    ? 'bg-pink-500 text-white'
-                    : 'bg-white border shadow-sm'
-                }`}
-              >
-                <p className="text-sm">{message.content}</p>
-                <p className={`text-xs mt-1 ${
-                  message.sender_id === user?.id ? 'text-pink-100' : 'text-gray-400'
-                }`}>
-                  {new Date(message.created_at).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </p>
+              <div className="max-w-xs lg:max-w-md">
+                <div
+                  className={`px-4 py-2 rounded-lg ${
+                    message.sender_id === user?.id
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-white border shadow-sm'
+                  }`}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className={`text-xs ${
+                      message.sender_id === user?.id ? 'text-pink-100' : 'text-gray-400'
+                    }`}>
+                      {new Date(message.created_at).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                    {message.sender_id === user?.id && (
+                      <span className={`text-xs ${
+                        message.is_read ? 'text-pink-200' : 'text-pink-300'
+                      }`}>
+                        {message.is_read ? '✓✓' : '✓'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Message reactions */}
+                <div className="mt-1">
+                  <MessageReactions
+                    messageId={message.id}
+                    reactions={message.reactions}
+                    onReact={handleReaction}
+                  />
+                </div>
               </div>
             </div>
           ))
         )}
+        
+        {/* Typing indicator */}
+        <TypingIndicator 
+          userName={match.other_user.first_name}
+          isVisible={otherUserTyping}
+        />
+        
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="bg-white border-t p-4">
-        <div className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            className="flex-1"
-          />
-          <Button 
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className="bg-pink-500 hover:bg-pink-600"
-          >
-            <Send size={20} />
-          </Button>
-        </div>
-      </div>
+      {/* Message Input */}
+      <MessageInput
+        onSendMessage={sendMessage}
+        onTyping={handleTyping}
+        disabled={false}
+      />
     </div>
   );
 };

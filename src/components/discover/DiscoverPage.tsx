@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Heart, X, Star, Crown, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import SwipeCard from './SwipeCard';
 import SearchFilters from './SearchFilters';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Filter, Heart, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { SearchPreferences, jsonToSearchPreferences, searchPreferencesToJson } from '@/types/search';
 
 interface Profile {
   id: string;
@@ -20,28 +20,23 @@ interface Profile {
   location_state?: string;
   date_of_birth: string;
   height_cm?: number;
-  interests?: string[];
-  relationship_goals?: string[];
-}
-
-interface SearchPreferences {
-  age_range: { min: number; max: number };
-  distance: number;
-  education_levels: string[];
   interests: string[];
   relationship_goals: string[];
-  height_range: { min: number; max: number };
+  distance_km?: number;
+  compatibility_score?: number;
+  profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
 const DiscoverPage = () => {
   const { user } = useAuth();
-  const { subscription, decrementSwipes, createCheckoutSession } = useSubscription();
   const { toast } = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchPreferences, setSearchPreferences] = useState<SearchPreferences>({
+  const [swipeCount, setSwipeCount] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(50);
+  const [preferences, setPreferences] = useState<SearchPreferences>({
     age_range: { min: 18, max: 99 },
     distance: 50,
     education_levels: [],
@@ -52,17 +47,13 @@ const DiscoverPage = () => {
 
   useEffect(() => {
     if (user) {
-      loadSearchPreferences();
+      fetchUserPreferences();
+      fetchProfiles();
+      checkDailyLimit();
     }
   }, [user]);
 
-  useEffect(() => {
-    if (user && !showFilters) {
-      fetchProfiles();
-    }
-  }, [user, searchPreferences, showFilters]);
-
-  const loadSearchPreferences = async () => {
+  const fetchUserPreferences = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -71,347 +62,232 @@ const DiscoverPage = () => {
         .single();
 
       if (error) {
-        console.error('Error loading search preferences:', error);
+        console.error('Error fetching preferences:', error);
         return;
       }
 
       if (data?.search_preferences) {
-        setSearchPreferences(data.search_preferences);
-        console.log('Loaded search preferences:', data.search_preferences);
+        setPreferences(jsonToSearchPreferences(data.search_preferences));
       }
     } catch (error) {
-      console.error('Error loading search preferences:', error);
+      console.error('Error:', error);
+    }
+  };
+
+  const updateUserPreferences = async (newPreferences: SearchPreferences) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ search_preferences: searchPreferencesToJson(newPreferences) })
+        .eq('id', user?.id);
+
+      if (error) {
+        console.error('Error updating preferences:', error);
+        return;
+      }
+
+      setPreferences(newPreferences);
+      fetchProfiles(); // Refresh profiles with new filters
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const checkDailyLimit = async () => {
+    try {
+      const { data, error } = await supabase
+        .rpc('check_daily_swipe_limit', { user_uuid: user?.id });
+
+      if (error) {
+        console.error('Error checking daily limit:', error);
+        return;
+      }
+
+      setDailyLimit(data || 0);
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
   const fetchProfiles = async () => {
-    setIsLoading(true);
+    if (!user) return;
+
     try {
-      // Use the advanced matching function for better results
-      const { data, error } = await supabase.rpc('get_compatible_profiles', {
-        user_uuid: user?.id,
-        max_distance: searchPreferences.distance,
-        age_min: searchPreferences.age_range.min,
-        age_max: searchPreferences.age_range.max,
-        filter_education_levels: searchPreferences.education_levels,
-        filter_interests: searchPreferences.interests,
-        filter_relationship_goals: searchPreferences.relationship_goals,
-        height_min: searchPreferences.height_range.min,
-        height_max: searchPreferences.height_range.max
-      });
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .rpc('get_compatible_profiles', {
+          user_uuid: user.id,
+          max_distance: preferences.distance,
+          age_min: preferences.age_range.min,
+          age_max: preferences.age_range.max,
+          filter_education_levels: preferences.education_levels,
+          filter_interests: preferences.interests,
+          filter_relationship_goals: preferences.relationship_goals,
+          height_min: preferences.height_range.min,
+          height_max: preferences.height_range.max
+        });
 
       if (error) {
-        console.error('Error fetching compatible profiles:', error);
-        // Fallback to basic query if advanced matching fails
-        await fetchBasicProfiles();
-      } else {
-        console.log('Found compatible profiles:', data?.length || 0);
-        setProfiles(data || []);
-        setCurrentIndex(0);
+        console.error('Error fetching profiles:', error);
+        return;
       }
+
+      // Get profile photos for each profile
+      const profilesWithPhotos = await Promise.all(
+        (data || []).map(async (profile: any) => {
+          const { data: photos } = await supabase
+            .from('profile_photos')
+            .select('photo_url, is_primary')
+            .eq('user_id', profile.id)
+            .order('order_index');
+
+          return {
+            ...profile,
+            profile_photos: photos || []
+          };
+        })
+      );
+
+      setProfiles(profilesWithPhotos);
+      setCurrentIndex(0);
     } catch (error) {
       console.error('Error:', error);
-      // Fallback to basic query
-      await fetchBasicProfiles();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchBasicProfiles = async () => {
-    try {
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .neq('id', user?.id)
-        .eq('is_active', true);
-
-      // Apply age filter
-      const currentYear = new Date().getFullYear();
-      const minBirthYear = currentYear - searchPreferences.age_range.max;
-      const maxBirthYear = currentYear - searchPreferences.age_range.min;
-      
-      query = query
-        .gte('date_of_birth', `${minBirthYear}-01-01`)
-        .lte('date_of_birth', `${maxBirthYear}-12-31`);
-
-      // Apply height filter if specified
-      if (searchPreferences.height_range.min > 0) {
-        query = query.gte('height_cm', searchPreferences.height_range.min);
-      }
-      if (searchPreferences.height_range.max < 220) {
-        query = query.lte('height_cm', searchPreferences.height_range.max);
-      }
-
-      // Apply education filter with proper type casting
-      if (searchPreferences.education_levels.length > 0) {
-        const validEducationLevels = ['high_school', 'some_college', 'bachelors', 'masters', 'phd', 'trade_school', 'other'] as const;
-        const educationLevels = searchPreferences.education_levels.filter(level => 
-          validEducationLevels.includes(level as any)
-        ) as typeof validEducationLevels[number][];
-        
-        if (educationLevels.length > 0) {
-          query = query.in('education', educationLevels);
-        }
-      }
-
-      const { data, error } = await query.limit(20);
-
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load profiles",
-          variant: "destructive",
-        });
-      } else {
-        // Filter by interests and relationship goals in memory
-        let filteredProfiles = data || [];
-        
-        if (searchPreferences.interests.length > 0) {
-          filteredProfiles = filteredProfiles.filter(profile => 
-            profile.interests?.some(interest => 
-              searchPreferences.interests.includes(interest)
-            )
-          );
-        }
-
-        if (searchPreferences.relationship_goals.length > 0) {
-          filteredProfiles = filteredProfiles.filter(profile => 
-            profile.relationship_goals?.some(goal => 
-              searchPreferences.relationship_goals.includes(goal)
-            )
-          );
-        }
-
-        setProfiles(filteredProfiles);
-        setCurrentIndex(0);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const trackProfileView = async (viewedId: string, viewType: 'view' | 'like' | 'super_like') => {
-    try {
-      await supabase
-        .from('profile_views')
-        .upsert({
-          viewer_id: user?.id,
-          viewed_id: viewedId,
-          view_type: viewType,
-        }, {
-          onConflict: 'viewer_id,viewed_id,view_type'
-        });
-    } catch (error) {
-      console.error('Error tracking profile view:', error);
-    }
-  };
-
-  const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
-    if (currentIndex >= profiles.length || !user) return;
-
-    // Check swipe limits for free users
-    if (action !== 'pass') {
-      const canSwipe = await decrementSwipes();
-      if (!canSwipe) return;
+  const handleSwipe = async (profileId: string, action: 'like' | 'pass') => {
+    if (dailyLimit <= 0) {
+      toast({
+        title: "Daily limit reached",
+        description: "You've reached your daily swipe limit. Upgrade to premium for unlimited swipes!",
+        variant: "destructive",
+      });
+      return;
     }
 
-    const currentProfile = profiles[currentIndex];
-
     try {
-      // Track the profile view
-      if (action === 'like' || action === 'super_like') {
-        await trackProfileView(currentProfile.id, action);
-      }
-
-      const { error } = await supabase
+      // Record the swipe
+      const { error: swipeError } = await supabase
         .from('swipes')
         .insert({
-          swiper_id: user.id,
-          swiped_id: currentProfile.id,
-          action: action,
+          swiper_id: user?.id,
+          swiped_id: profileId,
+          action: action
         });
 
-      if (error) {
-        console.error('Error saving swipe:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save swipe",
-          variant: "destructive",
-        });
+      if (swipeError) {
+        console.error('Error recording swipe:', swipeError);
         return;
       }
 
-      setCurrentIndex(currentIndex + 1);
+      // Increment swipe count
+      await supabase.rpc('increment_swipe_count', { user_uuid: user?.id });
 
-      if (action === 'like' || action === 'super_like') {
+      // Move to next profile
+      setCurrentIndex(prev => prev + 1);
+      setSwipeCount(prev => prev + 1);
+      setDailyLimit(prev => prev - 1);
+
+      if (action === 'like') {
         toast({
-          title: action === 'super_like' ? "Super Like Sent! 💫" : "Like Sent! 💖",
-          description: `You ${action === 'super_like' ? 'super liked' : 'liked'} ${currentProfile.first_name}`,
+          title: "Liked! 💖",
+          description: "Hope it's a match!",
         });
       }
-
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
-  const handleFiltersChange = async (filters: SearchPreferences) => {
-    setSearchPreferences(filters);
-    
-    // Save preferences to database
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ search_preferences: filters })
-        .eq('id', user?.id);
-
-      if (error) {
-        console.error('Error saving search preferences:', error);
-      } else {
-        console.log('Search preferences saved successfully');
-      }
-    } catch (error) {
-      console.error('Error saving search preferences:', error);
-    }
-    
-    setShowFilters(false);
-  };
-
-  // Show upgrade prompt if out of swipes
-  if (subscription.remainingSwipes === 0 && subscription.tier === 'free') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <div className="flex justify-center mb-4">
-              <Crown className="h-16 w-16 text-pink-500" />
-            </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
-              Out of Swipes!
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-600">
-              You've used all your daily swipes. Upgrade to get unlimited swipes and more features!
-            </p>
-            <Button 
-              onClick={() => createCheckoutSession('price_basic_monthly')}
-              className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600"
-            >
-              <Crown className="h-4 w-4 mr-2" />
-              Upgrade Now
-            </Button>
-            <p className="text-sm text-gray-500">
-              Or wait until tomorrow for more free swipes
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (showFilters) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
-        <SearchFilters 
-          onFiltersChange={handleFiltersChange}
-          onClose={() => setShowFilters(false)}
-          initialFilters={searchPreferences}
-        />
-      </div>
-    );
-  }
+  const currentProfile = profiles[currentIndex];
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Finding amazing people for you...</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
       </div>
     );
   }
-
-  if (currentIndex >= profiles.length) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">That's everyone for now! 🎉</h2>
-          <p className="text-gray-600 mb-6">Check back later for more profiles</p>
-          <div className="space-x-4">
-            <Button onClick={fetchProfiles}>
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={() => setShowFilters(true)}>
-              <Filter className="h-4 w-4 mr-2" />
-              Adjust Filters
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const currentProfile = profiles[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex flex-col items-center justify-center p-4">
-      {/* Filter button and swipes counter */}
-      <div className="mb-4 flex items-center justify-between w-full max-w-sm">
-        <Button variant="outline" size="sm" onClick={() => setShowFilters(true)}>
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-        </Button>
-        
-        {subscription.tier === 'free' && (
-          <p className="text-sm text-gray-600">
-            {subscription.remainingSwipes} swipes remaining today
-          </p>
-        )}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 p-4">
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
+            <p className="text-sm text-gray-600">
+              {dailyLimit} swipes remaining today
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowFilters(!showFilters)}
+            className="bg-white"
+          >
+            <Filter size={20} />
+          </Button>
+        </div>
 
-      <div className="relative">
-        <SwipeCard 
-          profile={currentProfile}
-          className="shadow-2xl"
-        />
-        
-        <div className="flex justify-center gap-4 mt-8">
-          <Button
-            variant="outline"
-            size="lg"
-            className="rounded-full w-16 h-16 border-red-300 text-red-500 hover:bg-red-50"
-            onClick={() => handleSwipe('pass')}
-          >
-            <X size={24} />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="lg"
-            className="rounded-full w-16 h-16 border-blue-300 text-blue-500 hover:bg-blue-50"
-            onClick={() => handleSwipe('super_like')}
-            disabled={subscription.tier === 'free'}
-          >
-            <Star size={24} />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="lg"
-            className="rounded-full w-16 h-16 border-green-300 text-green-500 hover:bg-green-50"
-            onClick={() => handleSwipe('like')}
-          >
-            <Heart size={24} />
-          </Button>
-        </div>
-        
-        <div className="text-center mt-4 text-sm text-gray-600">
-          {profiles.length - currentIndex} profiles remaining
-        </div>
+        {/* Search Filters */}
+        {showFilters && (
+          <div className="mb-6">
+            <SearchFilters 
+              preferences={preferences}
+              onPreferencesChange={updateUserPreferences}
+            />
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!currentProfile || currentIndex >= profiles.length ? (
+          <Card className="text-center py-16">
+            <CardContent>
+              <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">
+                No more profiles
+              </h2>
+              <p className="text-gray-500 mb-4">
+                Try adjusting your filters or check back later!
+              </p>
+              <Button onClick={fetchProfiles} className="bg-pink-500 hover:bg-pink-600">
+                Refresh
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <SwipeCard 
+              profile={currentProfile}
+              onSwipe={handleSwipe}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-6 mt-6">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full w-16 h-16 border-red-200 hover:bg-red-50"
+                onClick={() => handleSwipe(currentProfile.id, 'pass')}
+                disabled={dailyLimit <= 0}
+              >
+                <X size={24} className="text-red-500" />
+              </Button>
+              
+              <Button
+                size="lg"
+                className="rounded-full w-16 h-16 bg-pink-500 hover:bg-pink-600"
+                onClick={() => handleSwipe(currentProfile.id, 'like')}
+                disabled={dailyLimit <= 0}
+              >
+                <Heart size={24} />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

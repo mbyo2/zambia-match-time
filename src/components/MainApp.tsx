@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ProfileSetup from './profile/ProfileSetup';
+import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
@@ -51,6 +52,11 @@ const MainApp = () => {
     return <ProfileSetup />;
   }
 
+  // Handle profile edit page
+  if (currentTab === 'profile-edit') {
+    return <ProfileEditPage onBack={() => setCurrentTab('profile')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
       {/* Header */}
@@ -72,7 +78,27 @@ const MainApp = () => {
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
         {currentTab === 'subscription' && <SubscriptionPage />}
-        {/* Profile tab will be implemented later */}
+        {currentTab === 'profile' && (
+          <div className="p-4">
+            <div className="max-w-md mx-auto">
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <User size={32} className="text-gray-400" />
+                </div>
+                <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
+                <Button 
+                  onClick={() => setCurrentTab('profile-edit')}
+                  className="w-full bg-pink-500 hover:bg-pink-600 mb-3"
+                >
+                  Edit Profile
+                </Button>
+                <Button variant="outline" className="w-full">
+                  Privacy Settings
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Bottom Navigation */}
