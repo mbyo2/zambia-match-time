@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface SearchPreferences {
@@ -14,6 +13,12 @@ export interface SearchPreferences {
     min: number;
     max: number;
   };
+  // Premium filter options
+  body_types?: string[];
+  ethnicities?: string[];
+  religion?: string;
+  smoking?: string;
+  drinking?: string;
 }
 
 export interface SavedSearch {
@@ -41,7 +46,12 @@ export const jsonToSearchPreferences = (json: Json): SearchPreferences => {
     education_levels: obj.education_levels || [],
     interests: obj.interests || [],
     relationship_goals: obj.relationship_goals || [],
-    height_range: obj.height_range || { min: 150, max: 200 }
+    height_range: obj.height_range || { min: 150, max: 200 },
+    body_types: obj.body_types || [],
+    ethnicities: obj.ethnicities || [],
+    religion: obj.religion || '',
+    smoking: obj.smoking || '',
+    drinking: obj.drinking || ''
   };
 };
 

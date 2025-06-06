@@ -7,6 +7,7 @@ import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
+import NotificationCenter from './notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Heart, MessageCircle, Crown } from 'lucide-react';
 
@@ -66,9 +67,12 @@ const MainApp = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
               💖 MatchTime
             </h1>
-            <Button variant="ghost" onClick={handleSignOut}>
-              <LogOut size={20} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <Button variant="ghost" onClick={handleSignOut}>
+                <LogOut size={20} />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

@@ -7,6 +7,8 @@ import { Crown, Settings } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import SubscriptionPlans from './SubscriptionPlans';
 import LikesGrid from '../discover/LikesGrid';
+import BoostProfile from '../premium/BoostProfile';
+import ProfileViews from '../social/ProfileViews';
 
 const SubscriptionPage = () => {
   const { subscription, createPortalSession } = useSubscription();
@@ -57,6 +59,12 @@ const SubscriptionPage = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Premium Features */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <BoostProfile />
+          <ProfileViews />
+        </div>
 
         {/* Likes Grid */}
         <LikesGrid />
