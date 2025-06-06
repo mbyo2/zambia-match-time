@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EducationLevel, RelationshipGoal } from '@/types/search';
 
 interface ProfileEditPageProps {
   onBack: () => void;
@@ -32,10 +33,10 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
     last_name: '',
     bio: '',
     occupation: '',
-    education: '',
+    education: '' as EducationLevel | '',
     height_cm: '',
     interests: [] as string[],
-    relationship_goals: [] as string[]
+    relationship_goals: [] as RelationshipGoal[]
   });
 
   useEffect(() => {
@@ -104,7 +105,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
           last_name: profile.last_name,
           bio: profile.bio,
           occupation: profile.occupation,
-          education: profile.education,
+          education: profile.education || null,
           height_cm: profile.height_cm ? parseInt(profile.height_cm) : null,
           interests: profile.interests,
           relationship_goals: profile.relationship_goals,
@@ -317,7 +318,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
                 <Label htmlFor="education">Education</Label>
                 <Select 
                   value={profile.education} 
-                  onValueChange={(value) => setProfile({ ...profile, education: value })}
+                  onValueChange={(value: EducationLevel) => setProfile({ ...profile, education: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select education level" />

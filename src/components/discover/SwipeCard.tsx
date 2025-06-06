@@ -13,15 +13,22 @@ interface Profile {
   location_city?: string;
   location_state?: string;
   date_of_birth: string;
+  height_cm?: number;
+  interests: string[];
+  relationship_goals: string[];
+  distance_km?: number;
+  compatibility_score?: number;
+  profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
 interface SwipeCardProps {
   profile: Profile;
+  onSwipe?: (profileId: string, action: 'like' | 'pass') => Promise<void>;
   style?: React.CSSProperties;
   className?: string;
 }
 
-const SwipeCard = ({ profile, style, className }: SwipeCardProps) => {
+const SwipeCard = ({ profile, onSwipe, style, className }: SwipeCardProps) => {
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -35,10 +42,22 @@ const SwipeCard = ({ profile, style, className }: SwipeCardProps) => {
     return age;
   };
 
+  const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
+  const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url;
+
   return (
     <Card className={`h-96 w-80 relative overflow-hidden ${className}`} style={style}>
+      {photoUrl ? (
+        <img 
+          src={photoUrl} 
+          alt={profile.first_name}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-200 to-red-200" />
+      )}
+      
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
-      <div className="absolute inset-0 bg-gradient-to-r from-pink-200 to-red-200" />
       
       <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
         <div className="space-y-2">
@@ -75,7 +94,24 @@ const SwipeCard = ({ profile, style, className }: SwipeCardProps) => {
                 </span>
               </div>
             )}
+
+            {profile.distance_km && (
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin size={14} />
+                <span>{Math.round(profile.distance_km)} km away</span>
+              </div>
+            )}
           </div>
+
+          {profile.interests && profile.interests.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {profile.interests.slice(0, 3).map((interest, index) => (
+                <Badge key={index} variant="secondary" className="text-xs bg-white/20 text-white border-none">
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

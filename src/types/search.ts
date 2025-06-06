@@ -26,6 +26,12 @@ export interface SavedSearch {
   updated_at: string;
 }
 
+// Education types
+export type EducationLevel = 'high_school' | 'some_college' | 'bachelors' | 'masters' | 'phd' | 'trade_school' | 'other';
+
+// Relationship goal types
+export type RelationshipGoal = 'casual' | 'serious' | 'friendship' | 'networking';
+
 // Helper functions for type conversion
 export const jsonToSearchPreferences = (json: Json): SearchPreferences => {
   const obj = json as Record<string, any>;
@@ -40,5 +46,5 @@ export const jsonToSearchPreferences = (json: Json): SearchPreferences => {
 };
 
 export const searchPreferencesToJson = (prefs: SearchPreferences): Json => {
-  return prefs as Json;
+  return prefs as unknown as Json;
 };
