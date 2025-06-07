@@ -7,9 +7,10 @@ import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
+import SecuritySettings from './security/SecuritySettings';
 import NotificationCenter from './notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Heart, MessageCircle, Crown } from 'lucide-react';
+import { LogOut, User, Heart, MessageCircle, Crown, Shield } from 'lucide-react';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -58,6 +59,33 @@ const MainApp = () => {
     return <ProfileEditPage onBack={() => setCurrentTab('profile')} />;
   }
 
+  // Handle security settings page
+  if (currentTab === 'security') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setCurrentTab('profile')}>
+                  ← Back
+                </Button>
+                <h1 className="text-xl font-semibold">Security Settings</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <SecuritySettings />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
       {/* Header */}
@@ -90,15 +118,25 @@ const MainApp = () => {
                   <User size={32} className="text-gray-400" />
                 </div>
                 <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
-                <Button 
-                  onClick={() => setCurrentTab('profile-edit')}
-                  className="w-full bg-pink-500 hover:bg-pink-600 mb-3"
-                >
-                  Edit Profile
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Privacy Settings
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    onClick={() => setCurrentTab('profile-edit')}
+                    className="w-full bg-pink-500 hover:bg-pink-600"
+                  >
+                    Edit Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setCurrentTab('security')}
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Security & Privacy
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    Account Settings
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
