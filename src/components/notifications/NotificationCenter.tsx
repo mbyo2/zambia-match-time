@@ -54,8 +54,9 @@ const NotificationCenter = () => {
 
   const fetchNotifications = async () => {
     try {
+      // Use a direct query since the table might not be in types yet
       const { data, error } = await supabase
-        .from('notifications')
+        .from('notifications' as any)
         .select(`
           id,
           type,
@@ -76,11 +77,14 @@ const NotificationCenter = () => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return;
+      }
       
       const notificationData = data || [];
       setNotifications(notificationData);
-      setUnreadCount(notificationData.filter(n => !n.is_read).length);
+      setUnreadCount(notificationData.filter((n: any) => !n.is_read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -89,11 +93,14 @@ const NotificationCenter = () => {
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from('notifications' as any)
         .update({ is_read: true })
         .eq('id', notificationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        return;
+      }
       
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, is_read: true } : n
@@ -107,12 +114,15 @@ const NotificationCenter = () => {
   const markAllAsRead = async () => {
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from('notifications' as any)
         .update({ is_read: true })
         .eq('user_id', user?.id)
         .eq('is_read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        return;
+      }
       
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);

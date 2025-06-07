@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Crown } from 'lucide-react';
+import { Eye, Crown, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,13 +35,14 @@ const ProfileViews = () => {
 
   const fetchProfileViews = async () => {
     try {
+      // Use explicit join to avoid ambiguous relationship
       const { data, error } = await supabase
         .from('profile_views')
         .select(`
           id,
           view_type,
           created_at,
-          viewer:viewer_id (
+          viewer:profiles!profile_views_viewer_id_fkey (
             id,
             first_name,
             profile_photos (
@@ -54,7 +55,11 @@ const ProfileViews = () => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile views:', error);
+        return;
+      }
+      
       setViews(data || []);
     } catch (error) {
       console.error('Error fetching profile views:', error);
