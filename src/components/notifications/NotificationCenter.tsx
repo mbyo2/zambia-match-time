@@ -16,11 +16,7 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
-  related_user?: {
-    id: string;
-    first_name: string;
-    profile_photos: { photo_url: string; is_primary: boolean }[];
-  };
+  related_user_id?: string;
 }
 
 const NotificationCenter = () => {
@@ -54,7 +50,7 @@ const NotificationCenter = () => {
 
   const fetchNotifications = async () => {
     try {
-      // Use a direct query since the table might not be in types yet
+      // Simplified query without complex relationships for now
       const { data, error } = await supabase
         .from('notifications' as any)
         .select(`
@@ -64,14 +60,7 @@ const NotificationCenter = () => {
           message,
           is_read,
           created_at,
-          related_user:related_user_id (
-            id,
-            first_name,
-            profile_photos (
-              photo_url,
-              is_primary
-            )
-          )
+          related_user_id
         `)
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })

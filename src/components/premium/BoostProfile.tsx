@@ -31,10 +31,16 @@ const BoostProfile = () => {
 
     setIsLoading(true);
     try {
-      // Update last boost time in daily_limits table
-      const { error } = await supabase.rpc('increment_boost_count', {
-        user_uuid: user?.id
-      });
+      // Call the database function directly using SQL
+      const { error } = await supabase
+        .from('daily_limits')
+        .upsert({
+          user_id: user?.id,
+          date: new Date().toISOString().split('T')[0],
+          boosts_used: 1
+        }, {
+          onConflict: 'user_id,date'
+        });
 
       if (error) throw error;
 
