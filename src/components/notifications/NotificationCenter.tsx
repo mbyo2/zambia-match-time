@@ -49,20 +49,13 @@ const NotificationCenter = () => {
   }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user?.id) return;
+    
     try {
-      // Simplified query without complex relationships for now
       const { data, error } = await supabase
-        .from('notifications' as any)
-        .select(`
-          id,
-          type,
-          title,
-          message,
-          is_read,
-          created_at,
-          related_user_id
-        `)
-        .eq('user_id', user?.id)
+        .from('notifications')
+        .select('id, type, title, message, is_read, created_at, related_user_id')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -71,9 +64,10 @@ const NotificationCenter = () => {
         return;
       }
       
-      const notificationData = data || [];
-      setNotifications(notificationData);
-      setUnreadCount(notificationData.filter((n: any) => !n.is_read).length);
+      if (data) {
+        setNotifications(data);
+        setUnreadCount(data.filter((n) => !n.is_read).length);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -82,7 +76,7 @@ const NotificationCenter = () => {
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from('notifications' as any)
+        .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
 
@@ -101,11 +95,13 @@ const NotificationCenter = () => {
   };
 
   const markAllAsRead = async () => {
+    if (!user?.id) return;
+    
     try {
       const { error } = await supabase
-        .from('notifications' as any)
+        .from('notifications')
         .update({ is_read: true })
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .eq('is_read', false);
 
       if (error) {
