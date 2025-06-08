@@ -161,6 +161,56 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          related_match_id: string | null
+          related_user_id: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          related_match_id?: string | null
+          related_user_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          related_match_id?: string | null
+          related_user_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_match_id_fkey"
+            columns: ["related_match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_photos: {
         Row: {
           created_at: string | null
@@ -623,6 +673,17 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      create_notification: {
+        Args: {
+          target_user_id: string
+          notification_type: string
+          notification_title: string
+          notification_message: string
+          related_user_id?: string
+          related_match_id?: string
+        }
+        Returns: string
+      }
       get_compatible_profiles: {
         Args: {
           user_uuid: string
@@ -657,6 +718,10 @@ export type Database = {
       }
       increment_swipe_count: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      mark_notifications_read: {
+        Args: { notification_ids: string[] }
         Returns: undefined
       }
     }

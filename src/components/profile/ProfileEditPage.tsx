@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useFileUpload } from '@/hooks/useFileUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EducationLevel, RelationshipGoal } from '@/types/search';
@@ -26,6 +27,7 @@ interface ProfilePhoto {
 const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { uploadFile, deleteFile, isUploading, uploadProgress } = useFileUpload();
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
   const [profile, setProfile] = useState({
@@ -136,32 +138,77 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
-    // For now, we'll show a placeholder - actual file upload would need storage setup
-    toast({
-      title: "Feature coming soon!",
-      description: "Photo upload will be available when storage is configured.",
+    const photoUrl = await uploadFile(file, {
+      bucket: 'profile-photos',
+      folder: user.id,
+      maxSizeKB: 5000,
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
     });
+
+    if (photoUrl) {
+      try {
+        const { data, error } = await supabase
+          .from('profile_photos')
+          .insert({
+            user_id: user.id,
+            photo_url: photoUrl,
+            is_primary: photos.length === 0,
+            order_index: photos.length
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error saving photo:', error);
+          toast({
+            title: "Error",
+            description: "Failed to save photo",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setPhotos(prev => [...prev, data]);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Reset file input
+    e.target.value = '';
   };
 
-  const deletePhoto = async (photoId: string) => {
+  const deletePhoto = async (photo: ProfilePhoto) => {
     try {
+      // Extract file path from URL for deletion
+      const urlParts = photo.photo_url.split('/');
+      const filePath = `${user?.id}/${urlParts[urlParts.length - 1]}`;
+      
+      // Delete from storage
+      await deleteFile('profile-photos', filePath);
+
+      // Delete from database
       const { error } = await supabase
         .from('profile_photos')
         .delete()
-        .eq('id', photoId);
+        .eq('id', photo.id);
 
       if (error) {
         console.error('Error deleting photo:', error);
         return;
       }
 
-      setPhotos(photos.filter(p => p.id !== photoId));
-      toast({
-        title: "Success",
-        description: "Photo deleted successfully!",
-      });
+      setPhotos(photos.filter(p => p.id !== photo.id));
+      
+      // If this was the primary photo, make the first remaining photo primary
+      if (photo.is_primary && photos.length > 1) {
+        const remainingPhotos = photos.filter(p => p.id !== photo.id);
+        if (remainingPhotos.length > 0) {
+          await setPrimaryPhoto(remainingPhotos[0].id);
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
     }
@@ -211,6 +258,15 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Photos</CardTitle>
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Uploading...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="w-full" />
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 mb-4">
@@ -240,7 +296,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => deletePhoto(photo.id)}
+                      onClick={() => deletePhoto(photo)}
                       className="h-6 w-6 p-0"
                     >
                       <X size={12} />
@@ -259,6 +315,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoUpload}
+                    disabled={isUploading}
                     className="hidden"
                   />
                 </label>

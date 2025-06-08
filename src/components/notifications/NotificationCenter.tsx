@@ -11,12 +11,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
-  type: 'match' | 'message' | 'like' | 'super_like' | 'profile_view';
+  type: 'match' | 'message' | 'like' | 'super_like' | 'profile_view' | 'subscription';
   title: string;
   message: string;
   is_read: boolean;
   created_at: string;
   related_user_id?: string;
+  related_match_id?: string;
 }
 
 const NotificationCenter = () => {
@@ -52,30 +53,20 @@ const NotificationCenter = () => {
     if (!user?.id) return;
     
     try {
-      // Create mock notifications since the table might not have the exact structure yet
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'match',
-          title: 'New Match!',
-          message: 'You have a new match with Sarah',
-          is_read: false,
-          created_at: new Date().toISOString(),
-          related_user_id: 'user-123'
-        },
-        {
-          id: '2',
-          type: 'like',
-          title: 'Someone liked you!',
-          message: 'You received a new like',
-          is_read: true,
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          related_user_id: 'user-456'
-        }
-      ];
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      setNotifications(mockNotifications);
-      setUnreadCount(mockNotifications.filter((n) => !n.is_read).length);
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return;
+      }
+
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter((n) => !n.is_read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -89,8 +80,14 @@ const NotificationCenter = () => {
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      // In a real implementation, this would update the database
-      console.log('Marking notification as read:', notificationId);
+      // Update database
+      const { error } = await supabase.rpc('mark_notifications_read', {
+        notification_ids: [notificationId]
+      });
+
+      if (error) {
+        console.error('Error marking notification as read:', error);
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -100,11 +97,20 @@ const NotificationCenter = () => {
     if (!user?.id) return;
     
     try {
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
 
-      // In a real implementation, this would update the database
-      console.log('Marking all notifications as read for user:', user.id);
+      if (unreadIds.length > 0) {
+        const { error } = await supabase.rpc('mark_notifications_read', {
+          notification_ids: unreadIds
+        });
+
+        if (error) {
+          console.error('Error marking all notifications as read:', error);
+        }
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -117,6 +123,7 @@ const NotificationCenter = () => {
       case 'like': return <Heart className="h-4 w-4 text-pink-500" />;
       case 'super_like': return <Star className="h-4 w-4 text-yellow-500" />;
       case 'profile_view': return <User className="h-4 w-4 text-purple-500" />;
+      case 'subscription': return <Bell className="h-4 w-4 text-green-500" />;
       default: return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
