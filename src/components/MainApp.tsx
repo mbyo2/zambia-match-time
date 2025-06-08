@@ -8,9 +8,13 @@ import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
 import SecuritySettings from './security/SecuritySettings';
+import ContentModerationManager from './safety/ContentModerationManager';
+import VerificationManager from './safety/VerificationManager';
+import PrivacyPolicy from './legal/PrivacyPolicy';
+import TermsOfService from './legal/TermsOfService';
 import NotificationCenter from './notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Heart, MessageCircle, Crown, Shield } from 'lucide-react';
+import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle } from 'lucide-react';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -54,12 +58,11 @@ const MainApp = () => {
     return <ProfileSetup />;
   }
 
-  // Handle profile edit page
+  // Handle different page views
   if (currentTab === 'profile-edit') {
     return <ProfileEditPage onBack={() => setCurrentTab('profile')} />;
   }
 
-  // Handle security settings page
   if (currentTab === 'security') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
@@ -82,6 +85,110 @@ const MainApp = () => {
           </div>
         </header>
         <SecuritySettings />
+      </div>
+    );
+  }
+
+  if (currentTab === 'moderation') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setCurrentTab('profile')}>
+                  ← Back
+                </Button>
+                <h1 className="text-xl font-semibold">Content Moderation</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <ContentModerationManager />
+      </div>
+    );
+  }
+
+  if (currentTab === 'verification') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setCurrentTab('profile')}>
+                  ← Back
+                </Button>
+                <h1 className="text-xl font-semibold">Profile Verification</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <VerificationManager />
+      </div>
+    );
+  }
+
+  if (currentTab === 'privacy') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setCurrentTab('profile')}>
+                  ← Back
+                </Button>
+                <h1 className="text-xl font-semibold">Privacy Policy</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <PrivacyPolicy />
+      </div>
+    );
+  }
+
+  if (currentTab === 'terms') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setCurrentTab('profile')}>
+                  ← Back
+                </Button>
+                <h1 className="text-xl font-semibold">Terms of Service</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <TermsOfService />
       </div>
     );
   }
@@ -128,14 +235,50 @@ const MainApp = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
+                    onClick={() => setCurrentTab('verification')}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Get Verified
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
                     onClick={() => setCurrentTab('security')}
                   >
                     <Shield className="mr-2 h-4 w-4" />
                     Security & Privacy
                   </Button>
-                  <Button variant="outline" className="w-full">
-                    Account Settings
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setCurrentTab('moderation')}
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Content Moderation
                   </Button>
+                  <div className="pt-4 border-t">
+                    <h3 className="text-sm font-medium mb-2">Legal</h3>
+                    <div className="space-y-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="w-full text-sm"
+                        onClick={() => setCurrentTab('privacy')}
+                      >
+                        <FileText className="mr-2 h-3 w-3" />
+                        Privacy Policy
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="w-full text-sm"
+                        onClick={() => setCurrentTab('terms')}
+                      >
+                        <FileText className="mr-2 h-3 w-3" />
+                        Terms of Service
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
