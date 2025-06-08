@@ -13,7 +13,7 @@ interface VerificationRequest {
   id: string;
   user_id: string;
   selfie_url: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'verified' | 'rejected';
   created_at: string;
   reviewed_at?: string;
 }
@@ -22,7 +22,7 @@ const VerificationManager = () => {
   const { user } = useAuth();
   const { uploadFile, isUploading } = useFileUpload();
   const { toast } = useToast();
-  const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ const VerificationManager = () => {
     }
   };
 
-  const reviewVerification = async (requestId: string, status: 'approved' | 'rejected') => {
+  const reviewVerification = async (requestId: string, status: 'verified' | 'rejected') => {
     try {
       const { error } = await supabase
         .from('verification_requests')
@@ -113,14 +113,14 @@ const VerificationManager = () => {
       if (error) throw error;
 
       // Update profile verification status
-      if (status === 'approved') {
+      if (status === 'verified') {
         const request = requests.find(r => r.id === requestId);
         if (request) {
           await supabase
             .from('profiles')
             .update({
               is_verified: true,
-              verification_status: 'approved'
+              verification_status: 'verified'
             })
             .eq('id', request.user_id);
         }
@@ -141,7 +141,7 @@ const VerificationManager = () => {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case 'approved':
+      case 'verified':
         return <Badge variant="default"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
       case 'rejected':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
@@ -169,7 +169,7 @@ const VerificationManager = () => {
               <p className="text-sm text-gray-600">
                 {verificationStatus === 'none' && 'Not verified yet'}
                 {verificationStatus === 'pending' && 'Verification under review'}
-                {verificationStatus === 'approved' && 'Profile verified!'}
+                {verificationStatus === 'verified' && 'Profile verified!'}
                 {verificationStatus === 'rejected' && 'Verification rejected'}
               </p>
             </div>
@@ -216,7 +216,7 @@ const VerificationManager = () => {
             </div>
           )}
 
-          {verificationStatus === 'approved' && (
+          {verificationStatus === 'verified' && (
             <div className="text-center p-6 bg-green-50 rounded-lg">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
               <h3 className="font-medium mb-2">Profile Verified!</h3>
@@ -277,7 +277,7 @@ const VerificationManager = () => {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    onClick={() => reviewVerification(request.id, 'approved')}
+                    onClick={() => reviewVerification(request.id, 'verified')}
                   >
                     Approve
                   </Button>

@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 export const usePushNotifications = () => {
@@ -71,25 +70,14 @@ export const usePushNotifications = () => {
     if (!registration || !user) return;
 
     try {
-      // In a real implementation, you would get this from your server
-      const vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY';
-      
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      // For demo purposes, we'll just log that push subscription would be saved
+      // In production, you would need proper VAPID keys and backend integration
+      console.log('Push subscription would be saved for user:', user.id);
+
+      toast({
+        title: "Push Notifications Setup",
+        description: "Push notification subscription configured (demo mode).",
       });
-
-      // Save subscription to database
-      await supabase
-        .from('push_subscriptions')
-        .upsert({
-          user_id: user.id,
-          endpoint: subscription.endpoint,
-          p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))),
-          auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))),
-        });
-
-      console.log('Push subscription saved:', subscription);
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
     }
@@ -103,12 +91,6 @@ export const usePushNotifications = () => {
       if (subscription) {
         await subscription.unsubscribe();
         
-        // Remove subscription from database
-        await supabase
-          .from('push_subscriptions')
-          .delete()
-          .eq('user_id', user.id);
-
         toast({
           title: "Notifications Disabled",
           description: "You will no longer receive push notifications.",
@@ -127,22 +109,6 @@ export const usePushNotifications = () => {
         badge: '/favicon.ico',
       });
     }
-  };
-
-  // Helper function to convert VAPID key
-  const urlBase64ToUint8Array = (base64String: string) => {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
   };
 
   return {

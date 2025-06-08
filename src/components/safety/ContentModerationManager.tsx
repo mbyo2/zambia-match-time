@@ -32,14 +32,28 @@ const ContentModerationManager = () => {
 
   const fetchReports = async () => {
     try {
+      // Use the reports table that exists in the database
       const { data, error } = await supabase
-        .from('content_reports')
+        .from('reports')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setReports(data || []);
+      
+      // Map the reports data to our ContentReport interface
+      const mappedReports: ContentReport[] = (data || []).map(report => ({
+        id: report.id,
+        content_type: 'profile' as const,
+        content_id: report.reported_id,
+        reason: report.reason,
+        description: report.description || '',
+        status: report.status === 'pending' ? 'pending' : report.status === 'resolved' ? 'approved' : 'rejected',
+        created_at: report.created_at || new Date().toISOString(),
+        reported_user_id: report.reported_id
+      }));
+      
+      setReports(mappedReports);
     } catch (error) {
       console.error('Error fetching reports:', error);
     }
@@ -55,14 +69,14 @@ const ContentModerationManager = () => {
 
     setIsLoading(true);
     try {
+      // Use the existing reports table structure
       const { error } = await supabase
-        .from('content_reports')
+        .from('reports')
         .insert({
-          content_type: contentType,
-          content_id: contentId,
           reason,
           description,
           reporter_id: user.id,
+          reported_id: contentId,
           status: 'pending'
         });
 
@@ -88,9 +102,10 @@ const ContentModerationManager = () => {
 
   const moderateContent = async (reportId: string, action: 'approve' | 'reject') => {
     try {
+      const newStatus = action === 'approve' ? 'resolved' : 'rejected';
       const { error } = await supabase
-        .from('content_reports')
-        .update({ status: action === 'approve' ? 'approved' : 'rejected' })
+        .from('reports')
+        .update({ status: newStatus })
         .eq('id', reportId);
 
       if (error) throw error;
@@ -126,7 +141,7 @@ const ContentModerationManager = () => {
             Content Moderation
           </CardTitle>
           <CardDescription>
-            Automated and manual content review system
+            Review and moderate user reports
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,7 +175,7 @@ const ContentModerationManager = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Flag className="h-4 w-4 text-red-500" />
-                    <span className="font-medium capitalize">{report.content_type} Report</span>
+                    <span className="font-medium">User Report</span>
                     {getStatusBadge(report.status)}
                   </div>
                   <span className="text-sm text-gray-500">
