@@ -71,7 +71,7 @@ const VerificationManager = () => {
 
     try {
       const fileName = `verification/${user.id}/${Date.now()}-${file.name}`;
-      const fileUrl = await uploadFile(file, 'profile-photos', fileName);
+      const fileUrl = await uploadFile(file, fileName);
 
       const { error } = await supabase
         .from('verification_requests')
