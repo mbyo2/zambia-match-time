@@ -13,12 +13,14 @@ import VerificationManager from './safety/VerificationManager';
 import PrivacyPolicy from './legal/PrivacyPolicy';
 import TermsOfService from './legal/TermsOfService';
 import NotificationCenter from './notifications/NotificationCenter';
+import OnboardingFlow from './onboarding/OnboardingFlow';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle } from 'lucide-react';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTab, setCurrentTab] = useState('discover');
 
   useEffect(() => {
@@ -31,19 +33,31 @@ const MainApp = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, first_name')
         .eq('id', user?.id)
         .single();
 
-      setHasProfile(!!data && !error);
+      const profileExists = !!data && !error;
+      setHasProfile(profileExists);
+      
+      // Show onboarding for new users
+      if (!profileExists) {
+        setShowOnboarding(true);
+      }
     } catch (error) {
       console.error('Error checking profile:', error);
       setHasProfile(false);
+      setShowOnboarding(true);
     }
   };
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    // Profile setup will be shown next
   };
 
   if (hasProfile === null) {
@@ -52,6 +66,10 @@ const MainApp = () => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
       </div>
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
   if (!hasProfile) {

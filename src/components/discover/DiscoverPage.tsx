@@ -4,10 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import SwipeCard from './SwipeCard';
 import SearchFilters from './SearchFilters';
+import SwipeLimitDisplay from './SwipeLimitDisplay';
+import EmptyState from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Filter, Heart, X } from 'lucide-react';
+import { Filter, Heart, X, RefreshCw, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import { SearchPreferences, jsonToSearchPreferences, searchPreferencesToJson } from '@/types/search';
 
 interface Profile {
@@ -30,12 +33,12 @@ interface Profile {
 const DiscoverPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { canSwipe, consumeSwipe, refreshLimits } = useSwipeLimits();
+  
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [swipeCount, setSwipeCount] = useState(0);
-  const [dailyLimit, setDailyLimit] = useState(50);
   const [preferences, setPreferences] = useState<SearchPreferences>({
     age_range: { min: 18, max: 99 },
     distance: 50,
@@ -49,7 +52,6 @@ const DiscoverPage = () => {
     if (user) {
       fetchUserPreferences();
       fetchProfiles();
-      checkDailyLimit();
     }
   }, [user]);
 
@@ -87,23 +89,7 @@ const DiscoverPage = () => {
       }
 
       setPreferences(newPreferences);
-      fetchProfiles(); // Refresh profiles with new filters
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const checkDailyLimit = async () => {
-    try {
-      const { data, error } = await supabase
-        .rpc('check_daily_swipe_limit', { user_uuid: user?.id });
-
-      if (error) {
-        console.error('Error checking daily limit:', error);
-        return;
-      }
-
-      setDailyLimit(data || 0);
+      fetchProfiles();
     } catch (error) {
       console.error('Error:', error);
     }
@@ -159,12 +145,12 @@ const DiscoverPage = () => {
   };
 
   const handleSwipe = async (profileId: string, action: 'like' | 'pass') => {
-    if (dailyLimit <= 0) {
-      toast({
-        title: "Daily limit reached",
-        description: "You've reached your daily swipe limit. Upgrade to premium for unlimited swipes!",
-        variant: "destructive",
-      });
+    if (!canSwipe()) {
+      return;
+    }
+
+    const swipeAllowed = await consumeSwipe();
+    if (!swipeAllowed) {
       return;
     }
 
@@ -183,13 +169,9 @@ const DiscoverPage = () => {
         return;
       }
 
-      // Increment swipe count
-      await supabase.rpc('increment_swipe_count', { user_uuid: user?.id });
-
       // Move to next profile
       setCurrentIndex(prev => prev + 1);
-      setSwipeCount(prev => prev + 1);
-      setDailyLimit(prev => prev - 1);
+      refreshLimits();
 
       if (action === 'like') {
         toast({
@@ -219,9 +201,6 @@ const DiscoverPage = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
-            <p className="text-sm text-gray-600">
-              {dailyLimit} swipes remaining today
-            </p>
           </div>
           <Button 
             variant="outline" 
@@ -231,6 +210,9 @@ const DiscoverPage = () => {
             <Filter size={20} />
           </Button>
         </div>
+
+        {/* Swipe Limit Display */}
+        <SwipeLimitDisplay />
 
         {/* Search Filters */}
         {showFilters && (
@@ -244,20 +226,18 @@ const DiscoverPage = () => {
 
         {/* Main Content */}
         {!currentProfile || currentIndex >= profiles.length ? (
-          <Card className="text-center py-16">
-            <CardContent>
-              <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">
-                No more profiles
-              </h2>
-              <p className="text-gray-500 mb-4">
-                Try adjusting your filters or check back later!
-              </p>
-              <Button onClick={fetchProfiles} className="bg-pink-500 hover:bg-pink-600">
-                Refresh
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<Heart className="h-16 w-16" />}
+            title="No more profiles"
+            description={profiles.length === 0 
+              ? "No profiles match your current filters. Try adjusting your preferences or check back later!"
+              : "You've seen all available profiles. Try adjusting your filters or check back later for new people!"
+            }
+            action={{
+              label: profiles.length === 0 ? "Adjust Filters" : "Refresh",
+              onClick: profiles.length === 0 ? () => setShowFilters(true) : fetchProfiles
+            }}
+          />
         ) : (
           <>
             <SwipeCard 
@@ -272,7 +252,7 @@ const DiscoverPage = () => {
                 variant="outline"
                 className="rounded-full w-16 h-16 border-red-200 hover:bg-red-50"
                 onClick={() => handleSwipe(currentProfile.id, 'pass')}
-                disabled={dailyLimit <= 0}
+                disabled={!canSwipe()}
               >
                 <X size={24} className="text-red-500" />
               </Button>
@@ -281,11 +261,23 @@ const DiscoverPage = () => {
                 size="lg"
                 className="rounded-full w-16 h-16 bg-pink-500 hover:bg-pink-600"
                 onClick={() => handleSwipe(currentProfile.id, 'like')}
-                disabled={dailyLimit <= 0}
+                disabled={!canSwipe()}
               >
                 <Heart size={24} />
               </Button>
             </div>
+
+            {!canSwipe() && (
+              <div className="mt-4 text-center">
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardContent className="py-3">
+                    <p className="text-sm text-amber-800">
+                      Daily limit reached. Upgrade for unlimited swipes!
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </>
         )}
       </div>
