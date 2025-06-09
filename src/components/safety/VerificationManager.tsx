@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,8 +69,14 @@ const VerificationManager = () => {
     if (!user) return;
 
     try {
-      const fileName = `verification/${user.id}/${Date.now()}-${file.name}`;
-      const fileUrl = await uploadFile(file, fileName);
+      const fileUrl = await uploadFile(file, {
+        bucket: 'verification-selfies',
+        folder: user.id,
+        maxSizeKB: 10240, // 10MB
+        allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
+      });
+
+      if (!fileUrl) return;
 
       const { error } = await supabase
         .from('verification_requests')
