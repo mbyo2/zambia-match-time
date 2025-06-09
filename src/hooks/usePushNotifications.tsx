@@ -94,11 +94,14 @@ export const usePushNotifications = () => {
       setState(prev => ({ ...prev, subscription }));
 
       // Store subscription in database using proper Supabase client
+      // Convert PushSubscriptionJSON to a plain object for compatibility
+      const subscriptionData = JSON.parse(JSON.stringify(subscription.toJSON()));
+      
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
-          subscription: subscription.toJSON(),
+          subscription: subscriptionData,
           updated_at: new Date().toISOString()
         });
 
