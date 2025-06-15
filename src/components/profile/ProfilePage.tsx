@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Shield, FileText, CheckCircle } from 'lucide-react';
@@ -20,7 +19,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <div className="space-y-3">
             <Button 
               onClick={() => setCurrentTab('profile-edit')}
-              className="w-full bg-pink-500 hover:bg-pink-600"
+              className="w-full bg-green-500 hover:bg-green-600"
             >
               Edit Profile
             </Button>
