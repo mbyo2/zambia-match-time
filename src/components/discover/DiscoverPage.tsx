@@ -7,7 +7,7 @@ import SwipeLimitDisplay from './SwipeLimitDisplay';
 import EmptyState from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Filter, Heart, X } from 'lucide-react';
+import { Filter, Heart, X, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import { SearchPreferences, jsonToSearchPreferences, searchPreferencesToJson } from '@/types/search';
@@ -198,7 +198,15 @@ const DiscoverPage = () => {
         })
       );
 
-      return profilesWithPhotos;
+      // Sort profiles to show online users first
+      return profilesWithPhotos.sort((a, b) => {
+        const aOnline = onlineUsers.has(a.id);
+        const bOnline = onlineUsers.has(b.id);
+        
+        if (aOnline && !bOnline) return -1;
+        if (!aOnline && bOnline) return 1;
+        return 0;
+      });
     },
     enabled: !!user && !!preferences,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -250,6 +258,8 @@ const DiscoverPage = () => {
 
   const isLoading = isLoadingPreferences || isLoadingProfiles;
   const currentProfile = profiles?.[currentIndex];
+  const onlineCount = onlineUsers.size > 1 ? onlineUsers.size - 1 : 0;
+  const onlineProfilesCount = profiles?.filter(p => onlineUsers.has(p.id)).length || 0;
 
   if (isLoading) {
     return (
@@ -263,12 +273,15 @@ const DiscoverPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
-            <p className="text-sm text-gray-600">
-              {onlineUsers.size > 1 ? `${onlineUsers.size - 1} people online` : 'No one else online'}
-            </p>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users size={16} className="text-green-500" />
+              <span>
+                {onlineCount > 0 ? `${onlineCount} people online` : 'No one else online'}
+              </span>
+            </div>
           </div>
           <Button 
             variant="outline" 
@@ -278,6 +291,20 @@ const DiscoverPage = () => {
             <Filter size={20} />
           </Button>
         </div>
+
+        {/* Online Users Summary */}
+        {onlineProfilesCount > 0 && (
+          <Card className="mb-4 bg-green-50 border-green-200">
+            <CardContent className="py-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-800 font-medium">
+                  {onlineProfilesCount} {onlineProfilesCount === 1 ? 'person is' : 'people are'} currently online
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Swipe Limit Display */}
         <SwipeLimitDisplay />
@@ -312,17 +339,8 @@ const DiscoverPage = () => {
               <SwipeCard 
                 profile={currentProfile}
                 onSwipe={(profileId, action) => handleSwipe({ profileId, action })}
+                isOnline={onlineUsers.has(currentProfile.id)}
               />
-              
-              {/* Online Status Indicator */}
-              {onlineUsers.has(currentProfile.id) && (
-                <div className="absolute top-4 right-4 z-10">
-                  <ActivityStatus 
-                    userId={currentProfile.id}
-                    showOnlineStatus={true}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Action Buttons */}

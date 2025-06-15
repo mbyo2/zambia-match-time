@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Briefcase, GraduationCap } from 'lucide-react';
+import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -25,9 +26,10 @@ interface SwipeCardProps {
   onSwipe?: (profileId: string, action: 'like' | 'pass') => void;
   style?: React.CSSProperties;
   className?: string;
+  isOnline?: boolean;
 }
 
-const SwipeCard = ({ profile, onSwipe, style, className }: SwipeCardProps) => {
+const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -58,11 +60,26 @@ const SwipeCard = ({ profile, onSwipe, style, className }: SwipeCardProps) => {
       
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
       
+      {/* Online Status Indicator */}
+      {isOnline && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs border-green-300">
+            <Circle size={8} className="fill-green-500 text-green-500 mr-1 animate-pulse" />
+            Online
+          </Badge>
+        </div>
+      )}
+      
       <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
         <div className="space-y-2">
-          <h3 className="text-2xl font-bold">
-            {profile.first_name}, {calculateAge(profile.date_of_birth)}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-2xl font-bold">
+              {profile.first_name}, {calculateAge(profile.date_of_birth)}
+            </h3>
+            {isOnline && (
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
+            )}
+          </div>
           
           {profile.bio && (
             <p className="text-sm opacity-90 line-clamp-2">{profile.bio}</p>
