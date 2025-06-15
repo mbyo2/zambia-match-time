@@ -847,7 +847,7 @@ export type Database = {
     }
     Enums: {
       accommodation_type: "hotel" | "apartment" | "resort" | "villa" | "cabin"
-      app_role: "lodge_manager"
+      app_role: "lodge_manager" | "admin"
       education_level:
         | "high_school"
         | "some_college"
@@ -983,7 +983,7 @@ export const Constants = {
   public: {
     Enums: {
       accommodation_type: ["hotel", "apartment", "resort", "villa", "cabin"],
-      app_role: ["lodge_manager"],
+      app_role: ["lodge_manager", "admin"],
       education_level: [
         "high_school",
         "some_college",
