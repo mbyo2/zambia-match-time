@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from 'lucide-react';
+import AdminPanel from './AdminPanel';
 
 const DevActions = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -34,34 +35,38 @@ const DevActions = () => {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Developer Actions</CardTitle>
-                <CardDescription>
-                    For development and testing purposes only.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Alert className="mb-4">
-                  <Terminal className="h-4 w-4" />
-                  <AlertTitle>Heads up!</AlertTitle>
-                  <AlertDescription>
-                    This requires a Replicate API key to be set as a `REPLICATE_API_KEY` secret in your Supabase project settings.
-                  </AlertDescription>
-                </Alert>
-                <div className="space-y-4">
-                    <div>
-                        <h4 className="font-medium mb-2">Generate Fake Users</h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                            Creates 100 new user accounts with AI-generated Zambian profile photos.
-                        </p>
-                        <Button onClick={handleGenerateUsers} disabled={isLoading}>
-                            {isLoading ? 'Generating...' : 'Generate 100 Users'}
-                        </Button>
+        <div className="space-y-6">
+            <AdminPanel />
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Developer Actions</CardTitle>
+                    <CardDescription>
+                        For development and testing purposes only.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert className="mb-4">
+                      <Terminal className="h-4 w-4" />
+                      <AlertTitle>Heads up!</AlertTitle>
+                      <AlertDescription>
+                        This requires a Replicate API key to be set as a `REPLICATE_API_KEY` secret in your Supabase project settings.
+                      </AlertDescription>
+                    </Alert>
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="font-medium mb-2">Generate Fake Users</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                                Creates 100 new user accounts with AI-generated Zambian profile photos.
+                            </p>
+                            <Button onClick={handleGenerateUsers} disabled={isLoading}>
+                                {isLoading ? 'Generating...' : 'Generate 100 Users'}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 

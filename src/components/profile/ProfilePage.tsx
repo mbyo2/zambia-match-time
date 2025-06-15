@@ -14,7 +14,7 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const { user } = useAuth();
 
-  const { data: isDeveloper } = useQuery({
+  const { data: isAdmin } = useQuery({
     queryKey: ['userRole', user?.id, 'admin'],
     queryFn: async () => {
       if (!user) return false;
@@ -95,7 +95,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
             </div>
           </div>
         </div>
-        {isDeveloper && <DevActions />}
+        {isAdmin && <DevActions />}
       </div>
     </div>
   );
