@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Shield } from 'lucide-react';
@@ -21,9 +19,6 @@ const AuthForm = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    dateOfBirth: '',
-    gender: '',
   });
 
   const [signInData, setSignInData] = useState({
@@ -56,17 +51,6 @@ const AuthForm = () => {
     return null;
   };
 
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -93,26 +77,10 @@ const AuthForm = () => {
       return;
     }
 
-    if (signUpData.dateOfBirth) {
-      const age = calculateAge(signUpData.dateOfBirth);
-      if (age < 18) {
-        toast({
-          title: "Age Restriction",
-          description: "You must be at least 18 years old to create an account",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-    }
-
     try {
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await signUp(signUpData.email, signUpData.password, {
-        first_name: signUpData.firstName,
-        date_of_birth: signUpData.dateOfBirth,
-        gender: signUpData.gender,
         emailRedirectTo: redirectUrl
       });
 
@@ -139,9 +107,6 @@ const AuthForm = () => {
           email: '',
           password: '',
           confirmPassword: '',
-          firstName: '',
-          dateOfBirth: '',
-          gender: '',
         });
       }
     } catch (error) {
@@ -318,44 +283,6 @@ const AuthForm = () => {
                       {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </Button>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    value={signUpData.firstName}
-                    onChange={(e) => setSignUpData({ ...signUpData, firstName: e.target.value })}
-                    required
-                    autoComplete="given-name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={signUpData.dateOfBirth}
-                    onChange={(e) => setSignUpData({ ...signUpData, dateOfBirth: e.target.value })}
-                    required
-                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">You must be at least 18 years old</p>
-                </div>
-                <div>
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select value={signUpData.gender} onValueChange={(value) => setSignUpData({ ...signUpData, gender: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="non_binary">Non-binary</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creating Account...' : 'Create Account'}
