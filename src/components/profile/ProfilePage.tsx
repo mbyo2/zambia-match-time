@@ -1,7 +1,9 @@
 
+```typescript
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Shield, FileText, CheckCircle } from 'lucide-react';
+import DevActions from '../admin/DevActions';
 
 interface ProfilePageProps {
   setCurrentTab: (tab: string) => void;
@@ -10,7 +12,7 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   return (
     <div className="p-4">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto space-y-6">
         <div className="bg-white rounded-lg shadow-sm p-6 text-center">
           <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
             <User size={32} className="text-gray-400" />
@@ -72,9 +74,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
             </div>
           </div>
         </div>
+        <DevActions />
       </div>
     </div>
   );
 };
 
 export default ProfilePage;
+```
