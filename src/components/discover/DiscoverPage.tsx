@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import { SearchPreferences, jsonToSearchPreferences, searchPreferencesToJson } from '@/types/search';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import ActivityStatus from '@/components/social/ActivityStatus';
 
 interface Profile {
   id: string;
@@ -47,6 +48,69 @@ const DiscoverPage = () => {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  // Track online users through presence
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up discover page presence tracking');
+
+    // Subscribe to a general presence channel to track all online users
+    const presenceChannel = supabase
+      .channel('discover-presence')
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        console.log('Discover presence state sync:', state);
+        
+        const onlineUserIds = new Set<string>();
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            if (presence.user_id) {
+              onlineUserIds.add(presence.user_id);
+            }
+          });
+        });
+        setOnlineUsers(onlineUserIds);
+      })
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        console.log('User joined discover presence:', newPresences);
+        setOnlineUsers(prev => {
+          const updated = new Set(prev);
+          newPresences.forEach((presence: any) => {
+            if (presence.user_id) {
+              updated.add(presence.user_id);
+            }
+          });
+          return updated;
+        });
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        console.log('User left discover presence:', leftPresences);
+        setOnlineUsers(prev => {
+          const updated = new Set(prev);
+          leftPresences.forEach((presence: any) => {
+            if (presence.user_id) {
+              updated.delete(presence.user_id);
+            }
+          });
+          return updated;
+        });
+      })
+      .subscribe();
+
+    // Track our own presence
+    presenceChannel.track({
+      user_id: user.id,
+      online_at: new Date().toISOString(),
+      page: 'discover'
+    });
+
+    return () => {
+      console.log('Cleaning up discover presence');
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user]);
 
   // Fetch user preferences with React Query
   const { data: preferences, isLoading: isLoadingPreferences } = useQuery({
@@ -202,6 +266,9 @@ const DiscoverPage = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
+            <p className="text-sm text-gray-600">
+              {onlineUsers.size > 1 ? `${onlineUsers.size - 1} people online` : 'No one else online'}
+            </p>
           </div>
           <Button 
             variant="outline" 
@@ -241,10 +308,22 @@ const DiscoverPage = () => {
           />
         ) : (
           <>
-            <SwipeCard 
-              profile={currentProfile}
-              onSwipe={(profileId, action) => handleSwipe({ profileId, action })}
-            />
+            <div className="relative">
+              <SwipeCard 
+                profile={currentProfile}
+                onSwipe={(profileId, action) => handleSwipe({ profileId, action })}
+              />
+              
+              {/* Online Status Indicator */}
+              {onlineUsers.has(currentProfile.id) && (
+                <div className="absolute top-4 right-4 z-10">
+                  <ActivityStatus 
+                    userId={currentProfile.id}
+                    showOnlineStatus={true}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-center gap-6 mt-6">
