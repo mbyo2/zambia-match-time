@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import EventCard from './EventCard';
@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import { CalendarOff } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
+import EventDetails from './EventDetails';
 
 const fetchEvents = async (): Promise<Tables<'events'>[]> => {
   const { data, error } = await supabase
@@ -23,15 +24,21 @@ const fetchEvents = async (): Promise<Tables<'events'>[]> => {
 };
 
 const EventsPage = () => {
-  const { data: events, isLoading, isError, error } = useQuery<Tables<'events'>[]>({
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  const { data: events, isLoading, isError } = useQuery<Tables<'events'>[]>({
     queryKey: ['events'],
     queryFn: fetchEvents,
   });
 
+  if (selectedEventId) {
+    return <EventDetails eventId={selectedEventId} onBack={() => setSelectedEventId(null)} />;
+  }
+
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-6">Upcoming Events</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">Upcoming Events</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="space-y-4">
@@ -53,7 +60,6 @@ const EventsPage = () => {
     return (
       <div className="p-4">
         <p className="text-red-500 text-center">Error loading events. Please try again later.</p>
-        {/* For debugging: <p>{error.message}</p> */}
       </div>
     );
   }
@@ -70,7 +76,11 @@ const EventsPage = () => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard 
+              key={event.id} 
+              event={event} 
+              onClick={() => setSelectedEventId(event.id)} 
+            />
           ))}
         </div>
       )}
@@ -79,3 +89,4 @@ const EventsPage = () => {
 };
 
 export default EventsPage;
+
