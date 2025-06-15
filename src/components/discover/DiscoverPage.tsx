@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import SwipeCard from './SwipeCard';
@@ -48,19 +47,7 @@ const DiscoverPage = () => {
     height_range: { min: 150, max: 200 }
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchUserPreferences();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchProfiles();
-    }
-  }, [user, preferences]);
-
-  const fetchUserPreferences = async () => {
+  const fetchUserPreferences = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -79,7 +66,7 @@ const DiscoverPage = () => {
     } catch (error) {
       console.error('Error:', error);
     }
-  };
+  }, [user]);
 
   const updateUserPreferences = async (newPreferences: SearchPreferences) => {
     try {
@@ -99,7 +86,7 @@ const DiscoverPage = () => {
     }
   };
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -108,14 +95,14 @@ const DiscoverPage = () => {
       const { data, error } = await supabase
         .rpc('get_compatible_profiles', {
           user_uuid: user.id,
-          max_distance: preferences.distance,
-          age_min: preferences.age_range.min,
-          age_max: preferences.age_range.max,
-          filter_education_levels: preferences.education_levels,
-          filter_interests: preferences.interests,
-          filter_relationship_goals: preferences.relationship_goals,
-          height_min: preferences.height_range.min,
-          height_max: preferences.height_range.max
+          p_max_distance: preferences.distance,
+          p_age_min: preferences.age_range.min,
+          p_age_max: preferences.age_range.max,
+          p_filter_education_levels: preferences.education_levels,
+          p_filter_interests: preferences.interests,
+          p_filter_relationship_goals: preferences.relationship_goals,
+          p_height_min: preferences.height_range.min,
+          p_height_max: preferences.height_range.max
         });
 
       if (error) {
@@ -146,7 +133,19 @@ const DiscoverPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, preferences]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserPreferences();
+    }
+  }, [user, fetchUserPreferences]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfiles();
+    }
+  }, [user, fetchProfiles]);
 
   const handleSwipe = async (profileId: string, action: 'like' | 'pass') => {
     if (!canSwipe()) {
@@ -290,4 +289,3 @@ const DiscoverPage = () => {
 };
 
 export default DiscoverPage;
-
