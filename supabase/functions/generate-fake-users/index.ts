@@ -1,5 +1,4 @@
 
-```typescript
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Replicate from "https://esm.sh/replicate@0.25.2";
@@ -41,7 +40,9 @@ serve(async (req) => {
         ? femaleFirstNames[Math.floor(Math.random() * femaleFirstNames.length)]
         : maleFirstNames[Math.floor(Math.random() * maleFirstNames.length)];
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Math.floor(Math.random() * 900) + 100}@matchtime.com`;
+      
+      const randomNumber = Math.floor(Math.random() * 900) + 100;
+      const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${randomNumber}@matchtime.com`;
       const password = "password123";
       
       const age = Math.floor(Math.random() * (40 - 20 + 1)) + 20; // Age between 20-40
@@ -140,4 +141,3 @@ serve(async (req) => {
     });
   }
 });
-```
