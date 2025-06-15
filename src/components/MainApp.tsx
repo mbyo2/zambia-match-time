@@ -5,7 +5,6 @@ import ProfileSetup from './profile/ProfileSetup';
 import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
-import EventsPage from './events/EventsPage';
 import AccommodationsPage from './accommodations/AccommodationsPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
 import SecuritySettings from './security/SecuritySettings';
@@ -235,7 +234,6 @@ const MainApp = () => {
       <main className="flex-1 pb-20">
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
-        {currentTab === 'events' && <EventsPage />}
         {currentTab === 'accommodations' && <AccommodationsPage />}
         {currentTab === 'subscription' && <SubscriptionPage />}
         {currentTab === 'profile' && (
@@ -326,15 +324,6 @@ const MainApp = () => {
           >
             <MessageCircle size={20} />
             <span className="text-xs">Matches</span>
-          </Button>
-
-          <Button
-            variant={currentTab === 'events' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('events')}
-          >
-            <CalendarDays size={20} />
-            <span className="text-xs">Events</span>
           </Button>
 
           <Button
