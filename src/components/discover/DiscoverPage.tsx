@@ -174,11 +174,8 @@ const DiscoverPage = () => {
           p_max_distance: preferences.distance,
           p_age_min: preferences.age_range.min,
           p_age_max: preferences.age_range.max,
-          p_filter_education_levels: preferences.education_levels,
           p_filter_interests: preferences.interests,
-          p_filter_relationship_goals: preferences.relationship_goals,
-          p_height_min: preferences.height_range.min,
-          p_height_max: preferences.height_range.max
+          p_filter_relationship_goals: preferences.relationship_goals
         });
 
       if (error) {

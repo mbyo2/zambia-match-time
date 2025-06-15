@@ -16,16 +16,6 @@ interface SearchFiltersProps {
   onPreferencesChange: (preferences: SearchPreferences) => void;
 }
 
-const educationOptions = [
-  'high_school',
-  'some_college', 
-  'bachelors',
-  'masters',
-  'phd',
-  'trade_school',
-  'other'
-];
-
 const relationshipGoalOptions = [
   'casual',
   'serious', 
@@ -132,21 +122,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ preferences, onPreference
     });
   };
 
-  const updateHeightRange = (type: 'min' | 'max', value: number) => {
-    updatePreference('height_range', {
-      ...preferences.height_range,
-      [type]: value
-    });
-  };
-
-  const toggleEducationLevel = (level: string) => {
-    const current = preferences.education_levels;
-    const updated = current.includes(level)
-      ? current.filter(l => l !== level)
-      : [...current, level];
-    updatePreference('education_levels', updated);
-  };
-
   const toggleRelationshipGoal = (goal: string) => {
     const current = preferences.relationship_goals;
     const updated = current.includes(goal)
@@ -217,52 +192,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ preferences, onPreference
             onChange={(e) => updatePreference('distance', parseInt(e.target.value))}
             className="mt-2"
           />
-        </div>
-
-        {/* Height Range */}
-        <div>
-          <Label className="text-sm font-medium">Height Range (cm)</Label>
-          <div className="flex gap-4 mt-2">
-            <div className="flex-1">
-              <Label className="text-xs text-gray-500">Min</Label>
-              <Input
-                type="number"
-                value={preferences.height_range.min}
-                onChange={(e) => updateHeightRange('min', parseInt(e.target.value))}
-                min={100}
-                max={250}
-              />
-            </div>
-            <div className="flex-1">
-              <Label className="text-xs text-gray-500">Max</Label>
-              <Input
-                type="number"
-                value={preferences.height_range.max}
-                onChange={(e) => updateHeightRange('max', parseInt(e.target.value))}
-                min={100}
-                max={250}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Education Levels */}
-        <div>
-          <Label className="text-sm font-medium">Education Level</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {educationOptions.map((level) => (
-              <div key={level} className="flex items-center space-x-2">
-                <Checkbox
-                  id={level}
-                  checked={preferences.education_levels.includes(level)}
-                  onCheckedChange={() => toggleEducationLevel(level)}
-                />
-                <Label htmlFor={level} className="text-sm capitalize">
-                  {level.replace('_', ' ')}
-                </Label>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Relationship Goals */}
