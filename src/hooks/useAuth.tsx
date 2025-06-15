@@ -71,11 +71,28 @@ export const useAuth = () => {
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    console.log('Requesting password reset for:', email);
+    const redirectUrl = `${window.location.origin}/update-password`;
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    return { data, error };
+  };
+
+  const updateUserPassword = async (password: string) => {
+    console.log('Updating user password');
+    const { data, error } = await supabase.auth.updateUser({ password });
+    return { data, error };
+  };
+
   return {
     user,
     loading,
     signUp,
     signIn,
     signOut,
+    resetPassword,
+    updateUserPassword,
   };
 };
