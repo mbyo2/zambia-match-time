@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Replicate from "https://esm.sh/replicate@0.25.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,10 +26,6 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const replicate = new Replicate({
-      auth: Deno.env.get("REPLICATE_API_KEY"),
-    });
-
     console.log("Starting fake user generation...");
 
     for (let i = 0; i < 100; i++) {
@@ -49,23 +44,15 @@ serve(async (req) => {
       const year = new Date().getFullYear() - age;
       const dateOfBirth = `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`;
 
-      // 1. Generate photo with Replicate
-      const prompt = `professional headshot photo of a ${age} year old Zambian ${gender}, high resolution, looking at camera`;
-      console.log(`Generating image for ${email} with prompt: ${prompt}`);
-
-      const imageOutput = (await replicate.run(
-        "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de79ed86350232f1b422f46049903cc",
-        {
-          input: { prompt, num_outputs: 1 },
-        }
-      )) as string[];
+      // 1. Use a placeholder image URL
+      console.log(`Using placeholder image for ${email}`);
+      const imageUrl = `https://placehold.co/600x600/png?text=${encodeURIComponent(firstName)}`;
       
-      const imageUrl = imageOutput?.[0];
       if (!imageUrl) {
-        console.error(`Failed to generate image for ${email}`);
+        console.error(`Failed to generate image URL for ${email}`);
         continue;
       }
-      console.log(`Image generated for ${email}`);
+      console.log(`Image URL created for ${email}`);
 
       // 2. Sign up user
       const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
@@ -82,7 +69,10 @@ serve(async (req) => {
       });
 
       if (authError || !authData.user) {
-        console.error(`Error signing up ${email}:`, authError?.message);
+        // Ignore "User already registered" errors for idempotency
+        if (!authError?.message.includes("User already registered")) {
+            console.error(`Error signing up ${email}:`, authError?.message);
+        }
         continue;
       }
       const userId = authData.user.id;
