@@ -10,23 +10,36 @@ interface Message {
   conversation_id: string;
   created_at: string;
   is_read: boolean;
+  message_type: 'text' | 'image' | 'voice' | 'video';
 }
 
 interface RealtimeMessagesProps {
   conversationId: string;
   onNewMessage?: (message: Message) => void;
   onMessageRead?: (messageId: string) => void;
+  onMessageUpdate?: (message: Message) => void;
+  onTypingChange?: (isTyping: boolean, userId: string) => void;
+  onUserOnlineChange?: (isOnline: boolean, userId: string) => void;
 }
 
-const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: RealtimeMessagesProps) => {
+const RealtimeMessages = ({ 
+  conversationId, 
+  onNewMessage, 
+  onMessageRead, 
+  onMessageUpdate,
+  onTypingChange,
+  onUserOnlineChange
+}: RealtimeMessagesProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     if (!conversationId || !user) return;
 
+    console.log('Setting up realtime subscriptions for conversation:', conversationId);
+
     // Subscribe to real-time message updates
-    const channel = supabase
+    const messagesChannel = supabase
       .channel(`messages-${conversationId}`)
       .on(
         'postgres_changes',
@@ -37,6 +50,7 @@ const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: Realt
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
+          console.log('New message received:', payload);
           const newMessage = payload.new as Message;
           setMessages(prev => [...prev, newMessage]);
           onNewMessage?.(newMessage);
@@ -51,10 +65,12 @@ const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: Realt
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
+          console.log('Message updated:', payload);
           const updatedMessage = payload.new as Message;
           setMessages(prev => prev.map(msg => 
             msg.id === updatedMessage.id ? updatedMessage : msg
           ));
+          onMessageUpdate?.(updatedMessage);
           if (updatedMessage.is_read) {
             onMessageRead?.(updatedMessage.id);
           }
@@ -62,10 +78,85 @@ const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: Realt
       )
       .subscribe();
 
+    // Subscribe to typing indicators
+    const typingChannel = supabase
+      .channel(`typing-${conversationId}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = typingChannel.presenceState();
+        console.log('Typing state sync:', state);
+        
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            if (presence.user_id !== user.id) {
+              onTypingChange?.(presence.typing || false, presence.user_id);
+            }
+          });
+        });
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User joined typing channel:', key, newPresences);
+        newPresences.forEach((presence: any) => {
+          if (presence.user_id !== user.id) {
+            onTypingChange?.(presence.typing || false, presence.user_id);
+          }
+        });
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User left typing channel:', key, leftPresences);
+        leftPresences.forEach((presence: any) => {
+          if (presence.user_id !== user.id) {
+            onTypingChange?.(false, presence.user_id);
+          }
+        });
+      })
+      .subscribe();
+
+    // Subscribe to user presence/online status
+    const presenceChannel = supabase
+      .channel(`presence-${conversationId}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        console.log('Presence state sync:', state);
+        
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            if (presence.user_id !== user.id) {
+              onUserOnlineChange?.(true, presence.user_id);
+            }
+          });
+        });
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User came online:', key, newPresences);
+        newPresences.forEach((presence: any) => {
+          if (presence.user_id !== user.id) {
+            onUserOnlineChange?.(true, presence.user_id);
+          }
+        });
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User went offline:', key, leftPresences);
+        leftPresences.forEach((presence: any) => {
+          if (presence.user_id !== user.id) {
+            onUserOnlineChange?.(false, presence.user_id);
+          }
+        });
+      })
+      .subscribe();
+
+    // Track our own presence
+    presenceChannel.track({
+      user_id: user.id,
+      online_at: new Date().toISOString()
+    });
+
     return () => {
-      supabase.removeChannel(channel);
+      console.log('Cleaning up realtime subscriptions');
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(typingChannel);
+      supabase.removeChannel(presenceChannel);
     };
-  }, [conversationId, user, onNewMessage, onMessageRead]);
+  }, [conversationId, user, onNewMessage, onMessageRead, onMessageUpdate, onTypingChange, onUserOnlineChange]);
 
   // Mark messages as read when they come into view
   useEffect(() => {
@@ -75,6 +166,7 @@ const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: Realt
       );
 
       if (unreadMessages.length > 0) {
+        console.log('Marking messages as read:', unreadMessages.length);
         const messageIds = unreadMessages.map(msg => msg.id);
         
         await supabase
@@ -86,6 +178,15 @@ const RealtimeMessages = ({ conversationId, onNewMessage, onMessageRead }: Realt
 
     markAsRead();
   }, [messages, user?.id]);
+
+  // Function to send typing indicator
+  const sendTypingIndicator = (isTyping: boolean) => {
+    const typingChannel = supabase.channel(`typing-${conversationId}`);
+    typingChannel.track({
+      user_id: user?.id,
+      typing: isTyping
+    });
+  };
 
   return null; // This is a utility component that doesn't render anything
 };

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MessageInput from '@/components/messaging/MessageInput';
-import TypingIndicator from '@/components/messaging/TypingIndicator';
+import RealtimeMessages from '@/components/messaging/RealtimeMessages';
+import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
 import MessageReactions from '@/components/messaging/MessageReactions';
 
 interface Message {
@@ -31,14 +32,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (match?.conversation?.id) {
       fetchMessages();
-      subscribeToMessages();
-      subscribeToTypingIndicators();
     }
   }, [match]);
 
@@ -46,12 +47,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     scrollToBottom();
   }, [messages]);
 
+  // Reset new message count when messages change
+  useEffect(() => {
+    setNewMessageCount(0);
+  }, [messages.length]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const fetchMessages = async () => {
     try {
+      console.log('Fetching messages for conversation:', match.conversation.id);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -63,6 +70,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         return;
       }
 
+      console.log('Fetched messages:', data?.length);
       setMessages(data || []);
       markMessagesAsRead();
     } catch (error) {
@@ -85,56 +93,52 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     }
   };
 
-  const subscribeToMessages = () => {
-    const channel = supabase
-      .channel('messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${match.conversation.id}`
-        },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
-          
-          // Mark new messages as read if they're not from current user
-          if (payload.new.sender_id !== user?.id) {
-            markMessagesAsRead();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  const handleNewMessage = (message: Message) => {
+    console.log('New message received in ChatView:', message);
+    setMessages(prev => {
+      // Check if message already exists to prevent duplicates
+      if (prev.some(msg => msg.id === message.id)) {
+        return prev;
+      }
+      return [...prev, message];
+    });
+    
+    // Show notification for messages from other user
+    if (message.sender_id !== user?.id) {
+      setNewMessageCount(prev => prev + 1);
+      // Auto-mark as read since user is viewing the conversation
+      setTimeout(() => {
+        markMessagesAsRead();
+      }, 1000);
+    }
   };
 
-  const subscribeToTypingIndicators = () => {
-    const channel = supabase
-      .channel(`typing_${match.conversation.id}`)
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const otherUsersTyping = Object.values(state).some((presences: any) => 
-          presences.some((presence: any) => 
-            presence.user_id !== user?.id && presence.typing
-          )
-        );
-        setOtherUserTyping(otherUsersTyping);
-      })
-      .subscribe();
+  const handleMessageUpdate = (message: Message) => {
+    console.log('Message updated in ChatView:', message);
+    setMessages(prev => prev.map(msg => 
+      msg.id === message.id ? message : msg
+    ));
+  };
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  const handleTypingChange = (typing: boolean, userId: string) => {
+    if (userId !== user?.id) {
+      console.log('Other user typing status changed:', typing);
+      setOtherUserTyping(typing);
+    }
+  };
+
+  const handleUserOnlineChange = (online: boolean, userId: string) => {
+    if (userId !== user?.id) {
+      console.log('Other user online status changed:', online);
+      setOtherUserOnline(online);
+    }
   };
 
   const sendMessage = async (content: string, messageType: 'text' | 'image' = 'text') => {
     if (!content.trim() || !user) return;
 
     try {
+      console.log('Sending message:', content);
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -166,6 +170,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   };
 
   const handleTyping = (typing: boolean) => {
+    console.log('User typing status changed:', typing);
     setIsTyping(typing);
     
     // Clear existing timeout
@@ -174,14 +179,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     }
 
     // Send typing indicator via presence
-    const channel = supabase.channel(`typing_${match.conversation.id}`);
-    channel.track({ user_id: user?.id, typing });
+    const typingChannel = supabase.channel(`typing-${match.conversation.id}`);
+    typingChannel.track({ 
+      user_id: user?.id, 
+      typing: typing,
+      timestamp: new Date().toISOString()
+    });
 
     if (typing) {
       // Auto-stop typing after 3 seconds
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
-        channel.track({ user_id: user?.id, typing: false });
+        typingChannel.track({ user_id: user?.id, typing: false });
       }, 3000);
     }
   };
@@ -204,6 +213,15 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex flex-col">
+      {/* Realtime Messages Component */}
+      <RealtimeMessages
+        conversationId={match.conversation.id}
+        onNewMessage={handleNewMessage}
+        onMessageUpdate={handleMessageUpdate}
+        onTypingChange={handleTypingChange}
+        onUserOnlineChange={handleUserOnlineChange}
+      />
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b p-4">
         <div className="flex items-center gap-4">
@@ -225,12 +243,21 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             )}
           </div>
           
-          <div>
+          <div className="flex-1">
             <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
-            {otherUserTyping && (
-              <span className="text-xs text-green-500">typing...</span>
-            )}
+            <LiveMessageIndicator
+              isOnline={otherUserOnline}
+              isTyping={otherUserTyping}
+              userName={match.other_user.first_name}
+            />
           </div>
+
+          {/* New message indicator */}
+          {newMessageCount > 0 && (
+            <div className="bg-pink-500 text-white rounded-full px-2 py-1 text-xs">
+              {newMessageCount} new
+            </div>
+          )}
         </div>
       </div>
 
@@ -286,12 +313,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             </div>
           ))
         )}
-        
-        {/* Typing indicator */}
-        <TypingIndicator 
-          userName={match.other_user.first_name}
-          isVisible={otherUserTyping}
-        />
         
         <div ref={messagesEndRef} />
       </div>
