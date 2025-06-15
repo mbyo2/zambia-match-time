@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +38,10 @@ const fetchUserStatus = async (userId: string): Promise<{ hasAccommodation: bool
     return { hasAccommodation: false, availableToMeet: false };
   }
 
-  const availableToMeet = data?.search_preferences?.available_to_meet || false;
+  // Safely parse the search_preferences JSON
+  const searchPreferences = data?.search_preferences as Record<string, any> | null;
+  const availableToMeet = searchPreferences?.available_to_meet || false;
+  
   return { 
     hasAccommodation: data?.has_accommodation_available || false,
     availableToMeet
@@ -74,7 +76,7 @@ const AccommodationsPage = () => {
     },
     onSuccess: (hasAccommodation) => {
       queryClient.setQueryData(['userStatus', user?.id], (old: any) => ({
-        ...old,
+        ...(old || {}),
         hasAccommodation
       }));
       toast({
@@ -102,7 +104,7 @@ const AccommodationsPage = () => {
         .eq('id', user!.id)
         .single();
 
-      const currentPreferences = currentProfile?.search_preferences || {};
+      const currentPreferences = (currentProfile?.search_preferences as Record<string, any>) || {};
       
       const { error } = await supabase
         .from('profiles')
@@ -119,7 +121,7 @@ const AccommodationsPage = () => {
     },
     onSuccess: (availableToMeet) => {
       queryClient.setQueryData(['userStatus', user?.id], (old: any) => ({
-        ...old,
+        ...(old || {}),
         availableToMeet
       }));
       toast({
