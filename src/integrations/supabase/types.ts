@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accommodations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          location_city: string | null
+          location_country: string | null
+          name: string
+          owner_id: string
+          price_per_night: number
+          type: Database["public"]["Enums"]["accommodation_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          name: string
+          owner_id: string
+          price_per_night: number
+          type: Database["public"]["Enums"]["accommodation_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          name?: string
+          owner_id?: string
+          price_per_night?: number
+          type?: Database["public"]["Enums"]["accommodation_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -655,6 +705,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string | null
@@ -794,6 +865,13 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
+      has_role: {
+        Args: {
+          p_user_id: string
+          p_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       increment_swipe_count: {
         Args: { user_uuid: string }
         Returns: undefined
@@ -804,6 +882,8 @@ export type Database = {
       }
     }
     Enums: {
+      accommodation_type: "hotel" | "apartment" | "resort" | "villa" | "cabin"
+      app_role: "lodge_manager"
       education_level:
         | "high_school"
         | "some_college"
@@ -938,6 +1018,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      accommodation_type: ["hotel", "apartment", "resort", "villa", "cabin"],
+      app_role: ["lodge_manager"],
       education_level: [
         "high_school",
         "some_college",

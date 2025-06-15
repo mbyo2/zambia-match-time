@@ -6,6 +6,7 @@ import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
 import EventsPage from './events/EventsPage';
+import AccommodationsPage from './accommodations/AccommodationsPage';
 import SubscriptionPage from './subscription/SubscriptionPage';
 import SecuritySettings from './security/SecuritySettings';
 import ContentModerationManager from './safety/ContentModerationManager';
@@ -15,7 +16,7 @@ import TermsOfService from './legal/TermsOfService';
 import NotificationCenter from './notifications/NotificationCenter';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle, CalendarDays } from 'lucide-react';
+import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle, CalendarDays, Building } from 'lucide-react';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -235,6 +236,7 @@ const MainApp = () => {
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
         {currentTab === 'events' && <EventsPage />}
+        {currentTab === 'accommodations' && <AccommodationsPage />}
         {currentTab === 'subscription' && <SubscriptionPage />}
         {currentTab === 'profile' && (
           <div className="p-4">
@@ -333,6 +335,15 @@ const MainApp = () => {
           >
             <CalendarDays size={20} />
             <span className="text-xs">Events</span>
+          </Button>
+
+          <Button
+            variant={currentTab === 'accommodations' ? 'default' : 'ghost'}
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => setCurrentTab('accommodations')}
+          >
+            <Building size={20} />
+            <span className="text-xs">Stays</span>
           </Button>
 
           <Button
