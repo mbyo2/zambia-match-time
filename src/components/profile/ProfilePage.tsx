@@ -1,13 +1,36 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Shield, FileText, CheckCircle } from 'lucide-react';
 import DevActions from '../admin/DevActions';
+import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfilePageProps {
   setCurrentTab: (tab: string) => void;
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
+  const { user } = useAuth();
+
+  const { data: isDeveloper } = useQuery({
+    queryKey: ['userRole', user?.id, 'admin'],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data, error } = await supabase.rpc('has_role', {
+        p_user_id: user.id,
+        p_role: 'admin',
+      });
+      if (error) {
+        console.error('Error checking admin role:', error.message);
+        return false;
+      }
+      return data;
+    },
+    enabled: !!user,
+  });
+
   return (
     <div className="p-4">
       <div className="max-w-md mx-auto space-y-6">
@@ -72,7 +95,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
             </div>
           </div>
         </div>
-        <DevActions />
+        {isDeveloper && <DevActions />}
       </div>
     </div>
   );
