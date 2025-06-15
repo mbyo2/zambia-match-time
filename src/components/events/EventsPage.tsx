@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import EventCard from './EventCard';
@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import { CalendarOff } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
-import EventDetails from './EventDetails';
 
 const fetchEvents = async (): Promise<Tables<'events'>[]> => {
   const { data, error } = await supabase
@@ -24,16 +23,10 @@ const fetchEvents = async (): Promise<Tables<'events'>[]> => {
 };
 
 const EventsPage = () => {
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-
   const { data: events, isLoading, isError } = useQuery<Tables<'events'>[]>({
     queryKey: ['events'],
     queryFn: fetchEvents,
   });
-
-  if (selectedEventId) {
-    return <EventDetails eventId={selectedEventId} onBack={() => setSelectedEventId(null)} />;
-  }
 
   if (isLoading) {
     return (
@@ -79,7 +72,6 @@ const EventsPage = () => {
             <EventCard 
               key={event.id} 
               event={event} 
-              onClick={() => setSelectedEventId(event.id)} 
             />
           ))}
         </div>
@@ -89,4 +81,3 @@ const EventsPage = () => {
 };
 
 export default EventsPage;
-

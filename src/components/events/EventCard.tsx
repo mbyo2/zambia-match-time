@@ -7,14 +7,12 @@ import { Tables } from '@/integrations/supabase/types';
 
 interface EventCardProps {
   event: Tables<'events'>;
-  onClick: () => void;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
+const EventCard: React.FC<EventCardProps> = ({ event }) => {
   return (
     <Card
-      className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-      onClick={onClick}
+      className="overflow-hidden shadow-md"
     >
       {event.image_url && (
         <img
@@ -44,4 +42,3 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
 };
 
 export default EventCard;
-
