@@ -71,6 +71,42 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          event_date: string
+          id: string
+          image_url: string | null
+          location_city: string | null
+          location_country: string | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          event_date: string
+          id?: string
+          image_url?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string | null
