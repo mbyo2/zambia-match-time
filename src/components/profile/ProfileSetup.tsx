@@ -31,6 +31,7 @@ const ProfileSetup = () => {
     age_min: 18,
     age_max: 35,
     has_accommodation_available: false,
+    available_to_meet: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +59,15 @@ const ProfileSetup = () => {
           age_min: profileData.age_min,
           age_max: profileData.age_max,
           has_accommodation_available: profileData.has_accommodation_available,
+          search_preferences: {
+            distance: 50,
+            age_range: { min: profileData.age_min, max: profileData.age_max },
+            interests: [],
+            height_range: { min: 150, max: 200 },
+            education_levels: [],
+            relationship_goals: [],
+            available_to_meet: profileData.available_to_meet
+          }
         });
 
       if (error) {
@@ -219,6 +229,25 @@ const ProfileSetup = () => {
                 checked={profileData.has_accommodation_available}
                 onCheckedChange={(checked) => 
                   setProfileData({ ...profileData, has_accommodation_available: checked })
+                }
+              />
+            </div>
+
+            {/* Available to Meet Toggle */}
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border">
+              <div>
+                <Label htmlFor="availableToMeet" className="text-sm font-medium">
+                  I'm available to meet with travelers
+                </Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Let others know if you're open to meeting up or hanging out
+                </p>
+              </div>
+              <Switch
+                id="availableToMeet"
+                checked={profileData.available_to_meet}
+                onCheckedChange={(checked) => 
+                  setProfileData({ ...profileData, available_to_meet: checked })
                 }
               />
             </div>
