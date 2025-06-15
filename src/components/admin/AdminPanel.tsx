@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, Info } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AdminPanel = () => {
   const [newAdminEmail, setNewAdminEmail] = useState('');
@@ -19,34 +20,13 @@ const AdminPanel = () => {
 
     setIsLoading(true);
     try {
-      // First, get the user ID from auth.users table using the email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', newAdminEmail)
-        .single();
+      // Use the make_user_admin function
+      const { error } = await supabase.rpc('make_user_admin', {
+        user_email: newAdminEmail
+      });
 
-      if (userError || !userData) {
-        toast.error(`User not found with email: ${newAdminEmail}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // Insert admin role for the user
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userData.id,
-          role: 'admin'
-        });
-
-      if (roleError) {
-        // Check if it's a duplicate key error (user already has admin role)
-        if (roleError.code === '23505') {
-          toast.success(`${newAdminEmail} is already an admin`);
-        } else {
-          toast.error(`Failed to make user admin: ${roleError.message}`);
-        }
+      if (error) {
+        toast.error(`Failed to make user admin: ${error.message}`);
       } else {
         toast.success(`Successfully made ${newAdminEmail} an admin`);
         setNewAdminEmail('');
@@ -71,6 +51,18 @@ const AdminPanel = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Default Admin Account:</strong><br />
+            Email: <code className="bg-gray-100 px-1 rounded">admin@justgrown.com</code><br />
+            Password: <code className="bg-gray-100 px-1 rounded">AdminPass123!</code><br />
+            <span className="text-sm text-muted-foreground">
+              You need to sign up with these credentials first, then this account will automatically have admin privileges.
+            </span>
+          </AlertDescription>
+        </Alert>
+        
         <div>
           <h4 className="font-medium mb-2">Make User Admin</h4>
           <p className="text-sm text-muted-foreground mb-3">
