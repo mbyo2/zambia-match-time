@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +30,7 @@ const ProfileSetup = () => {
     interested_in: ['male', 'female'] as GenderType[],
     age_min: 18,
     age_max: 35,
+    has_accommodation_available: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +57,7 @@ const ProfileSetup = () => {
           interested_in: profileData.interested_in,
           age_min: profileData.age_min,
           age_max: profileData.age_max,
+          has_accommodation_available: profileData.has_accommodation_available,
         });
 
       if (error) {
@@ -200,6 +202,25 @@ const ProfileSetup = () => {
                   onChange={(e) => setProfileData({ ...profileData, age_max: parseInt(e.target.value) })}
                 />
               </div>
+            </div>
+
+            {/* Accommodation Availability Toggle */}
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border">
+              <div>
+                <Label htmlFor="accommodation" className="text-sm font-medium">
+                  I have accommodation available
+                </Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Let others know if you can offer a place to stay
+                </p>
+              </div>
+              <Switch
+                id="accommodation"
+                checked={profileData.has_accommodation_available}
+                onCheckedChange={(checked) => 
+                  setProfileData({ ...profileData, has_accommodation_available: checked })
+                }
+              />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
