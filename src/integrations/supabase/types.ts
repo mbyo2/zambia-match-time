@@ -348,6 +348,7 @@ export type Database = {
           location_state: string | null
           max_distance: number | null
           occupation: string | null
+          professional_badge: string | null
           relationship_goals:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
@@ -381,6 +382,7 @@ export type Database = {
           location_state?: string | null
           max_distance?: number | null
           occupation?: string | null
+          professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
@@ -414,6 +416,7 @@ export type Database = {
           location_state?: string | null
           max_distance?: number | null
           occupation?: string | null
+          professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
@@ -653,26 +656,35 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          profession: string | null
+          professional_document_url: string | null
           reviewed_at: string | null
           selfie_url: string
           status: Database["public"]["Enums"]["verification_status"] | null
           user_id: string
+          verification_type: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          profession?: string | null
+          professional_document_url?: string | null
           reviewed_at?: string | null
           selfie_url: string
           status?: Database["public"]["Enums"]["verification_status"] | null
           user_id: string
+          verification_type?: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          profession?: string | null
+          professional_document_url?: string | null
           reviewed_at?: string | null
           selfie_url?: string
           status?: Database["public"]["Enums"]["verification_status"] | null
           user_id?: string
+          verification_type?: string
         }
         Relationships: [
           {

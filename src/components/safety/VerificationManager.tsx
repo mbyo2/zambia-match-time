@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Shield, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Camera, Shield, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface VerificationRequest {
   id: string;
@@ -15,6 +18,9 @@ interface VerificationRequest {
   status: 'pending' | 'verified' | 'rejected';
   created_at: string;
   reviewed_at?: string;
+  verification_type: string;
+  profession: string | null;
+  professional_document_url: string | null;
 }
 
 const VerificationManager = () => {
@@ -23,6 +29,9 @@ const VerificationManager = () => {
   const { toast } = useToast();
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [verificationType, setVerificationType] = useState<'identity' | 'professional'>('identity');
+  const [profession, setProfession] = useState('');
+  const [professionalDocument, setProfessionalDocument] = useState<File | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -65,25 +74,47 @@ const VerificationManager = () => {
     }
   };
 
-  const handleSelfieUpload = async (file: File) => {
+  const handleVerificationSubmit = async (selfieFile: File) => {
     if (!user) return;
 
+    if (verificationType === 'professional' && (!profession || !professionalDocument)) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide your profession and upload a document.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const fileUrl = await uploadFile(file, {
+      const selfieUrl = await uploadFile(selfieFile, {
         bucket: 'verification-selfies',
-        folder: user.id,
+        folder: `${user.id}/selfies`,
         maxSizeKB: 10240, // 10MB
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
       });
+      if (!selfieUrl) return;
 
-      if (!fileUrl) return;
+      let professionalDocumentUrl: string | null = null;
+      if (verificationType === 'professional' && professionalDocument) {
+        professionalDocumentUrl = await uploadFile(professionalDocument, {
+          bucket: 'verification-selfies',
+          folder: `${user.id}/documents`,
+          maxSizeKB: 10240, // 10MB
+          allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+        });
+        if (!professionalDocumentUrl) return;
+      }
 
       const { error } = await supabase
         .from('verification_requests')
         .insert({
           user_id: user.id,
-          selfie_url: fileUrl,
-          status: 'pending'
+          selfie_url: selfieUrl,
+          status: 'pending',
+          verification_type: verificationType,
+          profession: verificationType === 'professional' ? profession : null,
+          professional_document_url: professionalDocumentUrl,
         });
 
       if (error) throw error;
@@ -95,6 +126,8 @@ const VerificationManager = () => {
 
       setVerificationStatus('pending');
       fetchVerificationRequests();
+      setProfession('');
+      setProfessionalDocument(null);
     } catch (error) {
       console.error('Error submitting verification:', error);
       toast({
@@ -121,12 +154,22 @@ const VerificationManager = () => {
       if (status === 'verified') {
         const request = requests.find(r => r.id === requestId);
         if (request) {
+          const profileUpdate: {
+            is_verified: boolean;
+            verification_status: 'verified' | 'rejected';
+            professional_badge?: string;
+          } = {
+            is_verified: true,
+            verification_status: 'verified',
+          };
+          
+          if (request.verification_type === 'professional' && request.profession) {
+            profileUpdate.professional_badge = request.profession;
+          }
+
           await supabase
             .from('profiles')
-            .update({
-              is_verified: true,
-              verification_status: 'verified'
-            })
+            .update(profileUpdate)
             .eq('id', request.user_id);
         }
       }
@@ -155,6 +198,34 @@ const VerificationManager = () => {
     }
   };
 
+  const renderVerificationForm = () => (
+    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+      <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+      <h3 className="font-medium mb-2">Take a Verification Selfie</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Take a clear selfie holding a piece of paper with your username written on it.
+      </p>
+      <input
+        type="file"
+        accept="image/*"
+        capture="user"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleVerificationSubmit(file);
+        }}
+        className="hidden"
+        id="verification-selfie"
+      />
+      <label htmlFor="verification-selfie">
+        <Button disabled={isUploading} asChild>
+          <span>
+            {isUploading ? 'Uploading...' : 'Take Selfie & Submit'}
+          </span>
+        </Button>
+      </label>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -164,7 +235,7 @@ const VerificationManager = () => {
             Profile Verification
           </CardTitle>
           <CardDescription>
-            Verify your identity to build trust and get a verification badge
+            Verify your identity to build trust and get a verification badge. Professionals can get a special badge.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,33 +253,40 @@ const VerificationManager = () => {
           </div>
 
           {verificationStatus === 'none' && (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="font-medium mb-2">Take a Verification Selfie</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Take a clear selfie holding a piece of paper with your username written on it
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleSelfieUpload(file);
-                  }}
-                  className="hidden"
-                  id="verification-selfie"
-                />
-                <label htmlFor="verification-selfie">
-                  <Button disabled={isUploading} asChild>
-                    <span>
-                      {isUploading ? 'Uploading...' : 'Take Selfie'}
-                    </span>
-                  </Button>
-                </label>
-              </div>
-            </div>
+            <Tabs value={verificationType} onValueChange={(value) => setVerificationType(value as any)} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="identity">Identity</TabsTrigger>
+                <TabsTrigger value="professional">Professional</TabsTrigger>
+              </TabsList>
+              <TabsContent value="identity" className="pt-4">
+                <p className="text-sm text-center text-gray-600 mb-4">Verify your identity to get a standard verified badge.</p>
+                {renderVerificationForm()}
+              </TabsContent>
+              <TabsContent value="professional" className="pt-4 space-y-4">
+                <p className="text-sm text-center text-gray-600">Verify your professional status (e.g., Doctor, Teacher) for a special badge.</p>
+                <div>
+                  <Label htmlFor="profession">Profession</Label>
+                  <Input 
+                    id="profession" 
+                    placeholder="e.g., Doctor, Teacher" 
+                    value={profession} 
+                    onChange={(e) => setProfession(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="professional-document">Proof of Profession</Label>
+                   <Input
+                    id="professional-document"
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => setProfessionalDocument(e.target.files?.[0] || null)}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Upload a document, ID, or certificate.</p>
+                </div>
+                {renderVerificationForm()}
+              </TabsContent>
+            </Tabs>
           )}
 
           {verificationStatus === 'pending' && (
@@ -259,11 +337,14 @@ const VerificationManager = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {requests.length === 0 && <p className="text-sm text-gray-500">No pending requests.</p>}
             {requests.filter(r => r.status === 'pending').map((request) => (
               <div key={request.id} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-medium">Verification Request</h3>
+                    <h3 className="font-medium">
+                      {request.verification_type === 'professional' ? 'Professional' : 'Identity'} Verification
+                    </h3>
                     <p className="text-sm text-gray-600">
                       Submitted: {new Date(request.created_at).toLocaleDateString()}
                     </p>
@@ -272,12 +353,32 @@ const VerificationManager = () => {
                 </div>
                 
                 <div className="mb-4">
-                  <img 
-                    src={request.selfie_url} 
-                    alt="Verification selfie"
-                    className="max-w-xs rounded-lg"
-                  />
+                  <h4 className="font-medium text-sm mb-1">Selfie:</h4>
+                  <a href={request.selfie_url} target="_blank" rel="noreferrer noopener">
+                    <img 
+                      src={request.selfie_url} 
+                      alt="Verification selfie"
+                      className="max-w-xs rounded-lg border"
+                    />
+                  </a>
                 </div>
+
+                {request.verification_type === 'professional' && (
+                  <>
+                    <div className="mb-4">
+                      <h4 className="font-medium text-sm">Profession:</h4>
+                      <p className="text-sm">{request.profession || 'N/A'}</p>
+                    </div>
+                    {request.professional_document_url && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-sm mb-1">Professional Document:</h4>
+                        <a href={request.professional_document_url} target="_blank" rel="noreferrer noopener" className="text-pink-600 hover:underline flex items-center gap-2">
+                           <FileText size={16}/> View Document
+                        </a>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div className="flex gap-2">
                   <Button
