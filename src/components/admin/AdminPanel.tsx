@@ -20,8 +20,8 @@ const AdminPanel = () => {
 
     setIsLoading(true);
     try {
-      // Use the make_user_admin function
-      const { error } = await supabase.rpc('make_user_admin', {
+      // Use the make_user_admin function with type assertion to work around TypeScript
+      const { error } = await (supabase as any).rpc('make_user_admin', {
         user_email: newAdminEmail
       });
 
