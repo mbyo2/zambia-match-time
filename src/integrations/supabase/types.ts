@@ -454,6 +454,8 @@ export type Database = {
       }
       reports: {
         Row: {
+          content_metadata: Json | null
+          content_type: string
           created_at: string | null
           description: string | null
           id: string
@@ -463,6 +465,8 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          content_metadata?: Json | null
+          content_type?: string
           created_at?: string | null
           description?: string | null
           id?: string
@@ -472,6 +476,8 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          content_metadata?: Json | null
+          content_type?: string
           created_at?: string | null
           description?: string | null
           id?: string
