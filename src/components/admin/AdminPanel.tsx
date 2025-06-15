@@ -19,12 +19,34 @@ const AdminPanel = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.rpc('make_user_admin', {
-        user_email: newAdminEmail
-      });
+      // First, get the user ID from auth.users table using the email
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', newAdminEmail)
+        .single();
 
-      if (error) {
-        toast.error(`Failed to make user admin: ${error.message}`);
+      if (userError || !userData) {
+        toast.error(`User not found with email: ${newAdminEmail}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // Insert admin role for the user
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userData.id,
+          role: 'admin'
+        });
+
+      if (roleError) {
+        // Check if it's a duplicate key error (user already has admin role)
+        if (roleError.code === '23505') {
+          toast.success(`${newAdminEmail} is already an admin`);
+        } else {
+          toast.error(`Failed to make user admin: ${roleError.message}`);
+        }
       } else {
         toast.success(`Successfully made ${newAdminEmail} an admin`);
         setNewAdminEmail('');
