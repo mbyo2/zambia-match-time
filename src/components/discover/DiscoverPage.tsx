@@ -37,7 +37,8 @@ const defaultPreferences: SearchPreferences = {
   education_levels: [],
   interests: [],
   relationship_goals: [],
-  height_range: { min: 150, max: 200 }
+  height_range: { min: 150, max: 200 },
+  genders: []
 };
 
 const DiscoverPage = () => {
@@ -178,7 +179,8 @@ const DiscoverPage = () => {
           p_filter_interests: preferences.interests,
           p_filter_relationship_goals: preferences.relationship_goals,
           p_height_min: preferences.height_range.min,
-          p_height_max: preferences.height_range.max
+          p_height_max: preferences.height_range.max,
+          p_filter_genders: preferences.genders
         });
 
       if (error) {
