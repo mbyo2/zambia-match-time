@@ -1,5 +1,4 @@
 
-```typescript
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Shield, FileText, CheckCircle } from 'lucide-react';
@@ -81,4 +80,3 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 };
 
 export default ProfilePage;
-```
