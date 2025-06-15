@@ -800,14 +800,14 @@ export type Database = {
       get_compatible_profiles: {
         Args: {
           user_uuid: string
-          max_distance?: number
-          age_min?: number
-          age_max?: number
-          filter_education_levels?: string[]
-          filter_interests?: string[]
-          filter_relationship_goals?: string[]
-          height_min?: number
-          height_max?: number
+          p_max_distance?: number
+          p_age_min?: number
+          p_age_max?: number
+          p_filter_education_levels?: string[]
+          p_filter_interests?: string[]
+          p_filter_relationship_goals?: string[]
+          p_height_min?: number
+          p_height_max?: number
         }
         Returns: {
           id: string

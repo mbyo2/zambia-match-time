@@ -51,9 +51,14 @@ const DiscoverPage = () => {
   useEffect(() => {
     if (user) {
       fetchUserPreferences();
-      fetchProfiles();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfiles();
+    }
+  }, [user, preferences]);
 
   const fetchUserPreferences = async () => {
     try {
@@ -89,7 +94,6 @@ const DiscoverPage = () => {
       }
 
       setPreferences(newPreferences);
-      fetchProfiles();
     } catch (error) {
       console.error('Error:', error);
     }
@@ -286,3 +290,4 @@ const DiscoverPage = () => {
 };
 
 export default DiscoverPage;
+
