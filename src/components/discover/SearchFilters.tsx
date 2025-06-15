@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,12 +31,6 @@ const relationshipGoalOptions = [
   'serious', 
   'friendship',
   'networking'
-];
-
-const genderOptions = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' }
 ];
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({ preferences, onPreferencesChange }) => {
@@ -160,14 +155,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ preferences, onPreference
     updatePreference('relationship_goals', updated);
   };
 
-  const toggleGender = (gender: string) => {
-    const current = preferences.genders;
-    const updated = current.includes(gender)
-      ? current.filter(g => g !== gender)
-      : [...current, gender];
-    updatePreference('genders', updated);
-  };
-
   return (
     <Card className="w-full">
       <CardContent className="p-6 space-y-6">
@@ -189,25 +176,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ preferences, onPreference
             </div>
           </div>
         )}
-
-        {/* Gender Filter */}
-        <div>
-          <Label className="text-sm font-medium">Show me</Label>
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {genderOptions.map((option) => (
-              <div key={option.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={option.value}
-                  checked={preferences.genders.includes(option.value)}
-                  onCheckedChange={() => toggleGender(option.value)}
-                />
-                <Label htmlFor={option.value} className="text-sm">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Age Range */}
         <div>

@@ -14,8 +14,6 @@ export interface SearchPreferences {
     min: number;
     max: number;
   };
-  // Gender filter
-  genders: string[];
   // Premium filter options
   body_types?: string[];
   ethnicities?: string[];
@@ -50,7 +48,6 @@ export const jsonToSearchPreferences = (json: Json): SearchPreferences => {
     interests: obj.interests || [],
     relationship_goals: obj.relationship_goals || [],
     height_range: obj.height_range || { min: 150, max: 200 },
-    genders: obj.genders || [],
     body_types: obj.body_types || [],
     ethnicities: obj.ethnicities || [],
     religion: obj.religion || '',
