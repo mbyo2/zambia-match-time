@@ -24,6 +24,7 @@ interface Profile {
   distance_km: number;
   compatibility_score: number;
   boost_active: boolean;
+  profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
 const DiscoverPage = () => {
@@ -58,7 +59,8 @@ const DiscoverPage = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_enhanced_compatible_profiles', {
+      // First get the enhanced compatible profiles
+      const { data: profilesData, error: profilesError } = await supabase.rpc('get_enhanced_compatible_profiles', {
         user_uuid: user.id,
         p_max_distance: filters.distance,
         p_age_min: filters.ageRange[0],
@@ -75,12 +77,37 @@ const DiscoverPage = () => {
         p_drinking: filters.drinking
       });
 
-      if (error) {
-        console.error('Error loading profiles:', error);
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError);
         return;
       }
 
-      setProfiles(data || []);
+      if (!profilesData || profilesData.length === 0) {
+        setProfiles([]);
+        setCurrentIndex(0);
+        return;
+      }
+
+      // Get profile photos for each profile
+      const profileIds = profilesData.map(p => p.id);
+      const { data: photosData, error: photosError } = await supabase
+        .from('profile_photos')
+        .select('user_id, photo_url, is_primary')
+        .in('user_id', profileIds)
+        .order('is_primary', { ascending: false })
+        .order('order_index', { ascending: true });
+
+      if (photosError) {
+        console.error('Error loading photos:', photosError);
+      }
+
+      // Combine profiles with their photos
+      const profilesWithPhotos = profilesData.map(profile => ({
+        ...profile,
+        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
+      }));
+
+      setProfiles(profilesWithPhotos);
       setCurrentIndex(0);
     } catch (error) {
       console.error('Error in loadProfiles:', error);
