@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,9 +19,11 @@ import { Button } from '@/components/ui/button';
 import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle, CalendarDays, Building } from 'lucide-react';
 import ProfilePage from './profile/ProfilePage';
 import SubPageWrapper from './SubPageWrapper';
+import { useNotifications } from '@/services/notificationService';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
+  const { initNotifications, subscribeToNotifications } = useNotifications();
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTab, setCurrentTab] = useState('discover');
@@ -28,6 +31,7 @@ const MainApp = () => {
   useEffect(() => {
     if (user) {
       checkProfile();
+      setupNotifications();
     }
   }, [user]);
 
@@ -50,6 +54,17 @@ const MainApp = () => {
       console.error('Error checking profile:', error);
       setHasProfile(false);
       setShowOnboarding(true);
+    }
+  };
+
+  const setupNotifications = async () => {
+    try {
+      const granted = await initNotifications();
+      if (granted && user) {
+        await subscribeToNotifications(user.id);
+      }
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
     }
   };
 
