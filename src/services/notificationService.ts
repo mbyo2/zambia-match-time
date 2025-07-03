@@ -55,12 +55,15 @@ export class NotificationService {
         )
       });
 
+      // Convert subscription to plain object for JSON compatibility
+      const subscriptionData = JSON.parse(JSON.stringify(subscription.toJSON()));
+
       // Save subscription to database
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
           user_id: userId,
-          subscription: subscription.toJSON()
+          subscription: subscriptionData
         });
 
       if (error) {
