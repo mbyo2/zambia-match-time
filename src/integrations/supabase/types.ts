@@ -59,6 +59,77 @@ export type Database = {
           },
         ]
       }
+      achievements: {
+        Row: {
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          points_reward: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points_reward?: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points_reward?: number | null
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
+      boosts: {
+        Row: {
+          boost_type: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          boost_type: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          boost_type?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boosts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -118,6 +189,127 @@ export type Database = {
           swipes_used?: number | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      daily_rewards: {
+        Row: {
+          claimed: boolean | null
+          created_at: string | null
+          id: string
+          reward_date: string | null
+          reward_type: string
+          reward_value: number | null
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean | null
+          created_at?: string | null
+          id?: string
+          reward_date?: string | null
+          reward_type: string
+          reward_value?: number | null
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean | null
+          created_at?: string | null
+          id?: string
+          reward_date?: string | null
+          reward_type?: string
+          reward_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_transactions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          gift_id: string
+          id: string
+          message: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          gift_id: string
+          id?: string
+          message?: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          gift_id?: string
+          id?: string
+          message?: string | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_transactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_transactions_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_transactions_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_transactions_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icebreaker_prompts: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          prompt_text: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_text: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_text?: string
         }
         Relationships: []
       }
@@ -378,10 +570,14 @@ export type Database = {
           age_max: number | null
           age_min: number | null
           bio: string | null
+          body_type: string | null
+          compatibility_score: number | null
           created_at: string | null
           date_of_birth: string
+          drinking: string | null
           education: Database["public"]["Enums"]["education_level"] | null
           email: string
+          ethnicity: string | null
           first_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           has_accommodation_available: boolean | null
@@ -397,13 +593,17 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_state: string | null
+          looking_for: string[] | null
           max_distance: number | null
           occupation: string | null
+          personality_traits: Json | null
           professional_badge: string | null
           relationship_goals:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          religion: string | null
           search_preferences: Json | null
+          smoking: string | null
           updated_at: string | null
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
@@ -413,10 +613,14 @@ export type Database = {
           age_max?: number | null
           age_min?: number | null
           bio?: string | null
+          body_type?: string | null
+          compatibility_score?: number | null
           created_at?: string | null
           date_of_birth: string
+          drinking?: string | null
           education?: Database["public"]["Enums"]["education_level"] | null
           email: string
+          ethnicity?: string | null
           first_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           has_accommodation_available?: boolean | null
@@ -432,13 +636,17 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_state?: string | null
+          looking_for?: string[] | null
           max_distance?: number | null
           occupation?: string | null
+          personality_traits?: Json | null
           professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          religion?: string | null
           search_preferences?: Json | null
+          smoking?: string | null
           updated_at?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
@@ -448,10 +656,14 @@ export type Database = {
           age_max?: number | null
           age_min?: number | null
           bio?: string | null
+          body_type?: string | null
+          compatibility_score?: number | null
           created_at?: string | null
           date_of_birth?: string
+          drinking?: string | null
           education?: Database["public"]["Enums"]["education_level"] | null
           email?: string
+          ethnicity?: string | null
           first_name?: string
           gender?: Database["public"]["Enums"]["gender_type"]
           has_accommodation_available?: boolean | null
@@ -467,13 +679,17 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_state?: string | null
+          looking_for?: string[] | null
           max_distance?: number | null
           occupation?: string | null
+          personality_traits?: Json | null
           professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
             | null
+          religion?: string | null
           search_preferences?: Json | null
+          smoking?: string | null
           updated_at?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
@@ -594,6 +810,83 @@ export type Database = {
           },
         ]
       }
+      stories: {
+        Row: {
+          content_type: string
+          content_url: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          text_content: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          content_type: string
+          content_url?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          text_content?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          content_type?: string
+          content_url?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          text_content?: string | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string | null
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string | null
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string | null
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       swipes: {
         Row: {
           action: Database["public"]["Enums"]["swipe_action"]
@@ -627,6 +920,42 @@ export type Database = {
           {
             foreignKeyName: "swipes_swiper_id_fkey"
             columns: ["swiper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -672,6 +1001,48 @@ export type Database = {
           },
         ]
       }
+      user_prompt_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          prompt_id: string
+          response_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          prompt_id: string
+          response_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          prompt_id?: string
+          response_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_prompt_responses_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "icebreaker_prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_prompt_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -692,6 +1063,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stats: {
+        Row: {
+          created_at: string | null
+          experience_points: number | null
+          id: string
+          last_login_date: string | null
+          level: number | null
+          likes_given: number | null
+          likes_received: number | null
+          login_streak: number | null
+          profile_views: number | null
+          super_likes_given: number | null
+          super_likes_received: number | null
+          total_conversations: number | null
+          total_matches: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          experience_points?: number | null
+          id?: string
+          last_login_date?: string | null
+          level?: number | null
+          likes_given?: number | null
+          likes_received?: number | null
+          login_streak?: number | null
+          profile_views?: number | null
+          super_likes_given?: number | null
+          super_likes_received?: number | null
+          total_conversations?: number | null
+          total_matches?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          experience_points?: number | null
+          id?: string
+          last_login_date?: string | null
+          level?: number | null
+          likes_given?: number | null
+          likes_received?: number | null
+          login_streak?: number | null
+          profile_views?: number | null
+          super_likes_given?: number | null
+          super_likes_received?: number | null
+          total_conversations?: number | null
+          total_matches?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_subscriptions: {
         Row: {
@@ -776,6 +1209,39 @@ export type Database = {
           },
         ]
       }
+      virtual_gifts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_url: string
+          id: string
+          is_active: boolean | null
+          name: string
+          price_in_points: number
+          rarity: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_url: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_in_points: number
+          rarity?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_in_points?: number
+          rarity?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -784,6 +1250,10 @@ export type Database = {
       calculate_distance: {
         Args: { lat1: number; lon1: number; lat2: number; lon2: number }
         Returns: number
+      }
+      check_achievements: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       check_daily_swipe_limit: {
         Args: { user_uuid: string }
@@ -826,6 +1296,40 @@ export type Database = {
           relationship_goals: string[]
           distance_km: number
           compatibility_score: number
+        }[]
+      }
+      get_enhanced_compatible_profiles: {
+        Args: {
+          user_uuid: string
+          p_max_distance?: number
+          p_age_min?: number
+          p_age_max?: number
+          p_filter_education_levels?: string[]
+          p_filter_interests?: string[]
+          p_filter_relationship_goals?: string[]
+          p_height_min?: number
+          p_height_max?: number
+          p_body_types?: string[]
+          p_ethnicities?: string[]
+          p_religion?: string
+          p_smoking?: string
+          p_drinking?: string
+        }
+        Returns: {
+          id: string
+          first_name: string
+          bio: string
+          occupation: string
+          education: string
+          location_city: string
+          location_state: string
+          date_of_birth: string
+          height_cm: number
+          interests: string[]
+          relationship_goals: string[]
+          distance_km: number
+          compatibility_score: number
+          boost_active: boolean
         }[]
       }
       get_user_subscription_tier: {
