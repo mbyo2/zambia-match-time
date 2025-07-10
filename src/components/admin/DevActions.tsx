@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from 'lucide-react';
 import AdminPanel from './AdminPanel';
+import AdminDashboard from './AdminDashboard';
 
 const DevActions = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +37,7 @@ const DevActions = () => {
 
     return (
         <div className="space-y-6">
+            <AdminDashboard />
             <AdminPanel />
             
             <Card>

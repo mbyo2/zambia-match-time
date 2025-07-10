@@ -20,6 +20,9 @@ import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircl
 import ProfilePage from './profile/ProfilePage';
 import SubPageWrapper from './SubPageWrapper';
 import { useNotifications } from '@/services/notificationService';
+import SafetyCenter from './safety/SafetyCenter';
+import CommunityGuidelines from './legal/CommunityGuidelines';
+import DevActions from './admin/DevActions';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -99,6 +102,9 @@ const MainApp = () => {
     verification: { title: 'Profile Verification', component: <VerificationManager /> },
     privacy: { title: 'Privacy Policy', component: <PrivacyPolicy /> },
     terms: { title: 'Terms of Service', component: <TermsOfService /> },
+    safety: { title: 'Safety Center', component: <SafetyCenter /> },
+    guidelines: { title: 'Community Guidelines', component: <CommunityGuidelines /> },
+    admin: { title: 'Admin Panel', component: <DevActions /> },
   };
 
   if (subPages[currentTab]) {

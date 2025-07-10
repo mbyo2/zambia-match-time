@@ -1264,6 +1264,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      cleanup_fake_users: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_notification: {
         Args: {
           target_user_id: string
@@ -1274,6 +1278,10 @@ export type Database = {
           related_match_id?: string
         }
         Returns: string
+      }
+      get_app_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_compatible_profiles: {
         Args: {
@@ -1350,6 +1358,10 @@ export type Database = {
       }
       increment_swipe_count: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      make_user_admin: {
+        Args: { user_email: string }
         Returns: undefined
       }
       mark_notifications_read: {
