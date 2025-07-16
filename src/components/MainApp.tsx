@@ -11,6 +11,7 @@ import SubscriptionPage from './subscription/SubscriptionPage';
 import SecuritySettings from './security/SecuritySettings';
 import ContentModerationManager from './safety/ContentModerationManager';
 import VerificationManager from './safety/VerificationManager';
+import VerificationFlow from './verification/VerificationFlow';
 import PrivacyPolicy from './legal/PrivacyPolicy';
 import TermsOfService from './legal/TermsOfService';
 import NotificationCenter from './notifications/NotificationCenter';

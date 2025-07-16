@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
+import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
@@ -30,6 +31,7 @@ interface Profile {
 const DiscoverPage = () => {
   const { user } = useAuth();
   const { incrementStat } = useUserStats();
+  const { canSwipe, consumeSwipe } = useSwipeLimits();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -119,9 +121,22 @@ const DiscoverPage = () => {
   const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
     if (!user || currentIndex >= profiles.length) return;
 
+    // Check swipe limits before proceeding
+    if (!canSwipe() && action !== 'pass') {
+      return;
+    }
+
     const currentProfile = profiles[currentIndex];
     
     try {
+      // Consume swipe first (for non-pass actions)
+      if (action !== 'pass') {
+        const canProceed = await consumeSwipe();
+        if (!canProceed) {
+          return;
+        }
+      }
+
       // Record the swipe
       const { error: swipeError } = await supabase
         .from('swipes')

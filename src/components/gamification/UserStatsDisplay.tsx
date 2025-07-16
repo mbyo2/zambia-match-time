@@ -1,13 +1,118 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useUserStats } from '@/hooks/useUserStats';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Star, Heart, MessageCircle, Eye, Zap } from 'lucide-react';
 
+interface UserStats {
+  level: number;
+  experience_points: number;
+  login_streak: number;
+  total_matches: number;
+  total_conversations: number;
+  profile_views: number;
+  likes_given: number;
+  likes_received: number;
+  super_likes_given: number;
+  super_likes_received: number;
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  points_reward: number;
+  earned_at: string;
+}
+
 const UserStatsDisplay = () => {
-  const { stats, achievements, loading } = useUserStats();
+  const { user } = useAuth();
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+      fetchAchievements();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching stats:', error);
+        return;
+      }
+
+      setStats(data || {
+        level: 1,
+        experience_points: 0,
+        login_streak: 0,
+        total_matches: 0,
+        total_conversations: 0,
+        profile_views: 0,
+        likes_given: 0,
+        likes_received: 0,
+        super_likes_given: 0,
+        super_likes_received: 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select(`
+          *,
+          achievements (
+            name,
+            description,
+            icon,
+            points_reward
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('earned_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching achievements:', error);
+        return;
+      }
+
+      const formattedAchievements = data?.map(item => ({
+        id: item.id,
+        name: item.achievements.name,
+        description: item.achievements.description,
+        icon: item.achievements.icon,
+        points_reward: item.achievements.points_reward,
+        earned_at: item.earned_at,
+      })) || [];
+
+      setAchievements(formattedAchievements);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+    }
+  };
 
   if (loading || !stats) {
     return (

@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useDailyRewards } from '@/hooks/useDailyRewards';
+import { supabase } from '@/integrations/supabase/client';
 import UserStatsDisplay from '@/components/gamification/UserStatsDisplay';
 import DailyRewardModal from '@/components/gamification/DailyRewardModal';
 import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSection';
@@ -30,10 +31,59 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const { todayReward } = useDailyRewards();
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+      fetchPhotos();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchPhotos = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profile_photos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching photos:', error);
+        return;
+      }
+
+      setPhotos(data || []);
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    }
+  };
 
   const handlePhotosUpdate = () => {
-    // Refresh photos logic
-    console.log('Photos updated');
+    fetchPhotos();
   };
 
   return (
@@ -84,9 +134,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{user?.email}</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{user?.email}</p>
+                  </div>
+                  {profile && (
+                    <>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Name</p>
+                        <p className="font-medium">{profile.first_name} {profile.last_name}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Location</p>
+                        <p className="font-medium">{profile.location_city}, {profile.location_state}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Bio</p>
+                        <p className="font-medium">{profile.bio || 'No bio added yet'}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>

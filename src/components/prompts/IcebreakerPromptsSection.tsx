@@ -79,7 +79,7 @@ const IcebreakerPromptsSection = () => {
                 <Card key={userResponse.id} className="bg-muted/50">
                   <CardContent className="pt-4">
                     <div className="space-y-2">
-                      <p className="font-medium text-sm">{userResponse.prompt_text}</p>
+                      <p className="font-medium text-sm">{userResponse.prompt?.prompt_text}</p>
                       {editingResponse === userResponse.id ? (
                         <div className="flex gap-2">
                           <Input
