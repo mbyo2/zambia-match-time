@@ -175,7 +175,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
               e.stopPropagation();
               onSwipe?.('pass');
             }}
-            className="w-12 h-12 bg-gray-500 hover:bg-gray-600 rounded-full flex items-center justify-center text-white transition-colors"
+            className="w-12 h-12 bg-secondary hover:bg-secondary/80 rounded-full flex items-center justify-center text-secondary-foreground transition-colors shadow-lg"
           >
             ✕
           </button>
@@ -184,7 +184,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
               e.stopPropagation();
               onSwipe?.('super_like');
             }}
-            className="w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white transition-colors"
+            className="w-12 h-12 bg-primary hover:bg-primary/80 rounded-full flex items-center justify-center text-primary-foreground transition-colors shadow-lg"
           >
             ⭐
           </button>
@@ -193,7 +193,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
               e.stopPropagation();
               onSwipe?.('like');
             }}
-            className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors"
+            className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors shadow-lg"
           >
             ♥
           </button>
