@@ -26,6 +26,7 @@ interface Profile {
   compatibility_score: number;
   boost_active: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  last_active?: string;
 }
 
 const DiscoverPage = () => {

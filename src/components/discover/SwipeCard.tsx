@@ -19,11 +19,12 @@ interface Profile {
   distance_km?: number;
   compatibility_score?: number;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  last_active?: string;
 }
 
 interface SwipeCardProps {
   profile: Profile;
-  onSwipe?: (profileId: string, action: 'like' | 'pass') => void;
+  onSwipe?: (action: 'like' | 'pass' | 'super_like') => void;
   style?: React.CSSProperties;
   className?: string;
   isOnline?: boolean;
@@ -46,8 +47,36 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    
+    if (x < width * 0.3) {
+      onSwipe?.('pass');
+    } else if (x > width * 0.7) {
+      onSwipe?.('like');
+    } else {
+      onSwipe?.('super_like');
+    }
+  };
+
+  const checkOnlineStatus = () => {
+    // Check if user was active in last 15 minutes
+    const lastActive = new Date(profile.last_active || '');
+    const now = new Date();
+    const diffMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60);
+    return diffMinutes <= 15;
+  };
+
+  const userIsOnline = checkOnlineStatus();
+
   return (
-    <Card className={`h-96 w-80 relative overflow-hidden ${className}`} style={style}>
+    <Card 
+      className={`h-96 w-80 relative overflow-hidden cursor-pointer select-none ${className}`} 
+      style={style}
+      onClick={handleCardClick}
+    >
       {photoUrl ? (
         <img 
           src={photoUrl} 
@@ -61,7 +90,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
       
       {/* Online Status Indicator */}
-      {isOnline && (
+      {userIsOnline && (
         <div className="absolute top-4 right-4 z-10">
           <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs border-green-300">
             <Circle size={8} className="fill-green-500 text-green-500 mr-1 animate-pulse" />
@@ -69,6 +98,15 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
           </Badge>
         </div>
       )}
+
+      {/* Swipe Instructions */}
+      <div className="absolute top-4 left-4 z-10 bg-black/50 rounded-lg p-2">
+        <div className="text-white text-xs space-y-1">
+          <div>← Pass</div>
+          <div>Center: Super Like</div>
+          <div>Like →</div>
+        </div>
+      </div>
       
       <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
         <div className="space-y-2">
@@ -76,7 +114,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
             <h3 className="text-2xl font-bold">
               {profile.first_name}, {calculateAge(profile.date_of_birth)}
             </h3>
-            {isOnline && (
+            {userIsOnline && (
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
             )}
           </div>
