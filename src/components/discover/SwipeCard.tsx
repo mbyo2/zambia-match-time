@@ -167,6 +167,37 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
             </div>
           )}
         </div>
+
+        {/* Action Buttons */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-20">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSwipe?.('pass');
+            }}
+            className="w-12 h-12 bg-gray-500 hover:bg-gray-600 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            ✕
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSwipe?.('super_like');
+            }}
+            className="w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            ⭐
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSwipe?.('like');
+            }}
+            className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            ♥
+          </button>
+        </div>
       </CardContent>
     </Card>
   );

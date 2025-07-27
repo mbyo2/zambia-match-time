@@ -1343,6 +1343,7 @@ export type Database = {
           distance_km: number
           compatibility_score: number
           boost_active: boolean
+          last_active: string
         }[]
       }
       get_user_subscription_tier: {
