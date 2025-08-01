@@ -52,33 +52,32 @@ const DiscoverPage = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      loadProfiles();
-    }
-  }, [user]);
+    // For testing without auth, always load profiles
+    loadProfiles();
+  }, []);
 
   const loadProfiles = async () => {
-    if (!user) return;
-
     setLoading(true);
     try {
-      // First get the enhanced compatible profiles
-      const { data: profilesData, error: profilesError } = await supabase.rpc('get_enhanced_compatible_profiles', {
-        user_uuid: user.id,
-        p_max_distance: filters.distance,
-        p_age_min: filters.ageRange[0],
-        p_age_max: filters.ageRange[1],
-        p_height_min: filters.heightRange[0],
-        p_height_max: filters.heightRange[1],
-        p_filter_education_levels: filters.education,
-        p_filter_interests: filters.interests,
-        p_filter_relationship_goals: filters.relationshipGoals,
-        p_body_types: filters.bodyTypes,
-        p_ethnicities: filters.ethnicities,
-        p_religion: filters.religion,
-        p_smoking: filters.smoking,
-        p_drinking: filters.drinking
-      });
+      // For testing, directly query profiles table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          bio,
+          occupation,
+          education,
+          location_city,
+          location_state,
+          date_of_birth,
+          height_cm,
+          interests,
+          relationship_goals,
+          last_active
+        `)
+        .eq('is_active', true)
+        .limit(10);
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError);
@@ -104,10 +103,14 @@ const DiscoverPage = () => {
         console.error('Error loading photos:', photosError);
       }
 
-      // Combine profiles with their photos
+      // Combine profiles with their photos and add mock data
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
-        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
+        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || [],
+        distance_km: Math.floor(Math.random() * 50) + 1, // Mock distance
+        compatibility_score: Math.floor(Math.random() * 100), // Mock compatibility
+        boost_active: Math.random() > 0.8, // Random boost status
+        date_of_birth: profile.date_of_birth.toString()
       }));
 
       setProfiles(profilesWithPhotos);
@@ -120,43 +123,17 @@ const DiscoverPage = () => {
   };
 
   const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
-    if (!user || currentIndex >= profiles.length) return;
-
-    // Check swipe limits before proceeding
-    if (!canSwipe() && action !== 'pass') {
-      return;
-    }
+    if (currentIndex >= profiles.length) return;
 
     const currentProfile = profiles[currentIndex];
     
     try {
-      // Consume swipe first (for non-pass actions)
-      if (action !== 'pass') {
-        const canProceed = await consumeSwipe();
-        if (!canProceed) {
-          return;
-        }
-      }
-
-      // Record the swipe
-      const { error: swipeError } = await supabase
-        .from('swipes')
-        .insert({
-          swiper_id: user.id,
-          swiped_id: currentProfile.id,
-          action
-        });
-
-      if (swipeError) {
-        console.error('Error recording swipe:', swipeError);
-        return;
-      }
-
-      // Update stats
-      if (action === 'like') {
-        await incrementStat('likes_given');
-      } else if (action === 'super_like') {
-        await incrementStat('super_likes_given');
+      // For testing without auth, just log the action
+      console.log(`Swiped ${action} on ${currentProfile.first_name}`);
+      
+      // Simulate a match for likes (demo purposes)
+      if (action === 'like' && Math.random() > 0.7) {
+        console.log(`🎉 It's a match with ${currentProfile.first_name}!`);
       }
 
       // Move to next profile
