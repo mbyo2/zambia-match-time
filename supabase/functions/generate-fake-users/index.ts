@@ -44,15 +44,43 @@ serve(async (req) => {
       const year = new Date().getFullYear() - age;
       const dateOfBirth = `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`;
 
-      // 1. Use a placeholder image URL
-      console.log(`Using placeholder image for ${email}`);
-      const imageUrl = `https://placehold.co/600x600/png?text=${encodeURIComponent(firstName)}`;
+      // 1. Generate a beautiful photo of a Black person matching the gender
+      console.log(`Generating beautiful photo for ${email} (${gender})`);
       
-      if (!imageUrl) {
-        console.error(`Failed to generate image URL for ${email}`);
+      const photoPrompt = isFemale 
+        ? `Beautiful Black woman, professional headshot, warm smile, elegant lighting, high quality portrait, natural makeup, stylish appearance, confident expression`
+        : `Handsome Black man, professional headshot, warm smile, elegant lighting, high quality portrait, well-groomed, stylish appearance, confident expression`;
+      
+      // Generate the image using OpenAI
+      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-1',
+          prompt: photoPrompt,
+          size: '1024x1024',
+          quality: 'high',
+          output_format: 'png'
+        })
+      });
+      
+      if (!imageResponse.ok) {
+        console.error(`Failed to generate image for ${email}:`, await imageResponse.text());
         continue;
       }
-      console.log(`Image URL created for ${email}`);
+      
+      const imageData = await imageResponse.json();
+      const base64Image = imageData.data[0].b64_json;
+      
+      if (!base64Image) {
+        console.error(`No image data received for ${email}`);
+        continue;
+      }
+      
+      console.log(`Image generated for ${email}`);
 
       // 2. Sign up user
       const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
@@ -78,9 +106,9 @@ serve(async (req) => {
       const userId = authData.user.id;
       console.log(`User created: ${email}, ID: ${userId}`);
       
-      // 3. Download image and upload to Supabase Storage
-      const imageResponse = await fetch(imageUrl);
-      const imageBlob = await imageResponse.blob();
+      // 3. Convert base64 to blob and upload to Supabase Storage
+      const imageBytes = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
+      const imageBlob = new Blob([imageBytes], { type: 'image/png' });
       const photoPath = `${userId}/${Date.now()}.png`;
 
       await supabaseAdmin.storage
