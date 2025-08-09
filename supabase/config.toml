@@ -40,6 +40,9 @@ verify_jwt = false
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.backfill-profile-photos]
+verify_jwt = true
+
 [realtime]
 enabled = true
 port = 54323

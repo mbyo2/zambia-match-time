@@ -11,6 +11,7 @@ import AdminDashboard from './AdminDashboard';
 
 const DevActions = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isBackfilling, setIsBackfilling] = useState(false);
 
     const handleGenerateUsers = async () => {
         setIsLoading(true);
@@ -35,6 +36,29 @@ const DevActions = () => {
         setIsLoading(false);
     };
 
+    const handleBackfillPhotos = async () => {
+        setIsBackfilling(true);
+        toast.info('Starting photo backfill...', {
+            description: 'Adding curated photos to accounts missing photos.',
+            duration: 8000,
+        });
+
+        const { data, error } = await supabase.functions.invoke('backfill-profile-photos', {
+            body: { limit: 200 }
+        });
+
+        if (error) {
+            toast.error('Backfill failed.', { description: error.message });
+            console.error(error);
+        } else {
+            toast.success('Photo backfill complete.', {
+                description: `Added: ${data?.added ?? 0}, skipped: ${data?.skipped ?? 0}, failed: ${data?.failed ?? 0}`,
+            });
+        }
+
+        setIsBackfilling(false);
+    };
+
     return (
         <div className="space-y-6">
             <AdminDashboard />
@@ -48,21 +72,23 @@ const DevActions = () => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Alert className="mb-4">
-                      <Terminal className="h-4 w-4" />
-                      <AlertTitle>Heads up!</AlertTitle>
-                      <AlertDescription>
-                        This requires a Replicate API key to be set as a `REPLICATE_API_KEY` secret in your Supabase project settings.
-                      </AlertDescription>
-                    </Alert>
                     <div className="space-y-4">
                         <div>
                             <h4 className="font-medium mb-2">Generate Fake Users</h4>
                             <p className="text-sm text-muted-foreground mb-2">
-                                Creates 100 new user accounts with AI-generated Zambian profile photos.
+                                Creates 100 new user accounts with curated stock profile photos.
                             </p>
                             <Button onClick={handleGenerateUsers} disabled={isLoading}>
                                 {isLoading ? 'Generating...' : 'Generate 100 Users'}
+                            </Button>
+                        </div>
+                        <div>
+                            <h4 className="font-medium mb-2">Backfill Profile Photos</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                                Adds curated photos to existing accounts missing photos.
+                            </p>
+                            <Button onClick={handleBackfillPhotos} disabled={isBackfilling}>
+                                {isBackfilling ? 'Backfilling...' : 'Backfill Photos'}
                             </Button>
                         </div>
                     </div>
