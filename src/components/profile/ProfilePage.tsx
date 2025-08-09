@@ -257,6 +257,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
+              <CardContent className="flex items-center gap-4 pt-6">
+                <Shield className="h-5 w-5 text-red-500" />
+                <div>
+                  <h3 className="font-medium">Developer Actions</h3>
+                  <p className="text-sm text-muted-foreground">Generate users and backfill photos</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
