@@ -44,43 +44,35 @@ serve(async (req) => {
       const year = new Date().getFullYear() - age;
       const dateOfBirth = `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`;
 
-      // 1. Generate a beautiful photo of a Black person matching the gender
-      console.log(`Generating beautiful photo for ${email} (${gender})`);
-      
-      const photoPrompt = isFemale 
-        ? `Beautiful Black woman, professional headshot, warm smile, elegant lighting, high quality portrait, natural makeup, stylish appearance, confident expression`
-        : `Handsome Black man, professional headshot, warm smile, elegant lighting, high quality portrait, well-groomed, stylish appearance, confident expression`;
-      
-      // Generate the image using OpenAI
-      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-image-1',
-          prompt: photoPrompt,
-          size: '1024x1024',
-          quality: 'high',
-          output_format: 'png'
-        })
-      });
-      
-      if (!imageResponse.ok) {
-        console.error(`Failed to generate image for ${email}:`, await imageResponse.text());
+      // 1. Pick a curated beautiful Black portrait matching gender (no external AI key needed)
+      console.log(`Selecting curated photo for ${email} (${gender})`);
+
+      const femalePhotoUrls = [
+        'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg',
+        'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1',
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9'
+      ];
+
+      const malePhotoUrls = [
+        'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+        'https://images.pexels.com/photos/1704488/pexels-photo-1704488.jpeg',
+        'https://images.unsplash.com/photo-1527980965255-d3b416303d12',
+        'https://images.unsplash.com/photo-1521572267360-ee0c2909d518',
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330'
+      ];
+
+      const list = isFemale ? femalePhotoUrls : malePhotoUrls;
+      const imageUrl = list[Math.floor(Math.random() * list.length)];
+
+      if (!imageUrl) {
+        console.error(`Failed to select image URL for ${email}`);
         continue;
       }
-      
-      const imageData = await imageResponse.json();
-      const base64Image = imageData.data[0].b64_json;
-      
-      if (!base64Image) {
-        console.error(`No image data received for ${email}`);
-        continue;
-      }
-      
-      console.log(`Image generated for ${email}`);
+      console.log(`Image URL selected for ${email}`);
 
       // 2. Sign up user
       const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
@@ -96,19 +88,34 @@ serve(async (req) => {
         },
       });
 
+      let userId: string | null = null;
       if (authError || !authData.user) {
-        // Ignore "User already registered" errors for idempotency
-        if (!authError?.message.includes("User already registered")) {
-            console.error(`Error signing up ${email}:`, authError?.message);
+        // If user already exists, fetch their ID and continue to add photos
+        if (authError?.message?.includes("User already registered")) {
+          const { data: existingProfile, error: profileErr } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .single();
+
+          if (profileErr || !existingProfile) {
+            console.error(`User exists but profile not found for ${email}:`, profileErr?.message);
+            continue;
+          }
+          userId = existingProfile.id;
+          console.log(`Existing user found: ${email}, ID: ${userId}`);
+        } else {
+          console.error(`Error signing up ${email}:`, authError?.message);
+          continue;
         }
-        continue;
+      } else {
+        userId = authData.user.id;
+        console.log(`User created: ${email}, ID: ${userId}`);
       }
-      const userId = authData.user.id;
-      console.log(`User created: ${email}, ID: ${userId}`);
       
-      // 3. Convert base64 to blob and upload to Supabase Storage
-      const imageBytes = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
-      const imageBlob = new Blob([imageBytes], { type: 'image/png' });
+      // 3. Download image and upload to Supabase Storage
+      const remoteImage = await fetch(imageUrl);
+      const imageBlob = await remoteImage.blob();
       const photoPath = `${userId}/${Date.now()}.png`;
 
       await supabaseAdmin.storage
