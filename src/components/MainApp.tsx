@@ -24,6 +24,7 @@ import { useNotifications } from '@/services/notificationService';
 import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -31,6 +32,7 @@ const MainApp = () => {
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTab, setCurrentTab] = useState('discover');
+  const { isSuperAdmin } = useSuperAdmin();
 
   useEffect(() => {
     if (user) {
@@ -107,6 +109,14 @@ const MainApp = () => {
     guidelines: { title: 'Community Guidelines', component: <CommunityGuidelines /> },
     admin: { title: 'Admin Panel', component: <DevActions /> },
   };
+
+if (currentTab === 'admin' && !isSuperAdmin) {
+    return (
+      <SubPageWrapper title="Access Denied" onBack={() => setCurrentTab('profile')}>
+        <div className="p-4">You do not have permission to view this page.</div>
+      </SubPageWrapper>
+    );
+  }
 
   if (subPages[currentTab]) {
     const { title, component } = subPages[currentTab];

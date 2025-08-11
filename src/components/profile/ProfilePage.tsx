@@ -10,6 +10,7 @@ import UserStatsDisplay from '@/components/gamification/UserStatsDisplay';
 import DailyRewardModal from '@/components/gamification/DailyRewardModal';
 import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSection';
 import PhotoUploadSection from './PhotoUploadSection';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { 
   User, 
   Edit, 
@@ -29,6 +30,7 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const { user } = useAuth();
   const { todayReward } = useDailyRewards();
+  const { isSuperAdmin } = useSuperAdmin();
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -258,6 +260,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
               </CardContent>
             </Card>
 
+{isSuperAdmin && (
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
               <CardContent className="flex items-center gap-4 pt-6">
                 <Shield className="h-5 w-5 text-red-500" />
@@ -267,6 +270,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </div>
         </TabsContent>
       </Tabs>

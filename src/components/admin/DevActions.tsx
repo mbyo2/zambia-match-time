@@ -8,10 +8,25 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from 'lucide-react';
 import AdminPanel from './AdminPanel';
 import AdminDashboard from './AdminDashboard';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const DevActions = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isBackfilling, setIsBackfilling] = useState(false);
+    const { isSuperAdmin, loading } = useSuperAdmin();
+
+    if (loading) return null;
+
+    if (!isSuperAdmin) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Access Denied</CardTitle>
+                    <CardDescription>You do not have permission to view this page.</CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
 
     const handleGenerateUsers = async () => {
         setIsLoading(true);
