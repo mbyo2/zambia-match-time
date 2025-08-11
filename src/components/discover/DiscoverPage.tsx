@@ -60,7 +60,8 @@ const DiscoverPage = () => {
     setLoading(true);
     try {
       // For testing, directly query profiles table
-      const { data: profilesData, error: profilesError } = await supabase
+      // Build base query and exclude current user when available
+      let query = supabase
         .from('profiles')
         .select(`
           id,
@@ -76,8 +77,13 @@ const DiscoverPage = () => {
           relationship_goals,
           last_active
         `)
-        .eq('is_active', true)
-        .limit(10);
+        .eq('is_active', true);
+
+      if (user?.id) {
+        query = query.neq('id', user.id);
+      }
+
+      const { data: profilesData, error: profilesError } = await query.limit(10);
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError);
@@ -113,7 +119,10 @@ const DiscoverPage = () => {
         date_of_birth: profile.date_of_birth.toString()
       }));
 
-      setProfiles(profilesWithPhotos);
+      // Safety: ensure we never include the current user
+      const filteredProfiles = profilesWithPhotos.filter(p => p.id !== user?.id);
+
+      setProfiles(filteredProfiles);
       setCurrentIndex(0);
     } catch (error) {
       console.error('Error in loadProfiles:', error);
@@ -126,6 +135,12 @@ const DiscoverPage = () => {
     if (currentIndex >= profiles.length) return;
 
     const currentProfile = profiles[currentIndex];
+    
+    // Safety guard: never allow swiping on your own profile
+    if (user?.id && currentProfile.id === user.id) {
+      setCurrentIndex(prev => prev + 1);
+      return;
+    }
     
     try {
       // For testing without auth, just log the action
