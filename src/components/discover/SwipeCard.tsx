@@ -45,7 +45,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
   };
 
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
-  const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url;
+  const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
 
   const handleCardClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -80,8 +80,11 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
       {photoUrl ? (
         <img 
           src={photoUrl} 
-          alt={profile.first_name}
+          alt={`${profile.first_name} profile photo`}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-r from-pink-200 to-red-200" />
