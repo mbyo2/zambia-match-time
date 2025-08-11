@@ -30,7 +30,7 @@ interface Profile {
 }
 
 const DiscoverPage = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -52,9 +52,11 @@ const DiscoverPage = () => {
   });
 
   useEffect(() => {
-    // For testing without auth, always load profiles
-    loadProfiles();
-  }, []);
+    // Load profiles after auth resolves and whenever user changes
+    if (!authLoading) {
+      loadProfiles();
+    }
+  }, [authLoading, user?.id]);
 
   const loadProfiles = async () => {
     setLoading(true);
