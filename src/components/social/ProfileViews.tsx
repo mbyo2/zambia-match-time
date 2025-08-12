@@ -132,7 +132,7 @@ const ProfileViews = () => {
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {views.map((view) => {
               const primaryPhoto = view.viewer.profile_photos?.find(p => p.is_primary);
-              const photoUrl = primaryPhoto?.photo_url || view.viewer.profile_photos?.[0]?.photo_url;
+              const photoUrl = primaryPhoto?.photo_url || view.viewer.profile_photos?.[0]?.photo_url || '/placeholder.svg';
               
               return (
                 <div key={view.id} className="flex items-center space-x-3">

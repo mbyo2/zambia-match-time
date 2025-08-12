@@ -230,17 +230,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           </Button>
           
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-            {match.other_user.profile_photos?.find((p: any) => p.is_primary) ? (
-              <img
-                src={match.other_user.profile_photos.find((p: any) => p.is_primary)?.photo_url}
-                alt={match.other_user.first_name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                {match.other_user.first_name[0]}
-              </div>
-            )}
+            {(() => {
+              const primary = match.other_user.profile_photos?.find((p: any) => p.is_primary);
+              const fallback = match.other_user.profile_photos?.[0];
+              const avatarUrl = primary?.photo_url || fallback?.photo_url || '/placeholder.svg';
+              return (
+                <img
+                  src={avatarUrl}
+                  alt={match.other_user.first_name}
+                  className="w-full h-full object-cover"
+                />
+              );
+            })()}
           </div>
           
           <div className="flex-1">
