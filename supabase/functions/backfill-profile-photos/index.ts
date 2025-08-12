@@ -33,9 +33,41 @@ serve(async (req) => {
   const log = (...args: any[]) => console.log("[backfill-profile-photos]", ...args);
 
   try {
+    // Authenticate and authorize caller
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: req.headers.get('Authorization')! } },
+      }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+      p_user_id: user.id,
+      p_role: 'admin'
+    });
+    const { data: isSuperAdmin } = await supabaseClient.rpc('is_super_admin', {
+      user_id: user.id
+    });
+
+    if (!isAdmin && !isSuperAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      });
+    }
+
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { persistSession: false } }
     );
 

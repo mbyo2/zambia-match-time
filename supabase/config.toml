@@ -35,7 +35,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-fake-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
