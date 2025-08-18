@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -1253,7 +1253,7 @@ export type Database = {
     }
     Functions: {
       calculate_distance: {
-        Args: { lat1: number; lon1: number; lat2: number; lon2: number }
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
       check_achievements: {
@@ -1270,12 +1270,12 @@ export type Database = {
       }
       create_notification: {
         Args: {
-          target_user_id: string
-          notification_type: string
-          notification_title: string
           notification_message: string
-          related_user_id?: string
+          notification_title: string
+          notification_type: string
           related_match_id?: string
+          related_user_id?: string
+          target_user_id: string
         }
         Returns: string
       }
@@ -1285,65 +1285,65 @@ export type Database = {
       }
       get_compatible_profiles: {
         Args: {
-          user_uuid: string
-          p_max_distance?: number
-          p_age_min?: number
           p_age_max?: number
+          p_age_min?: number
           p_filter_education_levels?: string[]
           p_filter_interests?: string[]
           p_filter_relationship_goals?: string[]
-          p_height_min?: number
           p_height_max?: number
+          p_height_min?: number
+          p_max_distance?: number
+          user_uuid: string
         }
         Returns: {
-          id: string
-          first_name: string
           bio: string
-          occupation: string
+          compatibility_score: number
+          date_of_birth: string
+          distance_km: number
           education: string
+          first_name: string
+          height_cm: number
+          id: string
+          interests: string[]
           location_city: string
           location_state: string
-          date_of_birth: string
-          height_cm: number
-          interests: string[]
+          occupation: string
           relationship_goals: string[]
-          distance_km: number
-          compatibility_score: number
         }[]
       }
       get_enhanced_compatible_profiles: {
         Args: {
-          user_uuid: string
-          p_max_distance?: number
-          p_age_min?: number
           p_age_max?: number
+          p_age_min?: number
+          p_body_types?: string[]
+          p_drinking?: string
+          p_ethnicities?: string[]
           p_filter_education_levels?: string[]
           p_filter_interests?: string[]
           p_filter_relationship_goals?: string[]
-          p_height_min?: number
           p_height_max?: number
-          p_body_types?: string[]
-          p_ethnicities?: string[]
+          p_height_min?: number
+          p_max_distance?: number
           p_religion?: string
           p_smoking?: string
-          p_drinking?: string
+          user_uuid: string
         }
         Returns: {
-          id: string
-          first_name: string
           bio: string
-          occupation: string
+          boost_active: boolean
+          compatibility_score: number
+          date_of_birth: string
+          distance_km: number
           education: string
+          first_name: string
+          height_cm: number
+          id: string
+          interests: string[]
+          last_active: string
           location_city: string
           location_state: string
-          date_of_birth: string
-          height_cm: number
-          interests: string[]
+          occupation: string
           relationship_goals: string[]
-          distance_km: number
-          compatibility_score: number
-          boost_active: boolean
-          last_active: string
         }[]
       }
       get_user_subscription_tier: {
@@ -1352,14 +1352,18 @@ export type Database = {
       }
       has_role: {
         Args: {
-          p_user_id: string
           p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
         }
         Returns: boolean
       }
       increment_swipe_count: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      is_super_admin: {
+        Args: { user_id: string }
+        Returns: boolean
       }
       make_user_admin: {
         Args: { user_email: string }
