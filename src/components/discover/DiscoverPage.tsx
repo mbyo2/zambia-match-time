@@ -61,31 +61,30 @@ const DiscoverPage = () => {
   const loadProfiles = async () => {
     setLoading(true);
     try {
-      // For testing, directly query profiles table
-      // Build base query and exclude current user when available
-      let query = supabase
-        .from('profiles')
-        .select(`
-          id,
-          first_name,
-          bio,
-          occupation,
-          education,
-          location_city,
-          location_state,
-          date_of_birth,
-          height_cm,
-          interests,
-          relationship_goals,
-          last_active
-        `)
-        .eq('is_active', true);
-
-      if (user?.id) {
-        query = query.neq('id', user.id);
+      if (!user?.id) {
+        setProfiles([]);
+        setLoading(false);
+        return;
       }
 
-      const { data: profilesData, error: profilesError } = await query.limit(10);
+      // Use the enhanced compatible profiles function that respects gender preferences
+      const { data: profilesData, error: profilesError } = await supabase
+        .rpc('get_enhanced_compatible_profiles', {
+          user_uuid: user.id,
+          p_max_distance: filters.distance,
+          p_age_min: filters.ageRange[0],
+          p_age_max: filters.ageRange[1],
+          p_filter_education_levels: filters.education,
+          p_filter_interests: filters.interests,
+          p_filter_relationship_goals: filters.relationshipGoals,
+          p_height_min: filters.heightRange[0],
+          p_height_max: filters.heightRange[1],
+          p_body_types: filters.bodyTypes,
+          p_ethnicities: filters.ethnicities,
+          p_religion: filters.religion,
+          p_smoking: filters.smoking,
+          p_drinking: filters.drinking
+        });
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError);
@@ -111,20 +110,14 @@ const DiscoverPage = () => {
         console.error('Error loading photos:', photosError);
       }
 
-      // Combine profiles with their photos and add mock data
+      // Combine profiles with their photos (using the enhanced function's data)
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
         profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || [],
-        distance_km: Math.floor(Math.random() * 50) + 1, // Mock distance
-        compatibility_score: Math.floor(Math.random() * 100), // Mock compatibility
-        boost_active: Math.random() > 0.8, // Random boost status
         date_of_birth: profile.date_of_birth.toString()
       }));
 
-      // Safety: ensure we never include the current user
-      const filteredProfiles = profilesWithPhotos.filter(p => p.id !== user?.id);
-
-      setProfiles(filteredProfiles);
+      setProfiles(profilesWithPhotos);
       setCurrentIndex(0);
     } catch (error) {
       console.error('Error in loadProfiles:', error);
@@ -175,14 +168,14 @@ const DiscoverPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4">
       <div className="max-w-md mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
