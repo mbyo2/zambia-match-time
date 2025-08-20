@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Camera, Shield, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { uploadVerificationDocument, getSecureVerificationDocumentUrl } from '@/utils/secureFileUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -87,30 +88,26 @@ const VerificationManager = () => {
     }
 
     try {
-      const selfieUrl = await uploadFile(selfieFile, {
-        bucket: 'verification-selfies',
-        folder: `${user.id}/selfies`,
-        maxSizeKB: 10240, // 10MB
-        allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
-      });
-      if (!selfieUrl) return;
+      // Upload selfie to secure verification bucket
+      const selfieResult = await uploadVerificationDocument(selfieFile, user.id, 'selfie');
+      if (selfieResult.error || !selfieResult.url) {
+        throw new Error(selfieResult.error || 'Failed to upload selfie securely');
+      }
 
       let professionalDocumentUrl: string | null = null;
       if (verificationType === 'professional' && professionalDocument) {
-        professionalDocumentUrl = await uploadFile(professionalDocument, {
-          bucket: 'verification-selfies',
-          folder: `${user.id}/documents`,
-          maxSizeKB: 10240, // 10MB
-          allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
-        });
-        if (!professionalDocumentUrl) return;
+        const docResult = await uploadVerificationDocument(professionalDocument, user.id, 'professional');
+        if (docResult.error || !docResult.url) {
+          throw new Error(docResult.error || 'Failed to upload professional document securely');
+        }
+        professionalDocumentUrl = docResult.url;
       }
 
       const { error } = await supabase
         .from('verification_requests')
         .insert({
           user_id: user.id,
-          selfie_url: selfieUrl,
+          selfie_url: selfieResult.url,
           status: 'pending',
           verification_type: verificationType,
           profession: verificationType === 'professional' ? profession : null,
@@ -120,8 +117,8 @@ const VerificationManager = () => {
       if (error) throw error;
 
       toast({
-        title: "Verification Submitted",
-        description: "Your verification request has been submitted for review.",
+        title: "Verification Submitted Securely",
+        description: "Your verification request has been submitted with enhanced security.",
       });
 
       setVerificationStatus('pending');
