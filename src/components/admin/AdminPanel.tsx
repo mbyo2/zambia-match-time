@@ -54,11 +54,11 @@ const AdminPanel = () => {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Default Admin Account:</strong><br />
-            Email: <code className="bg-gray-100 px-1 rounded">admin@justgrown.com</code><br />
-            Password: <code className="bg-gray-100 px-1 rounded">AdminPass123!</code><br />
+            <strong>Admin Account Setup:</strong><br />
+            Create your first admin account by signing up with any email, then use the form below to grant admin privileges to that email address.
+            <br />
             <span className="text-sm text-muted-foreground">
-              You need to sign up with these credentials first, then this account will automatically have admin privileges.
+              For security, no default admin credentials are provided. You must explicitly grant admin privileges to users.
             </span>
           </AlertDescription>
         </Alert>
