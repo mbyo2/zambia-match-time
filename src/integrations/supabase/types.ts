@@ -62,13 +62,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "accommodations_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       achievements: {
@@ -138,13 +131,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boosts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -247,13 +233,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "daily_rewards_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       gift_transactions: {
@@ -307,24 +286,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gift_transactions_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "gift_transactions_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gift_transactions_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -384,24 +349,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "matches_user1_id_fkey"
-            columns: ["user1_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "matches_user2_id_fkey"
             columns: ["user2_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "matches_user2_id_fkey"
-            columns: ["user2_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -453,13 +404,6 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -550,13 +494,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profile_photos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profile_videos: {
@@ -592,13 +529,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profile_videos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profile_views: {
@@ -632,24 +562,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profile_views_viewed_id_fkey"
-            columns: ["viewed_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "profile_views_viewer_id_fkey"
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_views_viewer_id_fkey"
-            columns: ["viewer_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -853,24 +769,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reports_reported_id_fkey"
-            columns: ["reported_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -909,13 +811,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "saved_searches_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -995,13 +890,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "stories_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       story_views: {
@@ -1038,13 +926,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "story_views_viewer_id_fkey"
-            columns: ["viewer_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       swipes: {
@@ -1078,24 +959,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "swipes_swiped_id_fkey"
-            columns: ["swiped_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "swipes_swiper_id_fkey"
             columns: ["swiper_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "swipes_swiper_id_fkey"
-            columns: ["swiper_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1134,13 +1001,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_achievements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_blocks: {
@@ -1174,24 +1034,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_blocks_blocked_id_fkey"
-            columns: ["blocked_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_blocks_blocker_id_fkey"
             columns: ["blocker_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_blocks_blocker_id_fkey"
-            columns: ["blocker_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1234,13 +1080,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_prompt_responses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1326,13 +1165,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_stats_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_subscriptions: {
@@ -1416,13 +1248,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "verification_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "safe_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       virtual_gifts: {
@@ -1460,120 +1285,7 @@ export type Database = {
       }
     }
     Views: {
-      safe_profiles: {
-        Row: {
-          age_max: number | null
-          age_min: number | null
-          bio: string | null
-          body_type: string | null
-          compatibility_score: number | null
-          created_at: string | null
-          date_of_birth: string | null
-          drinking: string | null
-          education: Database["public"]["Enums"]["education_level"] | null
-          ethnicity: string | null
-          first_name: string | null
-          gender: Database["public"]["Enums"]["gender_type"] | null
-          has_accommodation_available: boolean | null
-          height_cm: number | null
-          id: string | null
-          interested_in: Database["public"]["Enums"]["gender_type"][] | null
-          interests: string[] | null
-          is_active: boolean | null
-          last_active: string | null
-          location_city: string | null
-          location_state: string | null
-          looking_for: string[] | null
-          max_distance: number | null
-          occupation: string | null
-          personality_traits: Json | null
-          professional_badge: string | null
-          relationship_goals:
-            | Database["public"]["Enums"]["relationship_goal"][]
-            | null
-          religion: string | null
-          smoking: string | null
-          updated_at: string | null
-          verification_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
-        }
-        Insert: {
-          age_max?: number | null
-          age_min?: number | null
-          bio?: string | null
-          body_type?: string | null
-          compatibility_score?: number | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          drinking?: string | null
-          education?: Database["public"]["Enums"]["education_level"] | null
-          ethnicity?: string | null
-          first_name?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          has_accommodation_available?: boolean | null
-          height_cm?: number | null
-          id?: string | null
-          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
-          interests?: string[] | null
-          is_active?: boolean | null
-          last_active?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          looking_for?: string[] | null
-          max_distance?: number | null
-          occupation?: string | null
-          personality_traits?: Json | null
-          professional_badge?: string | null
-          relationship_goals?:
-            | Database["public"]["Enums"]["relationship_goal"][]
-            | null
-          religion?: string | null
-          smoking?: string | null
-          updated_at?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
-        }
-        Update: {
-          age_max?: number | null
-          age_min?: number | null
-          bio?: string | null
-          body_type?: string | null
-          compatibility_score?: number | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          drinking?: string | null
-          education?: Database["public"]["Enums"]["education_level"] | null
-          ethnicity?: string | null
-          first_name?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          has_accommodation_available?: boolean | null
-          height_cm?: number | null
-          id?: string | null
-          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
-          interests?: string[] | null
-          is_active?: boolean | null
-          last_active?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          looking_for?: string[] | null
-          max_distance?: number | null
-          occupation?: string | null
-          personality_traits?: Json | null
-          professional_badge?: string | null
-          relationship_goals?:
-            | Database["public"]["Enums"]["relationship_goal"][]
-            | null
-          religion?: string | null
-          smoking?: string | null
-          updated_at?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calculate_distance: {
@@ -1589,6 +1301,10 @@ export type Database = {
         Returns: number
       }
       cleanup_fake_users: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_inactive_accounts: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
@@ -1644,6 +1360,10 @@ export type Database = {
           relationship_goals: string[]
         }[]
       }
+      get_current_user_subscription: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["subscription_tier"]
+      }
       get_enhanced_compatible_profiles: {
         Args: {
           p_age_max?: number
@@ -1679,9 +1399,32 @@ export type Database = {
           relationship_goals: string[]
         }[]
       }
+      get_safe_profiles_for_user: {
+        Args: { user_uuid: string }
+        Returns: {
+          bio: string
+          date_of_birth: string
+          education: Database["public"]["Enums"]["education_level"]
+          first_name: string
+          has_accommodation_available: boolean
+          height_cm: number
+          id: string
+          interests: string[]
+          is_active: boolean
+          last_active: string
+          location_city: string
+          location_state: string
+          occupation: string
+          relationship_goals: Database["public"]["Enums"]["relationship_goal"][]
+        }[]
+      }
       get_user_subscription_tier: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
+      }
+      get_verification_document_url: {
+        Args: { p_document_type?: string; p_request_id: string }
+        Returns: string
       }
       has_role: {
         Args: {

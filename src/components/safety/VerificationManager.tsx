@@ -182,6 +182,26 @@ const VerificationManager = () => {
     }
   };
 
+  const getSecureDocumentUrl = async (requestId: string, documentType: 'selfie' | 'professional' = 'selfie') => {
+    try {
+      const { data, error } = await supabase.rpc('get_verification_document_url', {
+        p_request_id: requestId,
+        p_document_type: documentType
+      });
+      
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error('Error getting secure document URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to access verification document.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -351,13 +371,25 @@ const VerificationManager = () => {
                 
                 <div className="mb-4">
                   <h4 className="font-medium text-sm mb-1">Selfie:</h4>
-                  <a href={request.selfie_url} target="_blank" rel="noreferrer noopener">
-                    <img 
-                      src={request.selfie_url} 
-                      alt="Verification selfie"
-                      className="max-w-xs rounded-lg border"
-                    />
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Identity Selfie</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const url = await getSecureDocumentUrl(request.id, 'selfie');
+                          if (url) window.open(url, '_blank');
+                        }}
+                        className="text-xs"
+                      >
+                        View Secure Document
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 {request.verification_type === 'professional' && (
@@ -369,9 +401,23 @@ const VerificationManager = () => {
                     {request.professional_document_url && (
                       <div className="mb-4">
                         <h4 className="font-medium text-sm mb-1">Professional Document:</h4>
-                        <a href={request.professional_document_url} target="_blank" rel="noreferrer noopener" className="text-pink-600 hover:underline flex items-center gap-2">
-                           <FileText size={16}/> View Document
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          <div>
+                            <p className="font-medium">Professional Document</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                const url = await getSecureDocumentUrl(request.id, 'professional');
+                                if (url) window.open(url, '_blank');
+                              }}
+                              className="text-xs"
+                            >
+                              View Secure Document
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
