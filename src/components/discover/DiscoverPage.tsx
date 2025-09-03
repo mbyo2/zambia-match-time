@@ -60,13 +60,17 @@ const DiscoverPage = () => {
 
   const loadProfiles = async () => {
     setLoading(true);
+    console.log('Loading profiles for user:', user?.id);
     try {
       if (!user?.id) {
+        console.log('No user ID available');
         setProfiles([]);
         setLoading(false);
         return;
       }
 
+      console.log('Calling get_discovery_profiles with filters:', filters);
+      
       // Use the secure discovery profiles function
       const { data: profilesData, error: profilesError } = await supabase
         .rpc('get_discovery_profiles', {
@@ -86,12 +90,16 @@ const DiscoverPage = () => {
           p_drinking: filters.drinking
         });
 
+      console.log('Profile data response:', profilesData?.length || 0, 'profiles');
+      console.log('Profile error:', profilesError);
+
       if (profilesError) {
         console.error('Error loading profiles:', profilesError);
         return;
       }
 
       if (!profilesData || profilesData.length === 0) {
+        console.log('No profiles found, setting empty array');
         setProfiles([]);
         setCurrentIndex(0);
         return;
@@ -99,6 +107,8 @@ const DiscoverPage = () => {
 
       // Get profile photos for each profile
       const profileIds = profilesData.map(p => p.id);
+      console.log('Loading photos for profile IDs:', profileIds.slice(0, 3));
+      
       const { data: photosData, error: photosError } = await supabase
         .from('profile_photos')
         .select('user_id, photo_url, is_primary')
@@ -108,15 +118,18 @@ const DiscoverPage = () => {
 
       if (photosError) {
         console.error('Error loading photos:', photosError);
+      } else {
+        console.log('Loaded photos for', photosData?.length || 0, 'photos');
       }
 
-      // Combine profiles with their photos (using the enhanced function's data)
+      // Combine profiles with their photos
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
         profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || [],
         date_of_birth: profile.date_of_birth.toString()
       }));
 
+      console.log('Final profiles with photos:', profilesWithPhotos.length);
       setProfiles(profilesWithPhotos);
       setCurrentIndex(0);
     } catch (error) {
@@ -133,17 +146,44 @@ const DiscoverPage = () => {
     
     // Safety guard: never allow swiping on your own profile
     if (user?.id && currentProfile.id === user.id) {
+      console.log('Skipping own profile');
       setCurrentIndex(prev => prev + 1);
+      return;
+    }
+
+    // Check swipe limits and consume swipe
+    if (!canSwipe()) {
+      console.log('Swipe limit reached');
+      return;
+    }
+
+    const success = await consumeSwipe();
+    if (!success) {
+      console.log('Failed to consume swipe');
       return;
     }
     
     try {
-      // For testing without auth, just log the action
-      console.log(`Swiped ${action} on ${currentProfile.first_name}`);
-      
-      // Simulate a match for likes (demo purposes)
-      if (action === 'like' && Math.random() > 0.7) {
-        console.log(`🎉 It's a match with ${currentProfile.first_name}!`);
+      // Record the swipe in the database
+      const { error: swipeError } = await supabase
+        .from('swipes')
+        .insert({
+          swiper_id: user?.id,
+          swiped_id: currentProfile.id,
+          action: action
+        });
+
+      if (swipeError) {
+        console.error('Error recording swipe:', swipeError);
+      } else {
+        console.log(`Swiped ${action} on ${currentProfile.first_name}`);
+        
+        // Update user stats
+        if (action === 'like') {
+          incrementStat('likes_given');
+        } else if (action === 'super_like') {
+          incrementStat('super_likes_given');
+        }
       }
 
       // Move to next profile
@@ -151,6 +191,7 @@ const DiscoverPage = () => {
 
       // Load more profiles if running low
       if (currentIndex >= profiles.length - 3) {
+        console.log('Loading more profiles...');
         loadProfiles();
       }
     } catch (error) {
