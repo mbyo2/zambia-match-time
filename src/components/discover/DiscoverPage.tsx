@@ -67,9 +67,9 @@ const DiscoverPage = () => {
         return;
       }
 
-      // Use the enhanced compatible profiles function that respects gender preferences
+      // Use the secure discovery profiles function
       const { data: profilesData, error: profilesError } = await supabase
-        .rpc('get_enhanced_compatible_profiles', {
+        .rpc('get_discovery_profiles', {
           user_uuid: user.id,
           p_max_distance: filters.distance,
           p_age_min: filters.ageRange[0],

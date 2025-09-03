@@ -1364,6 +1364,41 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
+      get_discovery_profiles: {
+        Args: {
+          p_age_max?: number
+          p_age_min?: number
+          p_body_types?: string[]
+          p_drinking?: string
+          p_ethnicities?: string[]
+          p_filter_education_levels?: string[]
+          p_filter_interests?: string[]
+          p_filter_relationship_goals?: string[]
+          p_height_max?: number
+          p_height_min?: number
+          p_max_distance?: number
+          p_religion?: string
+          p_smoking?: string
+          user_uuid: string
+        }
+        Returns: {
+          bio: string
+          boost_active: boolean
+          compatibility_score: number
+          date_of_birth: string
+          distance_km: number
+          education: string
+          first_name: string
+          height_cm: number
+          id: string
+          interests: string[]
+          last_active: string
+          location_city: string
+          location_state: string
+          occupation: string
+          relationship_goals: string[]
+        }[]
+      }
       get_enhanced_compatible_profiles: {
         Args: {
           p_age_max?: number
