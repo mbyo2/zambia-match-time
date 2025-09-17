@@ -5,12 +5,44 @@ export interface SecureUploadResult {
   error?: string;
 }
 
+/**
+ * Validates file before upload for security
+ */
+const validateFile = (file: File, allowedTypes: string[], maxSize: number) => {
+  // File size validation
+  if (file.size > maxSize) {
+    throw new Error(`File size too large. Maximum ${Math.round(maxSize / 1024 / 1024)}MB allowed.`);
+  }
+
+  // MIME type validation
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
+  }
+
+  // File extension validation
+  const fileExtension = file.name.toLowerCase().split('.').pop();
+  const allowedExtensions = allowedTypes.map(type => type.split('/')[1]);
+  if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+    throw new Error('File extension does not match MIME type.');
+  }
+
+  // Additional security checks
+  if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+    throw new Error('Invalid file name.');
+  }
+};
+
 export const uploadVerificationDocument = async (
   file: File,
   userId: string,
   documentType: 'selfie' | 'professional'
 ): Promise<SecureUploadResult> => {
   try {
+    // Enhanced file validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/pdf'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    validateFile(file, allowedTypes, maxSize);
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${documentType}_${Date.now()}.${fileExt}`;
 
@@ -65,6 +97,11 @@ export const uploadChatMedia = async (
   conversationId: string
 ): Promise<SecureUploadResult> => {
   try {
+    // Enhanced file validation for chat media
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    validateFile(file, allowedTypes, maxSize);
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${conversationId}_${Date.now()}.${fileExt}`;
 

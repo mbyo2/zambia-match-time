@@ -1434,6 +1434,24 @@ export type Database = {
           relationship_goals: string[]
         }[]
       }
+      get_safe_profile_data: {
+        Args: { profile_id: string }
+        Returns: {
+          age: number
+          bio: string
+          education: string
+          first_name: string
+          general_city: string
+          has_accommodation_available: boolean
+          height_cm: number
+          id: string
+          interests: string[]
+          is_verified: boolean
+          last_active: string
+          occupation: string
+          relationship_goals: string[]
+        }[]
+      }
       get_safe_profiles_for_user: {
         Args: { user_uuid: string }
         Returns: {
@@ -1458,6 +1476,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
       get_verification_document_url: {
+        Args: { p_document_type?: string; p_request_id: string }
+        Returns: string
+      }
+      get_verification_document_url_secure: {
         Args: { p_document_type?: string; p_request_id: string }
         Returns: string
       }
