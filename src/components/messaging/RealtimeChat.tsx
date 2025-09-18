@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Phone, Video, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useTypingIndicator } from './TypingIndicatorSystem';
+import TypingIndicator from './TypingIndicator';
+import QuickReportDialog from '../safety/QuickReportDialog';
 
 interface Message {
   id: string;
@@ -31,10 +35,11 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isUserOnline, getUserLastSeen } = useOnlineStatus(conversationId);
+  const { isOtherUserTyping, sendTypingIndicator } = useTypingIndicator(conversationId, otherUserName);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -163,6 +168,17 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Send typing indicator
+    if (e.target.value.length > 0) {
+      sendTypingIndicator(true);
+    } else {
+      sendTypingIndicator(false);
+    }
+  };
+
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
@@ -217,7 +233,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
           </div>
           <div>
             <h2 className="font-semibold">{otherUserName}</h2>
-            <p className="text-sm text-gray-500">Active now</p>
+            <p className="text-sm text-gray-500">
+              {isUserOnline(otherUserId) ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Active now
+                </span>
+              ) : (
+                'Last seen recently'
+              )}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -227,9 +252,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
           <Button variant="ghost" size="sm">
             <Video size={20} />
           </Button>
-          <Button variant="ghost" size="sm">
-            <MoreVertical size={20} />
-          </Button>
+          <QuickReportDialog
+            reportedUserId={otherUserId}
+            reportedUserName={otherUserName}
+            contentType="message"
+            trigger={
+              <Button variant="ghost" size="sm">
+                <MoreVertical size={20} />
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -272,17 +304,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             ))}
           </div>
         ))}
-        {typing && (
-          <div className="flex justify-start">
-            <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg rounded-bl-none">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-            </div>
-          </div>
-        )}
+        <TypingIndicator userName={otherUserName} isVisible={isOtherUserTyping} />
         <div ref={messagesEndRef} />
       </div>
 
@@ -291,7 +313,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         <div className="flex items-center gap-2">
           <Input
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1"

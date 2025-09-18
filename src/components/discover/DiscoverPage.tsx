@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,8 +6,11 @@ import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
+import ProfileCompletionBanner from '../profile/ProfileCompletionBanner';
+import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
 import { Filter, Shuffle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
@@ -29,12 +31,16 @@ interface Profile {
 
 const DiscoverPage = () => {
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [needsLocation, setNeedsLocation] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [showProfileCompletion, setShowProfileCompletion] = useState(true);
   const [filters, setFilters] = useState({
     ageRange: [18, 99] as [number, number],
     heightRange: [150, 200] as [number, number],
@@ -50,11 +56,31 @@ const DiscoverPage = () => {
   });
 
   useEffect(() => {
-    // Load profiles after auth resolves and whenever user changes
-    if (!authLoading) {
-      loadProfiles();
+    if (!authLoading && user) {
+      checkLocationAndLoadProfiles();
     }
   }, [authLoading, user?.id]);
+
+  const checkLocationAndLoadProfiles = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('location_lat, location_lng')
+        .eq('id', user?.id)
+        .single();
+
+      if (!profile?.location_lat || !profile?.location_lng) {
+        setNeedsLocation(true);
+        setShowLocationPrompt(true);
+      } else {
+        setNeedsLocation(false);
+        loadProfiles();
+      }
+    } catch (error) {
+      console.error('Error checking location:', error);
+      loadProfiles(); // Load anyway
+    }
+  };
 
   const loadProfiles = async () => {
     setLoading(true);
@@ -193,6 +219,25 @@ const DiscoverPage = () => {
 
   const currentProfile = profiles[currentIndex];
 
+  if (showLocationPrompt) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4 flex items-center justify-center">
+        <LocationPermissionPrompt
+          onLocationSet={() => {
+            setShowLocationPrompt(false);
+            setNeedsLocation(false);
+            loadProfiles();
+          }}
+          onSkip={() => {
+            setShowLocationPrompt(false);
+            setNeedsLocation(false);
+            loadProfiles();
+          }}
+        />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
@@ -225,6 +270,18 @@ const DiscoverPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Profile Completion Banner */}
+        {showProfileCompletion && (
+          <ProfileCompletionBanner 
+            onEditProfile={() => {
+              toast({
+                title: "Edit Profile",
+                description: "Navigate to profile tab to edit your profile",
+              });
+            }} 
+          />
+        )}
 
         {/* Swipe Limit Display */}
         <SwipeLimitDisplay />
