@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Image, Camera } from 'lucide-react';
 import { validateMessage } from '@/utils/sanitization';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { useToast } from '@/hooks/use-toast';
 
 interface MessageInputProps {
@@ -20,11 +20,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
+  const { checkRateLimit } = useRateLimit();
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
     
     try {
+      // SECURITY FIX: Check rate limit before sending message 
+      const rateLimitResult = await checkRateLimit('send_message', 50, 60); // 50 messages per hour
+      if (!rateLimitResult.success) {
+        return;
+      }
+
       // Validate and sanitize message content
       const sanitizedMessage = validateMessage(message);
       onSendMessage(sanitizedMessage, 'text');

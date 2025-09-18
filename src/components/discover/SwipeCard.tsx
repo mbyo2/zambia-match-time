@@ -7,17 +7,16 @@ import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
 interface Profile {
   id: string;
   first_name: string;
+  age: number;
   bio?: string;
   occupation?: string;
-  education?: string;
-  location_city?: string;
-  location_state?: string;
-  date_of_birth: string;
+  general_location?: string;
   height_cm?: number;
   interests: string[];
   relationship_goals: string[];
   distance_km?: number;
   compatibility_score?: number;
+  is_verified: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
   last_active?: string;
 }
@@ -115,7 +114,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold">
-              {profile.first_name}, {calculateAge(profile.date_of_birth)}
+              {profile.first_name}, {profile.age}
             </h3>
             {userIsOnline && (
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
@@ -134,21 +133,10 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
               </div>
             )}
             
-            {profile.education && (
-              <div className="flex items-center gap-2 text-sm">
-                <GraduationCap size={14} />
-                <span className="capitalize">{profile.education.replace('_', ' ')}</span>
-              </div>
-            )}
-            
-            {(profile.location_city || profile.location_state) && (
+            {(profile.general_location) && (
               <div className="flex items-center gap-2 text-sm">
                 <MapPin size={14} />
-                <span>
-                  {profile.location_city}
-                  {profile.location_city && profile.location_state && ', '}
-                  {profile.location_state}
-                </span>
+                <span>{profile.general_location}</span>
               </div>
             )}
 

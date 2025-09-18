@@ -13,18 +13,16 @@ import { Filter, Shuffle } from 'lucide-react';
 interface Profile {
   id: string;
   first_name: string;
+  age: number;
   bio: string;
   occupation: string;
-  education: string;
-  location_city: string;
-  location_state: string;
-  date_of_birth: string;
+  general_location: string;
   height_cm: number;
   interests: string[];
   relationship_goals: string[];
   distance_km: number;
   compatibility_score: number;
-  boost_active: boolean;
+  is_verified: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
   last_active?: string;
 }
@@ -71,24 +69,13 @@ const DiscoverPage = () => {
 
       console.log('Calling get_discovery_profiles with filters:', filters);
       
-      // Use the secure discovery profiles function
-      const { data: profilesData, error: profilesError } = await supabase
-        .rpc('get_discovery_profiles', {
-          user_uuid: user.id,
-          p_max_distance: filters.distance,
-          p_age_min: filters.ageRange[0],
-          p_age_max: filters.ageRange[1],
-          p_filter_education_levels: filters.education,
-          p_filter_interests: filters.interests,
-          p_filter_relationship_goals: filters.relationshipGoals,
-          p_height_min: filters.heightRange[0],
-          p_height_max: filters.heightRange[1],
-          p_body_types: filters.bodyTypes,
-          p_ethnicities: filters.ethnicities,
-          p_religion: filters.religion,
-          p_smoking: filters.smoking,
-          p_drinking: filters.drinking
-        });
+      // SECURITY FIX: Use secure discovery function that only exposes safe data
+      const { data: profilesData, error: profilesError } = await supabase.rpc('get_safe_discovery_profiles', {
+        requesting_user_id: user.id,
+        p_max_distance: filters.distance,
+        p_age_min: filters.ageRange[0],
+        p_age_max: filters.ageRange[1]
+      });
 
       console.log('Profile data response:', profilesData?.length || 0, 'profiles');
       console.log('Profile error:', profilesError);
@@ -125,8 +112,7 @@ const DiscoverPage = () => {
       // Combine profiles with their photos
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
-        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || [],
-        date_of_birth: profile.date_of_birth.toString()
+        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
       }));
 
       console.log('Final profiles with photos:', profilesWithPhotos.length);

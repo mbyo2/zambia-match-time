@@ -726,6 +726,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_type: string
+          attempts: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          last_attempt: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          last_attempt?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          last_attempt?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           content_metadata: Json | null
@@ -1300,6 +1330,15 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      check_rate_limit: {
+        Args: {
+          p_action_type: string
+          p_max_attempts?: number
+          p_user_id: string
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
       cleanup_fake_users: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1434,6 +1473,29 @@ export type Database = {
           relationship_goals: string[]
         }[]
       }
+      get_safe_discovery_profiles: {
+        Args: {
+          p_age_max?: number
+          p_age_min?: number
+          p_max_distance?: number
+          requesting_user_id: string
+        }
+        Returns: {
+          age: number
+          bio: string
+          compatibility_score: number
+          distance_km: number
+          first_name: string
+          general_location: string
+          height_cm: number
+          id: string
+          interests: string[]
+          is_verified: boolean
+          last_active: string
+          occupation: string
+          relationship_goals: string[]
+        }[]
+      }
       get_safe_profile_data: {
         Args: { profile_id: string }
         Returns: {
@@ -1474,6 +1536,10 @@ export type Database = {
       get_user_subscription_tier: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
+      }
+      get_verification_document_secure: {
+        Args: { p_document_type?: string; p_request_id: string }
+        Returns: string
       }
       get_verification_document_url: {
         Args: { p_document_type?: string; p_request_id: string }
