@@ -1533,6 +1533,31 @@ export type Database = {
           relationship_goals: Database["public"]["Enums"]["relationship_goal"][]
         }[]
       }
+      get_secure_discovery_profiles: {
+        Args: {
+          p_age_max?: number
+          p_age_min?: number
+          p_limit?: number
+          p_max_distance?: number
+          requesting_user_id: string
+        }
+        Returns: {
+          age: number
+          bio: string
+          compatibility_score: number
+          distance_km: number
+          first_name: string
+          general_location: string
+          has_accommodation_available: boolean
+          height_cm: number
+          id: string
+          interests: string[]
+          is_verified: boolean
+          last_active: string
+          occupation: string
+          relationship_goals: string[]
+        }[]
+      }
       get_user_subscription_tier: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
@@ -1546,6 +1571,10 @@ export type Database = {
         Returns: string
       }
       get_verification_document_url_secure: {
+        Args: { p_document_type?: string; p_request_id: string }
+        Returns: string
+      }
+      get_verification_document_with_audit: {
         Args: { p_document_type?: string; p_request_id: string }
         Returns: string
       }
@@ -1583,6 +1612,10 @@ export type Database = {
       mark_notifications_read: {
         Args: { notification_ids: string[] }
         Returns: undefined
+      }
+      sanitize_message_content: {
+        Args: { p_content: string; p_user_id?: string }
+        Returns: string
       }
     }
     Enums: {

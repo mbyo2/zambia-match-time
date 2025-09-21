@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Image, Camera } from 'lucide-react';
-import { validateMessage } from '@/utils/sanitization';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MessageInputProps {
   onSendMessage: (content: string, type?: 'text' | 'image') => void;
@@ -32,8 +32,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
         return;
       }
 
-      // Validate and sanitize message content
-      const sanitizedMessage = validateMessage(message);
+      // SECURITY FIX: Use server-side sanitization for enhanced security
+      const { data: sanitizedMessage, error } = await supabase.rpc('sanitize_message_content', {
+        p_content: message
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Message validation failed');
+      }
+      
       onSendMessage(sanitizedMessage, 'text');
       setMessage('');
       
@@ -73,9 +80,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Enhanced file validation
+    // SECURITY FIX: Enhanced file validation using secure validation utility
     try {
-      validateImageFile(file);
+      const { validateSecureFile } = await import('@/utils/secureFileValidation');
+      const validation = await validateSecureFile(file, 'image');
+      
+      if (!validation.isValid) {
+        throw new Error(validation.error);
+      }
+      
       // For now, we'll just show a placeholder - image upload would need storage setup
       onSendMessage(`[Image: ${file.name}]`, 'image');
     } catch (error) {
@@ -88,19 +101,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const validateImageFile = (file: File) => {
-    // File size validation (max 10MB)
+    // Deprecated: Now using secureFileValidation utility
+    // This function kept for backward compatibility
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       throw new Error('File size too large. Maximum 10MB allowed.');
     }
 
-    // MIME type validation
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
     }
 
-    // File extension validation
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const fileExtension = file.name.toLowerCase().split('.').pop();
     if (!fileExtension || !allowedExtensions.includes(`.${fileExtension}`)) {

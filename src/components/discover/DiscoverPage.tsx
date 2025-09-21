@@ -96,11 +96,12 @@ const DiscoverPage = () => {
       console.log('Calling get_discovery_profiles with filters:', filters);
       
       // SECURITY FIX: Use secure discovery function that only exposes safe data
-      const { data: profilesData, error: profilesError } = await supabase.rpc('get_safe_discovery_profiles', {
+      const { data: profilesData, error: profilesError } = await supabase.rpc('get_secure_discovery_profiles', {
         requesting_user_id: user.id,
         p_max_distance: filters.distance,
         p_age_min: filters.ageRange[0],
-        p_age_max: filters.ageRange[1]
+        p_age_max: filters.ageRange[1],
+        p_limit: 50
       });
 
       console.log('Profile data response:', profilesData?.length || 0, 'profiles');
