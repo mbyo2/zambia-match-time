@@ -1318,6 +1318,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_verification_document_access: {
+        Args: {
+          p_admin_user_id: string
+          p_document_type: string
+          p_request_id: string
+        }
+        Returns: undefined
+      }
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
