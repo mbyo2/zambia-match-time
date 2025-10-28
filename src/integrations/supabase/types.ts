@@ -851,7 +851,7 @@ export type Database = {
           created_at: string | null
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resource_id: string | null
           resource_type: string
           user_agent: string | null
@@ -862,7 +862,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type: string
           user_agent?: string | null
@@ -873,7 +873,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string
           user_agent?: string | null
@@ -1322,14 +1322,8 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
-      check_achievements: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
-      check_daily_swipe_limit: {
-        Args: { user_uuid: string }
-        Returns: number
-      }
+      check_achievements: { Args: { p_user_id: string }; Returns: undefined }
+      check_daily_swipe_limit: { Args: { user_uuid: string }; Returns: number }
       check_rate_limit: {
         Args: {
           p_action_type: string
@@ -1339,14 +1333,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_fake_users: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_inactive_accounts: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      cleanup_fake_users: { Args: never; Returns: number }
+      cleanup_inactive_accounts: { Args: never; Returns: number }
       create_notification: {
         Args: {
           notification_message: string
@@ -1359,7 +1347,7 @@ export type Database = {
         Returns: string
       }
       detect_suspicious_activity: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           activity_type: string
           count: number
@@ -1367,10 +1355,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_app_statistics: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_app_statistics: { Args: never; Returns: Json }
       get_compatible_profiles: {
         Args: {
           p_age_max?: number
@@ -1400,7 +1385,7 @@ export type Database = {
         }[]
       }
       get_current_user_subscription: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
       get_discovery_profiles: {
@@ -1585,14 +1570,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_swipe_count: {
-        Args: { user_uuid: string }
-        Returns: undefined
-      }
-      is_super_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      increment_swipe_count: { Args: { user_uuid: string }; Returns: undefined }
+      is_super_admin: { Args: { user_id: string }; Returns: boolean }
       log_security_event: {
         Args: {
           p_action: string
@@ -1605,10 +1584,7 @@ export type Database = {
         }
         Returns: string
       }
-      make_user_admin: {
-        Args: { user_email: string }
-        Returns: undefined
-      }
+      make_user_admin: { Args: { user_email: string }; Returns: undefined }
       mark_notifications_read: {
         Args: { notification_ids: string[] }
         Returns: undefined
