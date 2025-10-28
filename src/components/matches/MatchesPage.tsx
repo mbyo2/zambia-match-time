@@ -74,34 +74,84 @@ const MatchesPage = () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch matches separately to handle RLS policies correctly
+      const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select(`
-          *,
-          conversations!inner (id, last_message_at),
-          user1:profiles!matches_user1_id_fkey (
-            id, first_name, bio,
-            profile_photos (photo_url, is_primary)
-          ),
-          user2:profiles!matches_user2_id_fkey (
-            id, first_name, bio,
-            profile_photos (photo_url, is_primary)
-          )
-        `)
+        .select('*')
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching matches:', error);
+      if (matchesError) {
+        console.error('Error fetching matches:', matchesError);
         return;
       }
 
-      const formattedMatches = data?.map((match: any) => ({
+      if (!matchesData || matchesData.length === 0) {
+        setMatches([]);
+        setMatchesWithDetails([]);
+        return;
+      }
+
+      // Get conversations for matches
+      const matchIds = matchesData.map(m => m.id);
+      const { data: conversationsData } = await supabase
+        .from('conversations')
+        .select('id, match_id, last_message_at')
+        .in('match_id', matchIds);
+
+      // Get profile data for matched users
+      const userIds = new Set<string>();
+      matchesData.forEach(match => {
+        userIds.add(match.user1_id);
+        userIds.add(match.user2_id);
+      });
+      userIds.delete(user.id); // Remove current user
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, first_name, bio')
+        .in('id', Array.from(userIds));
+
+      // Get photos for matched users
+      const { data: photosData } = await supabase
+        .from('profile_photos')
+        .select('user_id, photo_url, is_primary')
+        .in('user_id', Array.from(userIds))
+        .order('is_primary', { ascending: false });
+
+      // Combine the data
+      const data = matchesData.map(match => {
+        const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
+        const otherProfile = profilesData?.find(p => p.id === otherUserId);
+        const otherPhotos = photosData?.filter(p => p.user_id === otherUserId) || [];
+        const conversation = conversationsData?.find(c => c.match_id === match.id);
+
+        return {
+          ...match,
+          user1: match.user1_id === user.id ? null : {
+            id: otherUserId,
+            first_name: otherProfile?.first_name || 'Unknown',
+            bio: otherProfile?.bio || '',
+            profile_photos: otherPhotos
+          },
+          user2: match.user2_id === user.id ? null : {
+            id: otherUserId,
+            first_name: otherProfile?.first_name || 'Unknown',
+            bio: otherProfile?.bio || '',
+            profile_photos: otherPhotos
+          },
+          conversations: conversation ? [conversation] : []
+        };
+      });
+
+      const error = null;
+
+      const formattedMatches = data.map((match: any) => ({
         ...match,
         other_user: match.user1_id === user?.id ? match.user2 : match.user1,
-        conversation: match.conversations[0]
-      })) || [];
+        conversation: match.conversations[0] || { id: '', last_message_at: match.created_at }
+      }));
 
       setMatches(formattedMatches);
       await fetchMatchesDetails(formattedMatches);

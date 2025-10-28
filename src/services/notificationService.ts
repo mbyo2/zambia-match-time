@@ -48,11 +48,13 @@ export class NotificationService {
     }
 
     try {
+      const key = this.urlBase64ToUint8Array(
+        'BEl62iUYgUivxIkv69yViEuiBIa40HI80YmqiS7hRB1t5rWQWaChTTYBJXnQaVj5f2xB_1jzl_TjLlKGNzfA1Jk'
+      );
+      
       const subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(
-          'BEl62iUYgUivxIkv69yViEuiBIa40HI80YmqiS7hRB1t5rWQWaChTTYBJXnQaVj5f2xB_1jzl_TjLlKGNzfA1Jk' // Replace with your VAPID public key
-        )
+        applicationServerKey: key as unknown as BufferSource
       });
 
       // Convert subscription to plain object for JSON compatibility

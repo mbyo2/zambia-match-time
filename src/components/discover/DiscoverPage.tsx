@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
+import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
@@ -15,18 +16,20 @@ import { useToast } from '@/hooks/use-toast';
 interface Profile {
   id: string;
   first_name: string;
-  age: number;
   bio: string;
   occupation: string;
-  general_location: string;
+  education: string;
+  location_city: string;
+  location_state: string;
+  date_of_birth: string;
   height_cm: number;
   interests: string[];
   relationship_goals: string[];
   distance_km: number;
   compatibility_score: number;
-  is_verified: boolean;
+  boost_active: boolean;
+  last_active: string;
   profile_photos: { photo_url: string; is_primary: boolean }[];
-  last_active?: string;
 }
 
 const DiscoverPage = () => {
@@ -34,13 +37,13 @@ const DiscoverPage = () => {
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
+  const { status: profileStatus } = useProfileCompletion();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  const [showProfileCompletion, setShowProfileCompletion] = useState(true);
   const [filters, setFilters] = useState({
     ageRange: [18, 99] as [number, number],
     heightRange: [150, 200] as [number, number],
@@ -95,13 +98,22 @@ const DiscoverPage = () => {
 
       console.log('Calling get_discovery_profiles with filters:', filters);
       
-      // SECURITY FIX: Use secure discovery function that only exposes safe data
-      const { data: profilesData, error: profilesError } = await supabase.rpc('get_secure_discovery_profiles', {
-        requesting_user_id: user.id,
+      // Use the main discovery function with all available filters
+      const { data: profilesData, error: profilesError } = await supabase.rpc('get_discovery_profiles', {
+        user_uuid: user.id,
         p_max_distance: filters.distance,
         p_age_min: filters.ageRange[0],
         p_age_max: filters.ageRange[1],
-        p_limit: 50
+        p_filter_education_levels: filters.education,
+        p_filter_interests: filters.interests,
+        p_filter_relationship_goals: filters.relationshipGoals,
+        p_height_min: filters.heightRange[0],
+        p_height_max: filters.heightRange[1],
+        p_body_types: filters.bodyTypes,
+        p_ethnicities: filters.ethnicities,
+        p_religion: filters.religion,
+        p_smoking: filters.smoking,
+        p_drinking: filters.drinking
       });
 
       console.log('Profile data response:', profilesData?.length || 0, 'profiles');
@@ -273,7 +285,7 @@ const DiscoverPage = () => {
         </div>
 
         {/* Profile Completion Banner */}
-        {showProfileCompletion && (
+        {profileStatus.completionPercentage < 100 && (
           <ProfileCompletionBanner 
             onEditProfile={() => {
               toast({

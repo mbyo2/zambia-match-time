@@ -32,16 +32,20 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
 
     const { data, error } = await supabase.storage
       .from('profile-photos')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
     if (error) {
       console.error('Upload error:', error);
       return null;
     }
 
+    // Use data.path to get the correct path for public URL
     const { data: { publicUrl } } = supabase.storage
       .from('profile-photos')
-      .getPublicUrl(fileName);
+      .getPublicUrl(data.path);
 
     return publicUrl;
   }, [user]);
