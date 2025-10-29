@@ -9,11 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Camera, Shield, Award, FileText } from 'lucide-react';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { validateSecureFile } from '@/utils/secureFileValidation';
 
 const VerificationFlow = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { uploadFile, isUploading } = useFileUpload();
+  const { checkRateLimit } = useRateLimit();
   const [verificationType, setVerificationType] = useState<'identity' | 'professional'>('identity');
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -24,14 +27,49 @@ const VerificationFlow = () => {
     e.preventDefault();
     if (!user || !selfieFile) return;
 
+    // Rate limit check - 3 verification requests per day
+    const rateCheck = await checkRateLimit('verification_request', 3, 1440);
+    if (rateCheck.blocked) {
+      toast({
+        title: "Too many requests",
+        description: "You've reached the limit for verification requests. Please try again tomorrow.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate selfie file
+    const selfieValidation = await validateSecureFile(selfieFile, 'image');
+    if (!selfieValidation.isValid) {
+      toast({
+        title: "Invalid file",
+        description: selfieValidation.error || "Please upload a valid image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate document file if provided
+    if (verificationType === 'professional' && documentFile) {
+      const docValidation = await validateSecureFile(documentFile, 'document');
+      if (!docValidation.isValid) {
+        toast({
+          title: "Invalid document",
+          description: docValidation.error || "Please upload a valid document",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      // Upload selfie
-      const selfieUrl = await uploadFile(selfieFile, { bucket: 'profile-photos', folder: 'verification' });
+      // Upload to PRIVATE verification-docs bucket (not public profile-photos)
+      const selfieUrl = await uploadFile(selfieFile, { bucket: 'verification-docs', folder: 'selfies' });
       
       let documentUrl = null;
       if (verificationType === 'professional' && documentFile) {
-        documentUrl = await uploadFile(documentFile, { bucket: 'profile-photos', folder: 'verification-documents' });
+        documentUrl = await uploadFile(documentFile, { bucket: 'verification-docs', folder: 'documents' });
       }
 
       // Submit verification request
@@ -58,8 +96,8 @@ const VerificationFlow = () => {
       setProfession('');
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to submit verification request",
+        title: "Submission failed",
+        description: "Unable to submit verification request. Please try again later.",
         variant: "destructive",
       });
     } finally {

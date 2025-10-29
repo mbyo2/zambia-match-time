@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Camera, X, Star } from 'lucide-react';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { validateSecureFile, generateSecureFilename } from '@/utils/secureFileValidation';
 
 interface ProfilePhoto {
   id: string;
@@ -22,13 +23,13 @@ interface PhotoUploadSectionProps {
 const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhotosUpdate }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkRateLimit } = useRateLimit();
   const [uploading, setUploading] = useState(false);
 
   const uploadPhoto = useCallback(async (file: File) => {
     if (!user) return null;
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const fileName = generateSecureFilename(file.name, user.id);
 
     const { data, error } = await supabase.storage
       .from('profile-photos')
@@ -38,11 +39,9 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
       });
 
     if (error) {
-      console.error('Upload error:', error);
       return null;
     }
 
-    // Use data.path to get the correct path for public URL
     const { data: { publicUrl } } = supabase.storage
       .from('profile-photos')
       .getPublicUrl(data.path);
@@ -54,21 +53,23 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Rate limit check - 10 photo uploads per hour
+    const rateCheck = await checkRateLimit('photo_upload', 10, 60);
+    if (rateCheck.blocked) {
       toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
+        title: "Too many uploads",
+        description: "Please wait before uploading more photos.",
         variant: "destructive",
       });
       return;
     }
 
-    // Check file type
-    if (!file.type.startsWith('image/')) {
+    // Comprehensive file validation
+    const validation = await validateSecureFile(file, 'image');
+    if (!validation.isValid) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
+        title: "Invalid file",
+        description: validation.error || "Please select a valid image file",
         variant: "destructive",
       });
       return;
@@ -79,7 +80,7 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
     try {
       const photoUrl = await uploadPhoto(file);
       if (!photoUrl) {
-        throw new Error('Failed to upload photo');
+        throw new Error('Upload failed');
       }
 
       const nextOrderIndex = Math.max(...photos.map(p => p.order_index), -1) + 1;
@@ -89,14 +90,11 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
         .insert({
           user_id: user.id,
           photo_url: photoUrl,
-          is_primary: photos.length === 0, // First photo is primary
+          is_primary: photos.length === 0,
           order_index: nextOrderIndex
         });
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Photo uploaded!",
@@ -105,10 +103,9 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
 
       onPhotosUpdate();
     } catch (error) {
-      console.error('Error uploading photo:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload photo. Please try again.",
+        description: "Unable to upload photo. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -132,10 +129,9 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
 
       onPhotosUpdate();
     } catch (error) {
-      console.error('Error deleting photo:', error);
       toast({
         title: "Delete failed",
-        description: "Failed to delete photo. Please try again.",
+        description: "Unable to delete photo. Please try again.",
         variant: "destructive",
       });
     }
@@ -143,13 +139,11 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
 
   const setPrimaryPhoto = async (photoId: string) => {
     try {
-      // Remove primary from all photos
       await supabase
         .from('profile_photos')
         .update({ is_primary: false })
         .eq('user_id', user?.id);
 
-      // Set new primary
       const { error } = await supabase
         .from('profile_photos')
         .update({ is_primary: true })
@@ -164,10 +158,9 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
 
       onPhotosUpdate();
     } catch (error) {
-      console.error('Error setting primary photo:', error);
       toast({
         title: "Update failed",
-        description: "Failed to update primary photo. Please try again.",
+        description: "Unable to update primary photo. Please try again.",
         variant: "destructive",
       });
     }
