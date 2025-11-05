@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/utils/logger';
 
 interface Message {
   id: string;
@@ -36,8 +36,6 @@ const RealtimeMessages = ({
   useEffect(() => {
     if (!conversationId || !user) return;
 
-    console.log('Setting up realtime subscriptions for conversation:', conversationId);
-
     // Subscribe to real-time message updates
     const messagesChannel = supabase
       .channel(`messages-${conversationId}`)
@@ -50,7 +48,6 @@ const RealtimeMessages = ({
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('New message received:', payload);
           const newMessage = payload.new as Message;
           setMessages(prev => [...prev, newMessage]);
           onNewMessage?.(newMessage);
@@ -65,7 +62,6 @@ const RealtimeMessages = ({
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('Message updated:', payload);
           const updatedMessage = payload.new as Message;
           setMessages(prev => prev.map(msg => 
             msg.id === updatedMessage.id ? updatedMessage : msg
@@ -83,7 +79,6 @@ const RealtimeMessages = ({
       .channel(`typing-${conversationId}`)
       .on('presence', { event: 'sync' }, () => {
         const state = typingChannel.presenceState();
-        console.log('Typing state sync:', state);
         
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
@@ -94,7 +89,6 @@ const RealtimeMessages = ({
         });
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined typing channel:', key, newPresences);
         newPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
             onTypingChange?.(presence.typing || false, presence.user_id);
@@ -102,7 +96,6 @@ const RealtimeMessages = ({
         });
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left typing channel:', key, leftPresences);
         leftPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
             onTypingChange?.(false, presence.user_id);
@@ -116,7 +109,6 @@ const RealtimeMessages = ({
       .channel(`presence-${conversationId}`)
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        console.log('Presence state sync:', state);
         
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
@@ -127,7 +119,6 @@ const RealtimeMessages = ({
         });
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User came online:', key, newPresences);
         newPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
             onUserOnlineChange?.(true, presence.user_id);
@@ -135,7 +126,6 @@ const RealtimeMessages = ({
         });
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User went offline:', key, leftPresences);
         leftPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
             onUserOnlineChange?.(false, presence.user_id);
@@ -151,7 +141,6 @@ const RealtimeMessages = ({
     });
 
     return () => {
-      console.log('Cleaning up realtime subscriptions');
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(typingChannel);
       supabase.removeChannel(presenceChannel);
@@ -166,7 +155,6 @@ const RealtimeMessages = ({
       );
 
       if (unreadMessages.length > 0) {
-        console.log('Marking messages as read:', unreadMessages.length);
         const messageIds = unreadMessages.map(msg => msg.id);
         
         await supabase

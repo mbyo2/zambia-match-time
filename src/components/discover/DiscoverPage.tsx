@@ -12,6 +12,7 @@ import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
 import { Filter, Shuffle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 interface Profile {
   id: string;
@@ -79,25 +80,21 @@ const DiscoverPage = () => {
         setNeedsLocation(false);
         loadProfiles();
       }
-    } catch (error) {
-      console.error('Error checking location:', error);
+      } catch (error) {
+      logger.error('Error checking location:', error);
       loadProfiles(); // Load anyway
     }
   };
 
   const loadProfiles = async () => {
     setLoading(true);
-    console.log('Loading profiles for user:', user?.id);
     try {
       if (!user?.id) {
-        console.log('No user ID available');
         setProfiles([]);
         setLoading(false);
         return;
       }
 
-      console.log('Calling get_discovery_profiles with filters:', filters);
-      
       // Use the main discovery function with all available filters
       const { data: profilesData, error: profilesError } = await supabase.rpc('get_discovery_profiles', {
         user_uuid: user.id,
@@ -116,16 +113,12 @@ const DiscoverPage = () => {
         p_drinking: filters.drinking
       });
 
-      console.log('Profile data response:', profilesData?.length || 0, 'profiles');
-      console.log('Profile error:', profilesError);
-
       if (profilesError) {
-        console.error('Error loading profiles:', profilesError);
+        logger.error('Error loading profiles:', profilesError);
         return;
       }
 
       if (!profilesData || profilesData.length === 0) {
-        console.log('No profiles found, setting empty array');
         setProfiles([]);
         setCurrentIndex(0);
         return;
@@ -133,7 +126,6 @@ const DiscoverPage = () => {
 
       // Get profile photos for each profile
       const profileIds = profilesData.map(p => p.id);
-      console.log('Loading photos for profile IDs:', profileIds.slice(0, 3));
       
       const { data: photosData, error: photosError } = await supabase
         .from('profile_photos')
@@ -143,9 +135,7 @@ const DiscoverPage = () => {
         .order('order_index', { ascending: true });
 
       if (photosError) {
-        console.error('Error loading photos:', photosError);
-      } else {
-        console.log('Loaded photos for', photosData?.length || 0, 'photos');
+        logger.error('Error loading photos:', photosError);
       }
 
       // Combine profiles with their photos
@@ -154,11 +144,10 @@ const DiscoverPage = () => {
         profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
       }));
 
-      console.log('Final profiles with photos:', profilesWithPhotos.length);
       setProfiles(profilesWithPhotos);
       setCurrentIndex(0);
     } catch (error) {
-      console.error('Error in loadProfiles:', error);
+      logger.error('Error in loadProfiles:', error);
     } finally {
       setLoading(false);
     }
@@ -171,20 +160,17 @@ const DiscoverPage = () => {
     
     // Safety guard: never allow swiping on your own profile
     if (user?.id && currentProfile.id === user.id) {
-      console.log('Skipping own profile');
       setCurrentIndex(prev => prev + 1);
       return;
     }
 
     // Check swipe limits and consume swipe
     if (!canSwipe()) {
-      console.log('Swipe limit reached');
       return;
     }
 
     const success = await consumeSwipe();
     if (!success) {
-      console.log('Failed to consume swipe');
       return;
     }
     
@@ -199,10 +185,8 @@ const DiscoverPage = () => {
         });
 
       if (swipeError) {
-        console.error('Error recording swipe:', swipeError);
+        logger.error('Error recording swipe:', swipeError);
       } else {
-        console.log(`Swiped ${action} on ${currentProfile.first_name}`);
-        
         // Update user stats
         if (action === 'like') {
           incrementStat('likes_given');
@@ -216,11 +200,10 @@ const DiscoverPage = () => {
 
       // Load more profiles if running low
       if (currentIndex >= profiles.length - 3) {
-        console.log('Loading more profiles...');
         loadProfiles();
       }
     } catch (error) {
-      console.error('Error handling swipe:', error);
+      logger.error('Error handling swipe:', error);
     }
   };
 

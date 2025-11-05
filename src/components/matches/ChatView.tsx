@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,7 @@ import MessageInput from '@/components/messaging/MessageInput';
 import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
 import MessageReactions from '@/components/messaging/MessageReactions';
+import { logger } from '@/utils/logger';
 
 interface Message {
   id: string;
@@ -58,7 +58,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   const fetchMessages = async () => {
     try {
-      console.log('Fetching messages for conversation:', match.conversation.id);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -66,15 +65,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        logger.error('Error fetching messages:', error);
         return;
       }
 
-      console.log('Fetched messages:', data?.length);
       setMessages(data || []);
       markMessagesAsRead();
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -89,12 +87,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         .neq('sender_id', user?.id)
         .eq('is_read', false);
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      logger.error('Error marking messages as read:', error);
     }
   };
 
   const handleNewMessage = (message: Message) => {
-    console.log('New message received in ChatView:', message);
     setMessages(prev => {
       // Check if message already exists to prevent duplicates
       if (prev.some(msg => msg.id === message.id)) {
@@ -114,7 +111,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   };
 
   const handleMessageUpdate = (message: Message) => {
-    console.log('Message updated in ChatView:', message);
     setMessages(prev => prev.map(msg => 
       msg.id === message.id ? message : msg
     ));
@@ -122,14 +118,12 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   const handleTypingChange = (typing: boolean, userId: string) => {
     if (userId !== user?.id) {
-      console.log('Other user typing status changed:', typing);
       setOtherUserTyping(typing);
     }
   };
 
   const handleUserOnlineChange = (online: boolean, userId: string) => {
     if (userId !== user?.id) {
-      console.log('Other user online status changed:', online);
       setOtherUserOnline(online);
     }
   };
@@ -138,7 +132,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     if (!content.trim() || !user) return;
 
     try {
-      console.log('Sending message:', content);
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -149,7 +142,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         });
 
       if (error) {
-        console.error('Error sending message:', error);
+        logger.error('Error sending message:', error);
         toast({
           title: "Error",
           description: "Failed to send message",
@@ -165,12 +158,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         .eq('id', match.conversation.id);
 
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
   };
 
   const handleTyping = (typing: boolean) => {
-    console.log('User typing status changed:', typing);
     setIsTyping(typing);
     
     // Clear existing timeout
