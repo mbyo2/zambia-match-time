@@ -184,7 +184,7 @@ const VerificationManager = () => {
 
   const getSecureDocumentUrl = async (requestId: string, documentType: 'selfie' | 'professional' = 'selfie') => {
     try {
-      const { data, error } = await supabase.rpc('get_verification_document_url', {
+      const { data, error } = await supabase.rpc('get_verification_document_secure', {
         p_request_id: requestId,
         p_document_type: documentType
       });
@@ -195,7 +195,7 @@ const VerificationManager = () => {
       console.error('Error getting secure document URL:', error);
       toast({
         title: "Error",
-        description: "Failed to access verification document.",
+        description: "Failed to access verification document. Admin access with audit logging required.",
         variant: "destructive",
       });
       return null;
