@@ -1397,38 +1397,24 @@ export type Database = {
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
       get_discovery_profiles: {
-        Args: {
-          p_age_max?: number
-          p_age_min?: number
-          p_body_types?: string[]
-          p_drinking?: string
-          p_ethnicities?: string[]
-          p_filter_education_levels?: string[]
-          p_filter_interests?: string[]
-          p_filter_relationship_goals?: string[]
-          p_height_max?: number
-          p_height_min?: number
-          p_max_distance?: number
-          p_religion?: string
-          p_smoking?: string
-          user_uuid: string
-        }
+        Args: { _filters?: Json; _user_id: string }
         Returns: {
+          age: number
           bio: string
-          boost_active: boolean
           compatibility_score: number
-          date_of_birth: string
           distance_km: number
           education: string
           first_name: string
+          has_accommodation_available: boolean
           height_cm: number
           id: string
           interests: string[]
-          last_active: string
+          is_verified: boolean
           location_city: string
           location_state: string
+          looking_for: string[]
           occupation: string
-          relationship_goals: string[]
+          professional_badge: string
         }[]
       }
       get_enhanced_compatible_profiles: {
@@ -1556,12 +1542,8 @@ export type Database = {
         Returns: Database["public"]["Enums"]["subscription_tier"]
       }
       get_verification_document_secure: {
-        Args: { p_document_type?: string; p_request_id: string }
-        Returns: string
-      }
-      get_verification_document_url: {
-        Args: { p_document_type?: string; p_request_id: string }
-        Returns: string
+        Args: { _document_type?: string; _request_id: string }
+        Returns: Json
       }
       get_verification_document_url_secure: {
         Args: { p_document_type?: string; p_request_id: string }
