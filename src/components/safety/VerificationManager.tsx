@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { logger } from '@/utils/logger';
 
 interface VerificationRequest {
   id: string;
@@ -185,18 +186,21 @@ const VerificationManager = () => {
   const getSecureDocumentUrl = async (requestId: string, documentType: 'selfie' | 'professional' = 'selfie') => {
     try {
       const { data, error } = await supabase.rpc('get_verification_document_secure', {
-        p_request_id: requestId,
-        p_document_type: documentType
+        _request_id: requestId,
+        _document_type: documentType
       });
       
       if (error) throw error;
-      return data;
+      
+      // Extract document_path from the JSONB response and cast to string
+      const docPath = (data as any)?.document_path;
+      return docPath ? String(docPath) : null;
     } catch (error: any) {
-      console.error('Error getting secure document URL:', error);
+      logger.error('Error getting secure document URL:', error);
       toast({
         title: "Error",
         description: "Failed to access verification document. Admin access with audit logging required.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return null;
     }

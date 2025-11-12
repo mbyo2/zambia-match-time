@@ -7,19 +7,20 @@ import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
 interface Profile {
   id: string;
   first_name: string;
+  age: number;
   bio: string;
   occupation: string;
   education: string;
-  location_city: string;
-  location_state: string;
-  date_of_birth: string;
   height_cm: number;
   interests: string[];
-  relationship_goals: string[];
+  looking_for: string[];
+  location_city: string;
+  location_state: string;
   distance_km: number;
   compatibility_score: number;
-  boost_active: boolean;
-  last_active: string;
+  is_verified: boolean;
+  professional_badge: string;
+  has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
@@ -32,19 +33,6 @@ interface SwipeCardProps {
 }
 
 const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
 
@@ -62,15 +50,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
     }
   };
 
-  const checkOnlineStatus = () => {
-    // Check if user was active in last 15 minutes
-    const lastActive = new Date(profile.last_active || '');
-    const now = new Date();
-    const diffMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60);
-    return diffMinutes <= 15;
-  };
-
-  const userIsOnline = checkOnlineStatus();
+  const userIsOnline = isOnline;
 
   return (
     <Card 
@@ -116,7 +96,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold">
-              {profile.first_name}, {calculateAge(profile.date_of_birth)}
+              {profile.first_name}, {profile.age}
             </h3>
             {userIsOnline && (
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>

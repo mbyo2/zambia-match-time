@@ -17,19 +17,20 @@ import { logger } from '@/utils/logger';
 interface Profile {
   id: string;
   first_name: string;
+  age: number;
   bio: string;
   occupation: string;
   education: string;
-  location_city: string;
-  location_state: string;
-  date_of_birth: string;
   height_cm: number;
   interests: string[];
-  relationship_goals: string[];
+  looking_for: string[];
+  location_city: string;
+  location_state: string;
   distance_km: number;
   compatibility_score: number;
-  boost_active: boolean;
-  last_active: string;
+  is_verified: boolean;
+  professional_badge: string;
+  has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
@@ -95,22 +96,24 @@ const DiscoverPage = () => {
         return;
       }
 
-      // Use the main discovery function with all available filters
+      // Use the main discovery function with filters as JSON
       const { data: profilesData, error: profilesError } = await supabase.rpc('get_discovery_profiles', {
         _user_id: user.id,
-        p_max_distance: filters.distance,
-        p_age_min: filters.ageRange[0],
-        p_age_max: filters.ageRange[1],
-        p_filter_education_levels: filters.education,
-        p_filter_interests: filters.interests,
-        p_filter_relationship_goals: filters.relationshipGoals,
-        p_height_min: filters.heightRange[0],
-        p_height_max: filters.heightRange[1],
-        p_body_types: filters.bodyTypes,
-        p_ethnicities: filters.ethnicities,
-        p_religion: filters.religion,
-        p_smoking: filters.smoking,
-        p_drinking: filters.drinking
+        _filters: {
+          max_distance: filters.distance,
+          age_min: filters.ageRange[0],
+          age_max: filters.ageRange[1],
+          education_levels: filters.education,
+          interests: filters.interests,
+          relationship_goals: filters.relationshipGoals,
+          height_min: filters.heightRange[0],
+          height_max: filters.heightRange[1],
+          body_types: filters.bodyTypes,
+          ethnicities: filters.ethnicities,
+          religion: filters.religion,
+          smoking: filters.smoking,
+          drinking: filters.drinking
+        }
       });
 
       if (profilesError) {
