@@ -57,7 +57,7 @@ const VerificationManager = () => {
         setVerificationStatus(data[0].status as any);
       }
     } catch (error) {
-      console.error('Error checking verification status:', error);
+      logger.error('Error checking verification status:', error);
     }
   };
 
@@ -72,7 +72,7 @@ const VerificationManager = () => {
       if (error) throw error;
       setRequests(data || []);
     } catch (error) {
-      console.error('Error fetching verification requests:', error);
+      logger.error('Error fetching verification requests:', error);
     }
   };
 
@@ -127,7 +127,7 @@ const VerificationManager = () => {
       setProfession('');
       setProfessionalDocument(null);
     } catch (error) {
-      console.error('Error submitting verification:', error);
+      logger.error('Error submitting verification:', error);
       toast({
         title: "Error",
         description: "Failed to submit verification request",
@@ -179,7 +179,7 @@ const VerificationManager = () => {
 
       fetchVerificationRequests();
     } catch (error) {
-      console.error('Error reviewing verification:', error);
+      logger.error('Error reviewing verification:', error);
     }
   };
 

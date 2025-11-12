@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -9,21 +10,21 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Setting up auth listener...');
+    // Setting up auth listener
     
     // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error);
+          logger.error('Error getting session:', error);
         } else {
-          console.log('Initial session:', session);
+          // Initial session loaded
           setSession(session);
           setUser(session?.user ?? null);
         }
       } catch (error) {
-        console.error('Error in getSession:', error);
+        logger.error('Error in getSession:', error);
       } finally {
         setLoading(false);
       }
@@ -34,7 +35,7 @@ export const useAuth = () => {
     // Listen for auth changes (never use async functions here to prevent deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, session);
+        logger.info('Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -42,13 +43,13 @@ export const useAuth = () => {
     );
 
     return () => {
-      console.log('Cleaning up auth listener');
+      // Cleaning up auth listener
       subscription.unsubscribe();
     };
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    console.log('Signing up user:', email);
+    // Signing up user
     // CRITICAL: Always set emailRedirectTo to prevent auth issues
     const redirectUrl = `${window.location.origin}/`;
     
@@ -64,7 +65,7 @@ export const useAuth = () => {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('Signing in user:', email);
+    // Signing in user
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -73,13 +74,13 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    console.log('Signing out user');
+    // Signing out user
     const { error } = await supabase.auth.signOut();
     return { error };
   };
 
   const resetPassword = async (email: string) => {
-    console.log('Requesting password reset for:', email);
+    // Requesting password reset
     const redirectUrl = `${window.location.origin}/update-password`;
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
@@ -88,7 +89,7 @@ export const useAuth = () => {
   };
 
   const updateUserPassword = async (password: string) => {
-    console.log('Updating user password');
+    // Updating user password
     const { data, error } = await supabase.auth.updateUser({ password });
     return { data, error };
   };

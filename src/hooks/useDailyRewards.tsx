@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,7 +37,7 @@ export const useDailyRewards = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking daily reward:', error);
+        logger.error('Error checking daily reward:', error);
         return;
       }
 
@@ -58,7 +59,7 @@ export const useDailyRewards = () => {
           .single();
 
         if (createError) {
-          console.error('Error creating daily reward:', createError);
+          logger.error('Error creating daily reward:', createError);
         } else {
           setTodayReward(newReward);
         }
@@ -66,7 +67,7 @@ export const useDailyRewards = () => {
         setTodayReward(data);
       }
     } catch (error) {
-      console.error('Error in checkDailyReward:', error);
+      logger.error('Error in checkDailyReward:', error);
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export const useDailyRewards = () => {
         .eq('id', todayReward.id);
 
       if (error) {
-        console.error('Error claiming reward:', error);
+        logger.error('Error claiming reward:', error);
         return;
       }
 
@@ -95,7 +96,7 @@ export const useDailyRewards = () => {
 
       return true;
     } catch (error) {
-      console.error('Error in claimDailyReward:', error);
+      logger.error('Error in claimDailyReward:', error);
       return false;
     }
   };

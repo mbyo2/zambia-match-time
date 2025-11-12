@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +58,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        logger.error('Error fetching profile:', error);
         return;
       }
 
@@ -74,7 +75,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         });
       }
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
   };
 
@@ -116,7 +117,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         .eq('id', user?.id);
 
       if (error) {
-        console.error('Error updating profile:', error);
+        logger.error('Error updating profile:', error);
         toast({
           title: "Error",
           description: "Failed to update profile",
@@ -130,7 +131,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         description: "Profile updated successfully!",
       });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +162,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
           .single();
 
         if (error) {
-          console.error('Error saving photo:', error);
+          logger.error('Error saving photo:', error);
           toast({
             title: "Error",
             description: "Failed to save photo",
@@ -172,7 +173,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
 
         setPhotos(prev => [...prev, data]);
       } catch (error) {
-        console.error('Error:', error);
+        logger.error('Error:', error);
       }
     }
 
@@ -196,7 +197,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         .eq('id', photo.id);
 
       if (error) {
-        console.error('Error deleting photo:', error);
+        logger.error('Error deleting photo:', error);
         return;
       }
 
@@ -210,7 +211,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
   };
 
@@ -229,7 +230,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         .eq('id', photoId);
 
       if (error) {
-        console.error('Error setting primary photo:', error);
+        logger.error('Error setting primary photo:', error);
         return;
       }
 
@@ -239,7 +240,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
         description: "Primary photo updated!",
       });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
   };
 

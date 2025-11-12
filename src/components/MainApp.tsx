@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import ProfileSetup from './profile/ProfileSetup';
 import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
@@ -57,7 +58,7 @@ const MainApp = () => {
         setShowOnboarding(true);
       }
     } catch (error) {
-      console.error('Error checking profile:', error);
+      logger.error('Error checking profile:', error);
       setHasProfile(false);
       setShowOnboarding(true);
     }
@@ -70,7 +71,7 @@ const MainApp = () => {
         await subscribeToNotifications(user.id);
       }
     } catch (error) {
-      console.error('Error setting up notifications:', error);
+      logger.error('Error setting up notifications:', error);
     }
   };
 

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,7 +108,7 @@ const ProfileSetup = () => {
         });
 
       if (error) {
-        console.error('Profile creation error:', error);
+        logger.error('Profile creation error:', error);
         toast({
           title: "Error",
           description: error.message,
@@ -121,7 +122,7 @@ const ProfileSetup = () => {
         window.location.reload();
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
+      logger.error('Unexpected error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",

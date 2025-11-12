@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { Tables } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import AccommodationCard from './AccommodationCard';
@@ -19,7 +20,7 @@ const fetchAccommodations = async (): Promise<Tables<'accommodations'>[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching accommodations:', error);
+    logger.error('Error fetching accommodations:', error);
     throw new Error(error.message);
   }
 
@@ -34,7 +35,7 @@ const fetchUserStatus = async (userId: string): Promise<{ hasAccommodation: bool
     .single();
 
   if (error) {
-    console.error('Error fetching user status:', error);
+    logger.error('Error fetching user status:', error);
     return { hasAccommodation: false, availableToMeet: false };
   }
 

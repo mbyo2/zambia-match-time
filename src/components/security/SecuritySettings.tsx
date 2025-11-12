@@ -44,10 +44,10 @@ const SecuritySettings = () => {
   const loadSecuritySettings = async () => {
     try {
       // In a real implementation, load from database
-      console.log('Loading security settings for user:', user?.id);
+      // Loading security settings - removed console.log for production security
       // For now, use default settings
     } catch (error) {
-      console.error('Error loading security settings:', error);
+      // Error loading security settings - silently fail in production
     }
   };
 
@@ -56,14 +56,14 @@ const SecuritySettings = () => {
       setSettings(prev => ({ ...prev, [key]: value }));
       
       // In a real implementation, save to database
-      console.log('Updating security setting:', key, value);
+      // Updating security setting - removed console.log for production security
       
       toast({
         title: "Settings Updated",
         description: "Your security settings have been updated successfully.",
       });
     } catch (error) {
-      console.error('Error updating security setting:', error);
+      // Error updating security setting - silently fail in production
       toast({
         title: "Error",
         description: "Failed to update security settings",
