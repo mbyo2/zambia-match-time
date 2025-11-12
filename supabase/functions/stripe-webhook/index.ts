@@ -38,11 +38,8 @@ serve(async (req) => {
       Deno.env.get('STRIPE_WEBHOOK_SECRET')!
     )
   } catch (err) {
-    console.error(`Webhook signature verification failed.`, err.message)
     return new Response(`Webhook signature verification failed.`, { status: 400 })
   }
-
-  console.log(`Processing event: ${receivedEvent.type}`)
 
   if (relevantEvents.has(receivedEvent.type)) {
     try {
@@ -62,7 +59,6 @@ serve(async (req) => {
           break
       }
     } catch (error) {
-      console.error('Error processing webhook:', error)
       return new Response('Webhook processing failed', { status: 500 })
     }
   }
@@ -75,9 +71,16 @@ async function handleSubscriptionUpdate(subscription: any) {
   const userId = customer.metadata?.user_id
 
   if (!userId) {
-    console.error('No user ID found in customer metadata')
     return
   }
+  
+  // Audit log: Subscription update via service role
+  await supabaseClient.rpc('log_security_event', {
+    p_action: 'subscription_update',
+    p_resource_type: 'user_subscription',
+    p_resource_id: userId,
+    p_details: { subscription_id: subscription.id, status: subscription.status }
+  });
 
   // Map Stripe price to subscription tier
   let tier = 'free'
@@ -120,7 +123,6 @@ async function handleSubscriptionDeleted(subscription: any) {
   const userId = customer.metadata?.user_id
 
   if (!userId) {
-    console.error('No user ID found in customer metadata')
     return
   }
 
@@ -147,7 +149,6 @@ async function handlePaymentSucceeded(invoice: any) {
   const userId = customer.metadata?.user_id
 
   if (!userId) {
-    console.error('No user ID found in customer metadata')
     return
   }
 
@@ -165,7 +166,6 @@ async function handlePaymentFailed(invoice: any) {
   const userId = customer.metadata?.user_id
 
   if (!userId) {
-    console.error('No user ID found in customer metadata')
     return
   }
 

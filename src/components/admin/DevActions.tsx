@@ -41,7 +41,6 @@ const DevActions = () => {
             toast.error("Failed to generate users.", {
                 description: error.message,
             });
-            console.error(error);
         } else {
             toast.success("Successfully generated 100 fake users.", {
                 description: "You may need to refresh the discover page to see them.",
@@ -64,7 +63,6 @@ const DevActions = () => {
 
         if (error) {
             toast.error('Backfill failed.', { description: error.message });
-            console.error(error);
         } else {
             toast.success('Photo backfill complete.', {
                 description: `Added: ${data?.added ?? 0}, skipped: ${data?.skipped ?? 0}, failed: ${data?.failed ?? 0}`,

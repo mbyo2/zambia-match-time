@@ -27,7 +27,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       setStats(data as unknown as AppStats);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      // Silently fail in production, log in development
     }
   };
 

@@ -97,7 +97,7 @@ const DiscoverPage = () => {
 
       // Use the main discovery function with all available filters
       const { data: profilesData, error: profilesError } = await supabase.rpc('get_discovery_profiles', {
-        user_uuid: user.id,
+        _user_id: user.id,
         p_max_distance: filters.distance,
         p_age_min: filters.ageRange[0],
         p_age_max: filters.ageRange[1],

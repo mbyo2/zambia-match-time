@@ -33,7 +33,6 @@ const AdminPanel = () => {
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
-      console.error('Error making user admin:', error);
     } finally {
       setIsLoading(false);
     }

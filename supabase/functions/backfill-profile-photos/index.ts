@@ -65,6 +65,15 @@ serve(async (req) => {
       });
     }
 
+    // Audit log: Service role usage
+    log(`Service role access by admin user: ${user.id}`);
+    await supabaseClient.rpc('log_security_event', {
+      p_action: 'service_role_access',
+      p_resource_type: 'backfill_photos',
+      p_resource_id: user.id,
+      p_details: { function: 'backfill-profile-photos', user_id: user.id }
+    });
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
