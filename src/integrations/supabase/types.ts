@@ -1583,6 +1583,10 @@ export type Database = {
         Args: { p_content: string; p_user_id?: string }
         Returns: string
       }
+      users_are_matched: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       accommodation_type: "hotel" | "apartment" | "resort" | "villa" | "cabin"
