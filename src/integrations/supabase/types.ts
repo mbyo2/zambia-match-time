@@ -1332,6 +1332,10 @@ export type Database = {
       }
       check_achievements: { Args: { p_user_id: string }; Returns: undefined }
       check_daily_swipe_limit: { Args: { user_uuid: string }; Returns: number }
+      check_discovery_rate_limit: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_action_type: string
@@ -1363,6 +1367,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fuzz_distance: { Args: { exact_distance: number }; Returns: number }
       get_app_statistics: { Args: never; Returns: Json }
       get_compatible_profiles: {
         Args: {

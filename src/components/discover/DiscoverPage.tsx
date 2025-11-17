@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
+import { useDiscoveryRateLimit } from '@/hooks/useDiscoveryRateLimit';
 import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
@@ -39,6 +40,7 @@ const DiscoverPage = () => {
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
+  const { checkRateLimit, rateLimitState } = useDiscoveryRateLimit();
   const { status: profileStatus } = useProfileCompletion();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -92,6 +94,13 @@ const DiscoverPage = () => {
     try {
       if (!user?.id) {
         setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
+      // Check rate limit before loading profiles
+      const canProceed = await checkRateLimit();
+      if (!canProceed) {
         setLoading(false);
         return;
       }
