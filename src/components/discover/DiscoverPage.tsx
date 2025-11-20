@@ -192,17 +192,29 @@ const DiscoverPage = () => {
       return;
     }
 
-    // Check swipe limits and consume swipe
+    // Check swipe limits
     if (!canSwipe()) {
       return;
     }
 
-    const success = await consumeSwipe();
-    if (!success) {
-      return;
+    // OPTIMISTIC UPDATE: Move to next profile immediately
+    const previousIndex = currentIndex;
+    setCurrentIndex(prev => prev + 1);
+
+    // Load more profiles if running low
+    if (currentIndex >= profiles.length - 3) {
+      loadProfiles();
     }
-    
+
     try {
+      // Consume swipe in background
+      const swipeSuccess = await consumeSwipe();
+      if (!swipeSuccess) {
+        // Rollback on swipe limit failure
+        setCurrentIndex(previousIndex);
+        return;
+      }
+      
       // Record the swipe in the database
       const { error: swipeError } = await supabase
         .from('swipes')
@@ -214,24 +226,18 @@ const DiscoverPage = () => {
 
       if (swipeError) {
         logger.error('Error recording swipe:', swipeError);
+        // Don't rollback UI - user already saw next profile
       } else {
-        // Update user stats
+        // Update user stats in background
         if (action === 'like') {
           incrementStat('likes_given');
         } else if (action === 'super_like') {
           incrementStat('super_likes_given');
         }
       }
-
-      // Move to next profile
-      setCurrentIndex(prev => prev + 1);
-
-      // Load more profiles if running low
-      if (currentIndex >= profiles.length - 3) {
-        loadProfiles();
-      }
     } catch (error) {
       logger.error('Error handling swipe:', error);
+      // Don't rollback - optimistic update already happened
     }
   };
 
