@@ -22,11 +22,17 @@ export const useGeolocation = (enableHighAccuracy = true) => {
 
   const getCurrentPosition = () => {
     if (!navigator.geolocation) {
+      const errorMsg = 'Geolocation is not supported by this browser';
       setLocation(prev => ({
         ...prev,
-        error: 'Geolocation is not supported by this browser',
+        error: errorMsg,
         loading: false
       }));
+      toast({
+        title: "Location Not Supported",
+        description: errorMsg,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -47,13 +53,13 @@ export const useGeolocation = (enableHighAccuracy = true) => {
         
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied by user';
+            errorMessage = 'Please enable location access in your browser settings';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable';
+            errorMessage = 'Location information is unavailable. Please check your device settings';
             break;
           case error.TIMEOUT:
-            errorMessage = 'Location request timed out';
+            errorMessage = 'Location request timed out. Please try again';
             break;
         }
 
@@ -71,8 +77,8 @@ export const useGeolocation = (enableHighAccuracy = true) => {
       },
       {
         enableHighAccuracy,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutes
+        timeout: 15000,
+        maximumAge: 0
       }
     );
   };

@@ -69,23 +69,39 @@ const DiscoverPage = () => {
   }, [authLoading, user?.id]);
 
   const checkLocationAndLoadProfiles = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('location_lat, location_lng')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
+
+      if (error) {
+        logger.error('Error fetching profile location:', error);
+        setNeedsLocation(true);
+        setShowLocationPrompt(true);
+        setLoading(false);
+        return;
+      }
 
       if (!profile?.location_lat || !profile?.location_lng) {
         setNeedsLocation(true);
         setShowLocationPrompt(true);
+        setLoading(false);
       } else {
         setNeedsLocation(false);
         loadProfiles();
       }
-      } catch (error) {
+    } catch (error) {
       logger.error('Error checking location:', error);
-      loadProfiles(); // Load anyway
+      setNeedsLocation(true);
+      setShowLocationPrompt(true);
+      setLoading(false);
     }
   };
 
