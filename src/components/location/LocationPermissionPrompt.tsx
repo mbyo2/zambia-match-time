@@ -29,7 +29,8 @@ const LocationPermissionPrompt: React.FC<LocationPermissionPromptProps> = ({
     if (latitude && longitude && !saving) {
       saveLocationToProfile();
     }
-  }, [latitude, longitude]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latitude, longitude, saving]);
 
   const saveLocationToProfile = async () => {
     if (!user || !latitude || !longitude) return;
@@ -40,9 +41,14 @@ const LocationPermissionPrompt: React.FC<LocationPermissionPromptProps> = ({
       const response = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
       );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch location data');
+      }
+      
       const data = await response.json();
 
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           location_lat: latitude,
@@ -51,6 +57,8 @@ const LocationPermissionPrompt: React.FC<LocationPermissionPromptProps> = ({
           location_state: data.principalSubdivision || 'Unknown'
         })
         .eq('id', user.id);
+
+      if (error) throw error;
 
       toast({
         title: "Location Updated",
@@ -65,6 +73,8 @@ const LocationPermissionPrompt: React.FC<LocationPermissionPromptProps> = ({
         description: "Failed to save location. You can set it manually later.",
         variant: "destructive",
       });
+      // Still call onLocationSet to allow user to continue
+      onLocationSet();
     } finally {
       setSaving(false);
     }
