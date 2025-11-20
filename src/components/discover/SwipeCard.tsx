@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Profile {
   id: string;
@@ -33,8 +34,22 @@ interface SwipeCardProps {
 }
 
 const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
+
+  const handleSwipeAction = (action: 'like' | 'pass' | 'super_like') => {
+    // Show immediate visual feedback
+    if (action === 'like') setSwipeDirection('right');
+    else if (action === 'pass') setSwipeDirection('left');
+    else if (action === 'super_like') setSwipeDirection('up');
+
+    // Execute swipe with tiny delay for animation
+    setTimeout(() => {
+      onSwipe?.(action);
+      setSwipeDirection(null);
+    }, 200);
+  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -42,11 +57,11 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
     const width = rect.width;
     
     if (x < width * 0.3) {
-      onSwipe?.('pass');
+      handleSwipeAction('pass');
     } else if (x > width * 0.7) {
-      onSwipe?.('like');
+      handleSwipeAction('like');
     } else {
-      onSwipe?.('super_like');
+      handleSwipeAction('super_like');
     }
   };
 
@@ -54,7 +69,13 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
 
   return (
     <Card 
-      className={`h-96 w-80 relative overflow-hidden cursor-pointer select-none ${className}`} 
+      className={cn(
+        "h-96 w-80 relative overflow-hidden cursor-pointer select-none transition-all duration-200",
+        swipeDirection === 'right' && "translate-x-12 opacity-50 scale-95 rotate-6",
+        swipeDirection === 'left' && "-translate-x-12 opacity-50 scale-95 -rotate-6",
+        swipeDirection === 'up' && "-translate-y-12 opacity-50 scale-95",
+        className
+      )} 
       style={style}
       onClick={handleCardClick}
     >
@@ -73,6 +94,29 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
       
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
       
+      {/* Swipe Feedback Overlay */}
+      {swipeDirection === 'right' && (
+        <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+          <div className="text-green-500 text-6xl font-bold rotate-12 border-4 border-green-500 px-8 py-4 rounded-lg">
+            LIKE
+          </div>
+        </div>
+      )}
+      {swipeDirection === 'left' && (
+        <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center">
+          <div className="text-red-500 text-6xl font-bold -rotate-12 border-4 border-red-500 px-8 py-4 rounded-lg">
+            NOPE
+          </div>
+        </div>
+      )}
+      {swipeDirection === 'up' && (
+        <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
+          <div className="text-blue-500 text-6xl font-bold border-4 border-blue-500 px-8 py-4 rounded-lg">
+            ⭐
+          </div>
+        </div>
+      )}
+
       {/* Online Status Indicator */}
       {userIsOnline && (
         <div className="absolute top-4 right-4 z-10">
@@ -146,27 +190,30 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onSwipe?.('pass');
+              handleSwipeAction('pass');
             }}
-            className="w-12 h-12 bg-secondary hover:bg-secondary/80 rounded-full flex items-center justify-center text-secondary-foreground transition-colors shadow-lg"
+            disabled={swipeDirection !== null}
+            className="w-12 h-12 bg-secondary hover:bg-secondary/80 rounded-full flex items-center justify-center text-secondary-foreground transition-all shadow-lg hover:scale-110 active:scale-95 disabled:opacity-50"
           >
             ✕
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onSwipe?.('super_like');
+              handleSwipeAction('super_like');
             }}
-            className="w-12 h-12 bg-primary hover:bg-primary/80 rounded-full flex items-center justify-center text-primary-foreground transition-colors shadow-lg"
+            disabled={swipeDirection !== null}
+            className="w-12 h-12 bg-primary hover:bg-primary/80 rounded-full flex items-center justify-center text-primary-foreground transition-all shadow-lg hover:scale-110 active:scale-95 disabled:opacity-50"
           >
             ⭐
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onSwipe?.('like');
+              handleSwipeAction('like');
             }}
-            className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors shadow-lg"
+            disabled={swipeDirection !== null}
+            className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-all shadow-lg hover:scale-110 active:scale-95 disabled:opacity-50"
           >
             ♥
           </button>
