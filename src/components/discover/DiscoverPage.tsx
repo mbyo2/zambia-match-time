@@ -363,16 +363,19 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {/* Profile Completion Banner */}
+        {/* Profile Completion Banner - Non-blocking reminder */}
         {profileStatus.completionPercentage < 100 && (
-          <ProfileCompletionBanner 
-            onEditProfile={() => {
-              toast({
-                title: "Edit Profile",
-                description: "Navigate to profile tab to edit your profile",
-              });
-            }} 
-          />
+          <div className="animate-fade-in">
+            <ProfileCompletionBanner 
+              onEditProfile={() => {
+                toast({
+                  title: "Complete Your Profile",
+                  description: "A complete profile gets 3x more matches! Navigate to profile tab to finish setup.",
+                  duration: 5000,
+                });
+              }} 
+            />
+          </div>
         )}
 
         {/* Swipe Limit Display */}
