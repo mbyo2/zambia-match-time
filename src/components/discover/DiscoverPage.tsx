@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
@@ -11,7 +11,7 @@ import SwipeLimitDisplay from './SwipeLimitDisplay';
 import ProfileCompletionBanner from '../profile/ProfileCompletionBanner';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
-import { Filter, Shuffle } from 'lucide-react';
+import { Filter, Shuffle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
 
@@ -61,6 +61,12 @@ const DiscoverPage = () => {
     smoking: '',
     drinking: ''
   });
+
+  // Pull-to-refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -247,6 +253,38 @@ const DiscoverPage = () => {
     setCurrentIndex(0);
   };
 
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isRefreshing) return;
+    
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - touchStartY.current;
+    
+    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.5, 100));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDistance > 60 && !isRefreshing) {
+      setIsRefreshing(true);
+      await loadProfiles();
+      toast({
+        title: "Refreshed",
+        description: "Profile feed updated",
+      });
+      setIsRefreshing(false);
+    }
+    setPullDistance(0);
+    touchStartY.current = 0;
+  };
+
   const currentProfile = profiles[currentIndex];
 
   if (showLocationPrompt) {
@@ -277,8 +315,32 @@ const DiscoverPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
+    <div 
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4 overflow-y-auto"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div 
+        className="fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-200"
+        style={{ 
+          transform: `translateY(${pullDistance}px)`,
+          opacity: pullDistance / 100
+        }}
+      >
+        <div className="bg-background border border-border rounded-full p-3 shadow-lg mt-4">
+          <RefreshCw 
+            className={`h-5 w-5 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{
+              transform: `rotate(${pullDistance * 3.6}deg)`
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto space-y-4" style={{ paddingTop: pullDistance > 0 ? '60px' : '0' }}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
