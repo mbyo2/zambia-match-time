@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useNativeHaptics } from '@/hooks/useNativeHaptics';
 
 interface Profile {
   id: string;
@@ -36,7 +36,7 @@ interface SwipeCardProps {
 
 const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
-  const { triggerSwipeHaptic } = useHapticFeedback();
+  const { triggerSwipeHaptic } = useNativeHaptics();
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
 
