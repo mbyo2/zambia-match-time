@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Profile {
   id: string;
@@ -35,10 +36,14 @@ interface SwipeCardProps {
 
 const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
+  const { triggerSwipeHaptic } = useHapticFeedback();
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
 
   const handleSwipeAction = (action: 'like' | 'pass' | 'super_like') => {
+    // Trigger haptic feedback immediately for instant tactile response
+    triggerSwipeHaptic(action);
+    
     // Show immediate visual feedback
     if (action === 'like') setSwipeDirection('right');
     else if (action === 'pass') setSwipeDirection('left');
