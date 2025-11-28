@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Briefcase, GraduationCap, Circle } from 'lucide-react';
@@ -36,9 +36,14 @@ interface SwipeCardProps {
 
 const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: SwipeCardProps) => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const { triggerSwipeHaptic } = useNativeHaptics();
   const primaryPhoto = profile.profile_photos?.find(p => p.is_primary);
   const photoUrl = primaryPhoto?.photo_url || profile.profile_photos?.[0]?.photo_url || '/placeholder.svg';
+
+  const SWIPE_THRESHOLD = 100; // pixels to trigger swipe
 
   const handleSwipeAction = (action: 'like' | 'pass' | 'super_like') => {
     // Trigger haptic feedback immediately for instant tactile response
@@ -56,33 +61,125 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
     }, 200);
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const width = rect.width;
+  const handleDragStart = (clientX: number, clientY: number) => {
+    if (swipeDirection) return; // Don't allow drag if already swiping
+    setIsDragging(true);
+    dragStartRef.current = { x: clientX, y: clientY };
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (!isDragging || swipeDirection) return;
     
-    if (x < width * 0.3) {
-      handleSwipeAction('pass');
-    } else if (x > width * 0.7) {
-      handleSwipeAction('like');
-    } else {
+    const deltaX = clientX - dragStartRef.current.x;
+    const deltaY = clientY - dragStartRef.current.y;
+    
+    setDragOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleDragEnd = () => {
+    if (!isDragging || swipeDirection) return;
+    
+    setIsDragging(false);
+    
+    const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
+    
+    // Determine swipe action based on drag distance and direction
+    if (absX > SWIPE_THRESHOLD && absX > absY) {
+      // Horizontal swipe
+      handleSwipeAction(dragOffset.x > 0 ? 'like' : 'pass');
+    } else if (dragOffset.y < -SWIPE_THRESHOLD && absY > absX) {
+      // Upward swipe
       handleSwipeAction('super_like');
+    } else {
+      // Not enough distance, snap back
+      setDragOffset({ x: 0, y: 0 });
     }
   };
 
+  // Touch event handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragStart(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragMove(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    handleDragEnd();
+  };
+
+  // Mouse event handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDragStart(e.clientX, e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    handleDragMove(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    handleDragEnd();
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      handleDragEnd();
+    }
+  };
+
+  // Calculate rotation based on horizontal drag
+  const rotation = dragOffset.x * 0.1; // 0.1 degrees per pixel
+  const opacity = 1 - Math.abs(dragOffset.x) / 300;
+
   const userIsOnline = isOnline;
+
+  // Determine which overlay to show based on drag direction
+  const getDragOverlay = () => {
+    if (!isDragging) return null;
+    
+    const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
+    
+    if (absX > 30 && absX > absY) {
+      return dragOffset.x > 0 ? 'like' : 'pass';
+    } else if (dragOffset.y < -30 && absY > absX) {
+      return 'super_like';
+    }
+    return null;
+  };
+
+  const dragOverlay = getDragOverlay();
 
   return (
     <Card 
       className={cn(
-        "h-96 w-80 relative overflow-hidden cursor-pointer select-none transition-all duration-200",
+        "h-96 w-80 relative overflow-hidden cursor-grab select-none touch-none",
+        isDragging && "cursor-grabbing transition-none",
+        !isDragging && "transition-all duration-200",
         swipeDirection === 'right' && "translate-x-12 opacity-50 scale-95 rotate-6",
         swipeDirection === 'left' && "-translate-x-12 opacity-50 scale-95 -rotate-6",
         swipeDirection === 'up' && "-translate-y-12 opacity-50 scale-95",
         className
       )} 
-      style={style}
-      onClick={handleCardClick}
+      style={{
+        ...style,
+        transform: isDragging 
+          ? `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotation}deg)` 
+          : style?.transform,
+        opacity: isDragging ? opacity : style?.opacity,
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       {photoUrl ? (
         <img 
@@ -100,22 +197,34 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
       
       {/* Swipe Feedback Overlay */}
-      {swipeDirection === 'right' && (
-        <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+      {(swipeDirection === 'right' || dragOverlay === 'like') && (
+        <div className={cn(
+          "absolute inset-0 bg-green-500/30 flex items-center justify-center pointer-events-none",
+          dragOverlay === 'like' && "transition-opacity duration-100",
+          isDragging && dragOverlay === 'like' && dragOffset.x > 50 ? "opacity-100" : isDragging ? "opacity-50" : "opacity-100"
+        )}>
           <div className="text-green-500 text-6xl font-bold rotate-12 border-4 border-green-500 px-8 py-4 rounded-lg">
             LIKE
           </div>
         </div>
       )}
-      {swipeDirection === 'left' && (
-        <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center">
+      {(swipeDirection === 'left' || dragOverlay === 'pass') && (
+        <div className={cn(
+          "absolute inset-0 bg-red-500/30 flex items-center justify-center pointer-events-none",
+          dragOverlay === 'pass' && "transition-opacity duration-100",
+          isDragging && dragOverlay === 'pass' && dragOffset.x < -50 ? "opacity-100" : isDragging ? "opacity-50" : "opacity-100"
+        )}>
           <div className="text-red-500 text-6xl font-bold -rotate-12 border-4 border-red-500 px-8 py-4 rounded-lg">
             NOPE
           </div>
         </div>
       )}
-      {swipeDirection === 'up' && (
-        <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
+      {(swipeDirection === 'up' || dragOverlay === 'super_like') && (
+        <div className={cn(
+          "absolute inset-0 bg-blue-500/30 flex items-center justify-center pointer-events-none",
+          dragOverlay === 'super_like' && "transition-opacity duration-100",
+          isDragging && dragOverlay === 'super_like' && dragOffset.y < -50 ? "opacity-100" : isDragging ? "opacity-50" : "opacity-100"
+        )}>
           <div className="text-blue-500 text-6xl font-bold border-4 border-blue-500 px-8 py-4 rounded-lg">
             ⭐
           </div>
@@ -124,7 +233,7 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
 
       {/* Online Status Indicator */}
       {userIsOnline && (
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 pointer-events-none">
           <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs border-green-300">
             <Circle size={8} className="fill-green-500 text-green-500 mr-1 animate-pulse" />
             Online
@@ -132,14 +241,16 @@ const SwipeCard = ({ profile, onSwipe, style, className, isOnline = false }: Swi
         </div>
       )}
 
-      {/* Swipe Instructions */}
-      <div className="absolute top-4 left-4 z-10 bg-black/50 rounded-lg p-2">
-        <div className="text-white text-xs space-y-1">
-          <div>← Pass</div>
-          <div>Center: Super Like</div>
-          <div>Like →</div>
+      {/* Swipe Instructions - hide while dragging */}
+      {!isDragging && !swipeDirection && (
+        <div className="absolute top-4 left-4 z-10 bg-black/50 rounded-lg p-2 pointer-events-none">
+          <div className="text-white text-xs space-y-1">
+            <div>← Drag to Pass</div>
+            <div>↑ Drag for Super Like</div>
+            <div>→ Drag to Like</div>
+          </div>
         </div>
-      </div>
+      )}
       
       <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
         <div className="space-y-2">
