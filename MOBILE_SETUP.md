@@ -111,13 +111,37 @@ Add required permissions to platform-specific files:
 - Android: `android/app/src/main/AndroidManifest.xml`
 - iOS: `ios/App/App/Info.plist`
 
+## App Icons & Splash Screens
+
+Your app includes brand-colored assets in the `public/` folder:
+- `app-icon.png` (1024x1024) - Master app icon
+- `splash-screen.png` (1080x1920) - Splash screen
+
+### Setting Up Icons
+
+After adding platforms (`npx cap add ios/android`), copy assets to native folders:
+
+**iOS** (in `ios/App/App/Assets.xcassets/`):
+- Use Xcode to drag `app-icon.png` into AppIcon.appiconset
+- Xcode will generate all required sizes
+
+**Android** (in `android/app/src/main/res/`):
+- Place `app-icon.png` in `mipmap-xxxhdpi/ic_launcher.png`
+- Use Android Studio's Image Asset wizard for all sizes
+- Place `splash-screen.png` in `drawable/splash.png`
+
+Or use a tool like [capacitor-assets](https://github.com/ionic-team/capacitor-assets):
+```bash
+npm install -g @capacitor/assets
+npx capacitor-assets generate
+```
+
 ## Next Steps
 
 After successful setup:
 1. Test all features on physical devices
-2. Configure app icons and splash screens
-3. Set up proper signing certificates
-4. Prepare for app store submission
+2. Configure proper signing certificates
+3. Prepare for app store submission
 
 ## Useful Resources
 - [Capacitor Documentation](https://capacitorjs.com/docs)
