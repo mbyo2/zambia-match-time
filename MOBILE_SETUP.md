@@ -65,19 +65,39 @@ npx cap run ios
 
 ## Native Features Available
 
-### 1. Advanced Haptics
+### 1. Advanced Haptics (`@capacitor/haptics`)
 Your app now uses native haptic feedback for:
 - Light haptics for "pass" swipes
 - Medium haptics for "like" swipes  
 - Success pattern for "super like" swipes
 
-### 2. Camera Access
-Ready to integrate with `@capacitor/camera` for:
-- Profile photo uploads
-- Verification selfies
-- In-app photo features
+### 2. Native Camera (`@capacitor/camera`)
+Full camera integration for profile photos:
+- Take photos directly from camera
+- Pick from photo library
+- Automatic permission handling
+- Photo editing before upload
+- Used in: Profile photo upload section
 
-### 3. App Store Distribution
+### 3. Push Notifications (`@capacitor/push-notifications`)
+Native push notifications for:
+- New match alerts
+- Message notifications
+- Deep linking to specific screens
+- Background notification handling
+
+**Setup Required:**
+1. For iOS: Configure push certificates in Apple Developer Portal
+2. For Android: Set up Firebase Cloud Messaging (FCM)
+3. Add your server key to send notifications
+
+### 4. Drag-to-Swipe Gestures
+Natural Tinder-like swipe experience:
+- Drag profiles left (pass), right (like), or up (super like)
+- Visual feedback with rotation and opacity
+- Haptic feedback on swipe completion
+
+### 5. App Store Distribution
 Once tested, you can:
 - Submit to Apple App Store (iOS)
 - Publish to Google Play Store (Android)
