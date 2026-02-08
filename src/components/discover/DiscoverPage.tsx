@@ -308,16 +308,19 @@ const DiscoverPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
+  // Get visible profiles for card stack (current + next 2)
+  const visibleProfiles = profiles.slice(currentIndex, currentIndex + 3);
+
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4 overflow-y-auto"
+      className="min-h-screen bg-background flex flex-col"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -340,49 +343,53 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto space-y-4" style={{ paddingTop: pullDistance > 0 ? '60px' : '0' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Discover</h1>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={shuffleProfiles}
-              disabled={profiles.length === 0}
-            >
-              <Shuffle className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+        <h1 className="text-2xl font-bold text-foreground">Discover</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={shuffleProfiles}
+            disabled={profiles.length === 0}
+            className="rounded-full"
+          >
+            <Shuffle className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            className="rounded-full"
+          >
+            <Filter className="h-5 w-5" />
+          </Button>
         </div>
+      </div>
 
-        {/* Profile Completion Banner - Non-blocking reminder */}
-        {profileStatus.completionPercentage < 100 && (
-          <div className="animate-fade-in">
-            <ProfileCompletionBanner 
-              onEditProfile={() => {
-                toast({
-                  title: "Complete Your Profile",
-                  description: "A complete profile gets 3x more matches! Navigate to profile tab to finish setup.",
-                  duration: 5000,
-                });
-              }} 
-            />
-          </div>
-        )}
+      {/* Profile Completion Banner */}
+      {profileStatus.completionPercentage < 100 && (
+        <div className="px-4 animate-fade-in">
+          <ProfileCompletionBanner 
+            onEditProfile={() => {
+              toast({
+                title: "Complete Your Profile",
+                description: "A complete profile gets 3x more matches!",
+                duration: 3000,
+              });
+            }} 
+          />
+        </div>
+      )}
 
-        {/* Swipe Limit Display */}
+      {/* Swipe Limit Display */}
+      <div className="px-4 py-2">
         <SwipeLimitDisplay />
+      </div>
 
-        {/* Filters */}
-        {showFilters && (
+      {/* Filters */}
+      {showFilters && (
+        <div className="px-4 pb-4">
           <EnhancedSearchFilters
             filters={filters}
             onFiltersChange={setFilters}
@@ -391,40 +398,59 @@ const DiscoverPage = () => {
               setShowFilters(false);
             }}
           />
-        )}
+        </div>
+      )}
 
-        {/* Main Card Area */}
-        <div className="relative h-[600px] flex items-center justify-center">
-          {currentProfile ? (
-            <SwipeCard
-              profile={currentProfile}
-              onSwipe={handleSwipe}
-            />
+      {/* Card Stack Area */}
+      <div className="flex-1 flex items-center justify-center px-4 pb-4">
+        <div className="relative w-full max-w-sm aspect-[3/4]">
+          {visibleProfiles.length > 0 ? (
+            <>
+              {/* Render cards in reverse order so first is on top */}
+              {visibleProfiles.slice().reverse().map((profile, reversedIndex) => {
+                const actualIndex = visibleProfiles.length - 1 - reversedIndex;
+                const isTopCard = actualIndex === 0;
+                
+                return (
+                  <SwipeCard
+                    key={profile.id}
+                    profile={profile}
+                    isTop={isTopCard}
+                    onSwipe={isTopCard ? handleSwipe : undefined}
+                    style={{
+                      transform: `scale(${1 - actualIndex * 0.04}) translateY(${actualIndex * 8}px)`,
+                      zIndex: visibleProfiles.length - actualIndex,
+                    }}
+                  />
+                );
+              })}
+            </>
           ) : (
-            <div className="text-center space-y-4">
-              <div className="text-6xl">🎉</div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  No more profiles for now!
+            <div className="text-center space-y-6 p-8">
+              <div className="text-7xl">💫</div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold text-foreground">
+                  That's everyone!
                 </h3>
-                <p className="text-gray-600">
-                  Try adjusting your filters or check back later for new matches.
+                <p className="text-muted-foreground">
+                  Check back later for new people, or adjust your discovery settings.
                 </p>
-                <Button onClick={loadProfiles} className="mt-4">
+                <Button onClick={loadProfiles} className="mt-6" size="lg">
+                  <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh
                 </Button>
               </div>
             </div>
           )}
         </div>
-
-        {/* Profile Counter */}
-        {profiles.length > 0 && (
-          <div className="text-center text-sm text-gray-600">
-            {currentIndex + 1} of {profiles.length} profiles
-          </div>
-        )}
       </div>
+
+      {/* Profile Counter */}
+      {profiles.length > 0 && currentIndex < profiles.length && (
+        <div className="text-center pb-4 text-sm text-muted-foreground">
+          {currentIndex + 1} of {profiles.length}
+        </div>
+      )}
     </div>
   );
 };
