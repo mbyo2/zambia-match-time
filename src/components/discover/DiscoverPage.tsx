@@ -8,6 +8,7 @@ import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
+import MatchCelebrationModal from './MatchCelebrationModal';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
 import { Filter, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
@@ -47,6 +48,8 @@ const DiscoverPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [lastSwipe, setLastSwipe] = useState<{ profile: Profile; index: number; action: string } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
+  const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
+  const [showMatchModal, setShowMatchModal] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
@@ -243,6 +246,20 @@ const DiscoverPage = () => {
           incrementStat('likes_given');
         } else if (action === 'super_like') {
           incrementStat('super_likes_given');
+        }
+
+        // Check if it's a match (other user already liked us)
+        if (action === 'like' || action === 'super_like') {
+          const { data: matchData } = await supabase
+            .from('matches')
+            .select('id')
+            .or(`and(user1_id.eq.${user?.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user?.id})`)
+            .limit(1);
+
+          if (matchData && matchData.length > 0) {
+            setMatchedProfile(currentProfile);
+            setShowMatchModal(true);
+          }
         }
       }
     } catch (error) {
@@ -483,6 +500,20 @@ const DiscoverPage = () => {
           {currentIndex + 1} of {profiles.length}
         </div>
       )}
+
+      {/* Match Celebration Modal */}
+      <MatchCelebrationModal
+        open={showMatchModal}
+        onOpenChange={setShowMatchModal}
+        matchedProfile={matchedProfile}
+        onSendMessage={() => {
+          toast({
+            title: "Send a message!",
+            description: `Go to Matches to chat with ${matchedProfile?.first_name}`,
+          });
+        }}
+        onKeepSwiping={() => setShowMatchModal(false)}
+      />
     </div>
   );
 };
