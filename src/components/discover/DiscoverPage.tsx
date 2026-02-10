@@ -367,20 +367,6 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      {/* Profile Completion Banner */}
-      {profileStatus.completionPercentage < 100 && (
-        <div className="px-4 animate-fade-in">
-          <ProfileCompletionBanner 
-            onEditProfile={() => {
-              toast({
-                title: "Complete Your Profile",
-                description: "A complete profile gets 3x more matches!",
-                duration: 3000,
-              });
-            }} 
-          />
-        </div>
-      )}
 
       {/* Swipe Limit Display */}
       <div className="px-4 py-2">
