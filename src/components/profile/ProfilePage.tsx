@@ -10,6 +10,7 @@ import UserStatsDisplay from '@/components/gamification/UserStatsDisplay';
 import DailyRewardModal from '@/components/gamification/DailyRewardModal';
 import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSection';
 import PhotoUploadSection from './PhotoUploadSection';
+import ProfileCompletionBanner from './ProfileCompletionBanner';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { 
   User, 
@@ -127,6 +128,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          <ProfileCompletionBanner onEditProfile={() => setCurrentTab('profile-edit')} />
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
