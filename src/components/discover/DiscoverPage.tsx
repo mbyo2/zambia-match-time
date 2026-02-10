@@ -8,10 +8,9 @@ import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
-import ProfileCompletionBanner from '../profile/ProfileCompletionBanner';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
-import { Filter, Shuffle, RefreshCw } from 'lucide-react';
+import { Filter, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
 
@@ -46,6 +45,8 @@ const DiscoverPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [lastSwipe, setLastSwipe] = useState<{ profile: Profile; index: number; action: string } | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
@@ -192,6 +193,9 @@ const DiscoverPage = () => {
 
     const currentProfile = profiles[currentIndex];
     
+    // Save for undo
+    setLastSwipe({ profile: currentProfile, index: currentIndex, action });
+    
     // Safety guard: never allow swiping on your own profile
     if (user?.id && currentProfile.id === user.id) {
       setCurrentIndex(prev => prev + 1);
@@ -251,6 +255,38 @@ const DiscoverPage = () => {
     const shuffled = [...profiles].sort(() => Math.random() - 0.5);
     setProfiles(shuffled);
     setCurrentIndex(0);
+    setLastSwipe(null);
+  };
+
+  const handleUndo = async () => {
+    if (!lastSwipe || isUndoing || !user?.id) return;
+    
+    setIsUndoing(true);
+    try {
+      // Delete the last swipe from the database
+      const { error } = await supabase
+        .from('swipes')
+        .delete()
+        .eq('swiper_id', user.id)
+        .eq('swiped_id', lastSwipe.profile.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        logger.error('Error undoing swipe:', error);
+        toast({ title: "Couldn't undo", description: "Please try again", variant: "destructive" });
+        return;
+      }
+
+      // Go back to the previous card
+      setCurrentIndex(lastSwipe.index);
+      setLastSwipe(null);
+      toast({ title: "Undo!", description: "Swipe undone ↩️" });
+    } catch (error) {
+      logger.error('Error in handleUndo:', error);
+    } finally {
+      setIsUndoing(false);
+    }
   };
 
   // Pull-to-refresh handlers
@@ -347,6 +383,16 @@ const DiscoverPage = () => {
       <div className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <h1 className="text-2xl font-bold text-foreground">Discover</h1>
         <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleUndo}
+            disabled={!lastSwipe || isUndoing}
+            className="rounded-full"
+            title="Undo last swipe"
+          >
+            <Undo2 className="h-5 w-5" />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon"
