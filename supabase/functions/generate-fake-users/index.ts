@@ -160,15 +160,24 @@ serve(async (req) => {
 
       console.log(`Photo uploaded for ${userId}: ${publicUrl}`);
 
-      // 4. Update profile with more details
+      // 4. Update profile with more details including Lusaka coordinates
+      const city = "Lusaka";
+      // Add slight random offset to coordinates so users aren't all at exact same point
+      const baseLat = -15.3875;
+      const baseLng = 28.3228;
+      const latOffset = (Math.random() - 0.5) * 0.15; // ~8km range
+      const lngOffset = (Math.random() - 0.5) * 0.15;
+
       await supabaseAdmin
         .from("profiles")
         .update({
-          bio: `Hi, I'm ${firstName}. Living in ${cities[Math.floor(Math.random() * cities.length)]} and working as a ${occupations[Math.floor(Math.random() * occupations.length)]}. Let's connect!`,
+          bio: `Hi, I'm ${firstName}. Living in ${city} and working as a ${occupations[Math.floor(Math.random() * occupations.length)]}. Let's connect!`,
           occupation: occupations[Math.floor(Math.random() * occupations.length)],
-          location_city: cities[Math.floor(Math.random() * cities.length)],
-          location_state: "Zambia",
+          location_city: city,
+          location_state: "Lusaka Province",
           interested_in: [isFemale ? "male" : "female"],
+          location_lat: baseLat + latOffset,
+          location_lng: baseLng + lngOffset,
         })
         .eq("id", userId);
 
