@@ -102,11 +102,11 @@ const DiscoverPage = () => {
       if (!profile?.location_lat || !profile?.location_lng) {
         setNeedsLocation(true);
         setShowLocationPrompt(true);
-        setLoading(false);
       } else {
         setNeedsLocation(false);
-        loadProfiles();
       }
+      // Always load profiles regardless of location status
+      loadProfiles();
     } catch (error) {
       logger.error('Error checking location:', error);
       setNeedsLocation(true);
