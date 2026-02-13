@@ -42,7 +42,7 @@ export const usePushNotifications = () => {
       setState(prev => ({ ...prev, registration }));
       
       // Check for existing subscription
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager?.getSubscription();
       if (subscription) {
         setState(prev => ({ ...prev, subscription }));
       }
@@ -86,7 +86,7 @@ export const usePushNotifications = () => {
     if (!state.registration || !user) return;
 
     try {
-      const subscription = await state.registration.pushManager.subscribe({
+      const subscription = await (state.registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HI8YQjuUGTp_r1KtF2z-UrjjvQ5g7Z-AzPZ0AoJT8PjbOqh9F1k7rlyCPY' // Demo VAPID key
       });

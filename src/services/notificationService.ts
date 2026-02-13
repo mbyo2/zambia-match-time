@@ -52,7 +52,7 @@ export class NotificationService {
         'BEl62iUYgUivxIkv69yViEuiBIa40HI80YmqiS7hRB1t5rWQWaChTTYBJXnQaVj5f2xB_1jzl_TjLlKGNzfA1Jk'
       );
       
-      const subscription = await this.registration.pushManager.subscribe({
+      const subscription = await (this.registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: key as unknown as BufferSource
       });
