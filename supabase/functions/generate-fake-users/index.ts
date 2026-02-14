@@ -96,6 +96,7 @@ serve(async (req) => {
   }
 
   try {
+    // Auth check
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
