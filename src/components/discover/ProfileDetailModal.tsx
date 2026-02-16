@@ -43,6 +43,19 @@ const educationLabel = (edu: string) => {
 
 const ProfileDetailModal = ({ profile, open, onOpenChange, onSwipe }: ProfileDetailModalProps) => {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
+  const [animating, setAnimating] = useState(false);
+
+  const goToPhoto = (next: number, dir: 'left' | 'right') => {
+    if (animating) return;
+    setSlideDir(dir);
+    setAnimating(true);
+    setTimeout(() => {
+      setPhotoIndex(next);
+      setSlideDir(null);
+      setAnimating(false);
+    }, 250);
+  };
 
   const photos = profile.profile_photos?.length > 0
     ? profile.profile_photos
@@ -61,7 +74,12 @@ const ProfileDetailModal = ({ profile, open, onOpenChange, onSwipe }: ProfileDet
           <img
             src={photos[photoIndex]?.photo_url || '/placeholder.svg'}
             alt={profile.first_name}
-            className="w-full h-full object-cover"
+            className={cn(
+              "w-full h-full object-cover transition-all duration-250 ease-out",
+              slideDir === 'left' && "animate-[slide-out-left_0.25s_ease-out]",
+              slideDir === 'right' && "animate-[slide-out-right_0.25s_ease-out]",
+              !slideDir && "animate-[fade-in_0.25s_ease-out]"
+            )}
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
           />
 
@@ -72,8 +90,8 @@ const ProfileDetailModal = ({ profile, open, onOpenChange, onSwipe }: ProfileDet
                 <div
                   key={idx}
                   className={cn(
-                    "flex-1 h-1 rounded-full transition-all",
-                    idx === photoIndex ? "bg-white" : "bg-white/30"
+                    "flex-1 h-1 rounded-full transition-all duration-300",
+                    idx === photoIndex ? "bg-white scale-y-125" : "bg-white/30"
                   )}
                 />
               ))}
@@ -85,16 +103,16 @@ const ProfileDetailModal = ({ profile, open, onOpenChange, onSwipe }: ProfileDet
             <>
               {photoIndex > 0 && (
                 <button
-                  onClick={() => setPhotoIndex(i => i - 1)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white"
+                  onClick={() => goToPhoto(photoIndex - 1, 'right')}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white transition-transform active:scale-90"
                 >
                   <ChevronLeft size={18} />
                 </button>
               )}
               {photoIndex < photos.length - 1 && (
                 <button
-                  onClick={() => setPhotoIndex(i => i + 1)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white"
+                  onClick={() => goToPhoto(photoIndex + 1, 'left')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white transition-transform active:scale-90"
                 >
                   <ChevronRight size={18} />
                 </button>
