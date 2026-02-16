@@ -30,15 +30,16 @@ interface SwipeCardProps {
   isTop?: boolean;
   style?: React.CSSProperties;
   className?: string;
+  onTapProfile?: (profile: Profile) => void;
 }
 
-const SwipeCard = ({ profile, onSwipe, isTop = true, style, className }: SwipeCardProps) => {
+const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProfile }: SwipeCardProps) => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | 'up' | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const { triggerSwipeHaptic } = useNativeHaptics();
@@ -301,10 +302,10 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className }: SwipeCa
 
           {/* Expand/collapse details */}
           <button 
-            onClick={(e) => { e.stopPropagation(); setShowDetails(!showDetails); }}
+            onClick={(e) => { e.stopPropagation(); onTapProfile?.(profile); }}
             className="text-xs text-white/60 hover:text-white/90 transition-colors font-medium"
           >
-            {showDetails ? 'Show less ▲' : 'More about me ▼'}
+            View full profile ▶
           </button>
 
           {/* Expanded details */}
