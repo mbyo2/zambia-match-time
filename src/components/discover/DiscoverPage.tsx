@@ -9,6 +9,7 @@ import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
 import MatchCelebrationModal from './MatchCelebrationModal';
+import ProfileDetailModal from './ProfileDetailModal';
 import WhoLikedYou from './WhoLikedYou';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const DiscoverPage = () => {
   const [isUndoing, setIsUndoing] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
   const [showMatchModal, setShowMatchModal] = useState(false);
+  const [detailProfile, setDetailProfile] = useState<Profile | null>(null);
   const [needsLocation, setNeedsLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
@@ -467,6 +469,7 @@ const DiscoverPage = () => {
                     profile={profile}
                     isTop={isTopCard}
                     onSwipe={isTopCard ? handleSwipe : undefined}
+                    onTapProfile={(p) => setDetailProfile(p)}
                     style={{
                       transform: `scale(${1 - actualIndex * 0.04}) translateY(${actualIndex * 8}px)`,
                       zIndex: visibleProfiles.length - actualIndex,
@@ -504,6 +507,16 @@ const DiscoverPage = () => {
 
       {/* Who Liked You */}
       <WhoLikedYou />
+
+      {/* Profile Detail Modal */}
+      {detailProfile && (
+        <ProfileDetailModal
+          profile={detailProfile}
+          open={!!detailProfile}
+          onOpenChange={(open) => { if (!open) setDetailProfile(null); }}
+          onSwipe={handleSwipe}
+        />
+      )}
 
       {/* Match Celebration Modal */}
       <MatchCelebrationModal
