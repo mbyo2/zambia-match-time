@@ -9,6 +9,7 @@ import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
 import SwipeLimitDisplay from './SwipeLimitDisplay';
 import MatchCelebrationModal from './MatchCelebrationModal';
+import WhoLikedYou from './WhoLikedYou';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
 import { Filter, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
@@ -342,7 +343,7 @@ const DiscoverPage = () => {
 
   if (showLocationPrompt) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-accent to-background p-4 flex items-center justify-center">
         <LocationPermissionPrompt
           onLocationSet={() => {
             setShowLocationPrompt(false);
@@ -496,10 +497,13 @@ const DiscoverPage = () => {
 
       {/* Profile Counter */}
       {profiles.length > 0 && currentIndex < profiles.length && (
-        <div className="text-center pb-4 text-sm text-muted-foreground">
+        <div className="text-center pb-2 text-sm text-muted-foreground">
           {currentIndex + 1} of {profiles.length}
         </div>
       )}
+
+      {/* Who Liked You */}
+      <WhoLikedYou />
 
       {/* Match Celebration Modal */}
       <MatchCelebrationModal
