@@ -1367,7 +1367,19 @@ export type Database = {
           user_id: string
         }[]
       }
-      fuzz_distance: { Args: { exact_distance: number }; Returns: number }
+      fuzz_distance:
+        | {
+            Args: { exact_distance: number }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.fuzz_distance(exact_distance => float8), public.fuzz_distance(exact_distance => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { exact_distance: number }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.fuzz_distance(exact_distance => float8), public.fuzz_distance(exact_distance => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       get_app_statistics: { Args: never; Returns: Json }
       get_compatible_profiles: {
         Args: {
