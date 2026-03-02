@@ -1,0 +1,1 @@
+UPDATE profiles SET gender = 'male', interested_in = ARRAY['female']::gender_type[] WHERE id = 'b2d175b0-3e93-458c-9704-47fdbb77a012';
