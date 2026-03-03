@@ -7,8 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Lock, Eye, UserX, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Eye, UserX, AlertTriangle, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface SecuritySettings {
   two_factor_enabled: boolean;
