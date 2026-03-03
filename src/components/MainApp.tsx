@@ -161,7 +161,7 @@ if (currentTab === 'admin' && !isSuperAdmin) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
         <div className="flex justify-around py-2">
           <Button
             variant={currentTab === 'discover' ? 'default' : 'ghost'}
