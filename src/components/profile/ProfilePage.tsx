@@ -217,6 +217,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
         <TabsContent value="settings" className="space-y-4">
           <div className="grid gap-4">
+            {/* Dark Mode Toggle */}
+            <Card>
+              <CardContent className="flex items-center justify-between gap-4 pt-6">
+                <div className="flex items-center gap-4">
+                  {theme === 'dark' ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+                  <div>
+                    <h3 className="font-medium">Dark Mode</h3>
+                    <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={theme === 'dark'}
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                />
+              </CardContent>
+            </Card>
+
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('security')}>
               <CardContent className="flex items-center gap-4 pt-6">
                 <Shield className="h-5 w-5 text-primary" />
