@@ -216,27 +216,27 @@ const MatchesPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        <h1 className="text-2xl font-bold text-foreground mb-6 text-center">
           Messages 💬
         </h1>
 
         {matchesWithDetails.length === 0 ? (
           <Card className="text-center py-8">
             <CardContent>
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">
+              <MessageSquare className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-muted-foreground mb-2">
                 No conversations yet
               </h2>
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 When you match with someone, your conversation will appear here.
               </p>
             </CardContent>
@@ -252,7 +252,7 @@ const MatchesPage = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-muted">
                         {(() => {
                           const primary = match.other_user.profile_photos?.find(p => p.is_primary);
                           const fallback = match.other_user.profile_photos?.[0];
@@ -270,25 +270,25 @@ const MatchesPage = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-800 truncate">
+                        <h3 className="font-semibold text-foreground truncate">
                           {match.other_user.first_name}
                         </h3>
                         {match.lastMessage && (
-                           <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                           <p className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                             {new Date(match.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         )}
                       </div>
 
                       <div className="flex justify-between items-center mt-1">
-                        <p className="text-sm text-gray-600 truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {match.lastMessage ? 
                             `${match.lastMessage.sender_id === user?.id ? 'You: ' : ''}${match.lastMessage.content}`
                             : `Matched on ${new Date(match.created_at).toLocaleDateString()}`
                           }
                         </p>
                         {match.unreadCount > 0 && (
-                          <Badge className="bg-pink-500 text-white flex-shrink-0 ml-2">{match.unreadCount}</Badge>
+                          <Badge className="bg-primary text-primary-foreground flex-shrink-0 ml-2">{match.unreadCount}</Badge>
                         )}
                       </div>
                     </div>

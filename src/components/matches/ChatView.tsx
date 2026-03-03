@@ -197,14 +197,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Realtime Messages Component */}
       <RealtimeMessages
         conversationId={match.conversation.id}
@@ -215,13 +215,13 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b p-4">
+      <div className="bg-card shadow-sm border-b border-border p-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft size={20} />
           </Button>
           
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-muted">
             {(() => {
               const primary = match.other_user.profile_photos?.find((p: any) => p.is_primary);
               const fallback = match.other_user.profile_photos?.[0];
@@ -247,7 +247,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
           {/* New message indicator */}
           {newMessageCount > 0 && (
-            <div className="bg-pink-500 text-white rounded-full px-2 py-1 text-xs">
+            <div className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
               {newMessageCount} new
             </div>
           )}
@@ -257,7 +257,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-muted-foreground mt-8">
             <p>Start the conversation! 👋</p>
           </div>
         ) : (
@@ -270,14 +270,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
                 <div
                   className={`px-4 py-2 rounded-lg ${
                     message.sender_id === user?.id
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-white border shadow-sm'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-card border border-border shadow-sm'
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
                   <div className="flex items-center justify-between mt-1">
                     <p className={`text-xs ${
-                      message.sender_id === user?.id ? 'text-pink-100' : 'text-gray-400'
+                      message.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
                     }`}>
                       {new Date(message.created_at).toLocaleTimeString([], { 
                         hour: '2-digit', 
@@ -286,7 +286,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
                     </p>
                     {message.sender_id === user?.id && (
                       <span className={`text-xs ${
-                        message.is_read ? 'text-pink-200' : 'text-pink-300'
+                        message.is_read ? 'text-primary-foreground/60' : 'text-primary-foreground/40'
                       }`}>
                         {message.is_read ? '✓✓' : '✓'}
                       </span>
