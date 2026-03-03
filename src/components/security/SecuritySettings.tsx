@@ -317,9 +317,70 @@ const SecuritySettings = () => {
             <Shield className="mr-2 h-4 w-4" />
             Safety Center
           </Button>
-          <Button variant="destructive" className="w-full">
-            Deactivate Account
-          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-5 w-5" />
+            Delete Account
+          </CardTitle>
+          <CardDescription>
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete My Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete your account, profile, matches, messages, and all data. This action cannot be undone.
+                  <br /><br />
+                  Type <strong>DELETE</strong> to confirm.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                  onClick={async () => {
+                    setIsDeleting(true);
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const response = await supabase.functions.invoke('delete-account', {
+                        headers: { Authorization: `Bearer ${session?.access_token}` },
+                      });
+                      if (response.error) throw response.error;
+                      toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
+                      await supabase.auth.signOut();
+                    } catch (error: any) {
+                      toast({ title: "Error", description: error.message || "Failed to delete account", variant: "destructive" });
+                    } finally {
+                      setIsDeleting(false);
+                      setDeleteConfirmText('');
+                    }
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Forever'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>
