@@ -214,7 +214,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <div className="grid gap-4">
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('security')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-blue-500" />
+                <Shield className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-medium">Security Settings</h3>
                   <p className="text-sm text-muted-foreground">Manage your account security</p>
@@ -224,7 +224,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('verification')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-medium">Profile Verification</h3>
                   <p className="text-sm text-muted-foreground">Verify your identity</p>
@@ -234,7 +234,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('moderation')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-purple-500" />
+                <Shield className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-medium">Content Moderation</h3>
                   <p className="text-sm text-muted-foreground">Manage content settings</p>
@@ -244,17 +244,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('privacy')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <FileText className="h-5 w-5 text-gray-500" />
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <h3 className="font-medium">Privacy Policy</h3>
-                  <p className="text-sm text-muted-foreground">Review our privacy policy</p>
+                   <h3 className="font-medium">Privacy Policy</h3>
+                   <p className="text-sm text-muted-foreground">Review our privacy policy</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('terms')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <FileText className="h-5 w-5 text-gray-500" />
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <h3 className="font-medium">Terms of Service</h3>
                   <p className="text-sm text-muted-foreground">Review our terms of service</p>
@@ -265,7 +265,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 {isSuperAdmin && (
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
               <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-red-500" />
+                <Shield className="h-5 w-5 text-destructive" />
                 <div>
                   <h3 className="font-medium">Developer Actions</h3>
                   <p className="text-sm text-muted-foreground">Generate users and backfill photos</p>

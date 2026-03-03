@@ -196,12 +196,12 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-teal-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent to-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Leaf className="h-6 w-6 text-green-500" />
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-500 to-teal-500 bg-clip-text text-transparent">
+            <Leaf className="h-6 w-6 text-primary" />
+            <CardTitle className="text-2xl font-bold text-primary">
               JustGrown
             </CardTitle>
           </div>
@@ -328,7 +328,7 @@ const AuthForm = () => {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Must be at least 8 characters with uppercase, lowercase, number, and special character
                   </p>
                 </div>
