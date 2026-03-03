@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useDailyRewards } from '@/hooks/useDailyRewards';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,7 @@ import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSect
 import PhotoUploadSection from './PhotoUploadSection';
 import ProfileCompletionBanner from './ProfileCompletionBanner';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { useTheme } from 'next-themes';
 import { 
   User, 
   Edit, 
@@ -21,7 +23,9 @@ import {
   FileText, 
   Gift,
   Trophy,
-  MessageCircle
+  MessageCircle,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -32,6 +36,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const { user } = useAuth();
   const { todayReward } = useDailyRewards();
   const { isSuperAdmin } = useSuperAdmin();
+  const { theme, setTheme } = useTheme();
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
