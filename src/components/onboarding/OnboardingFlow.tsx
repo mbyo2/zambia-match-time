@@ -25,12 +25,12 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       id: 'welcome',
       title: 'Welcome to MatchTime!',
       description: 'Find meaningful connections and lasting relationships',
-      icon: <Heart className="h-8 w-8 text-pink-500" />,
+      icon: <Heart className="h-8 w-8 text-primary" />,
       component: (
         <div className="text-center space-y-4">
           <div className="text-6xl mb-4">💖</div>
-          <h2 className="text-2xl font-bold text-gray-800">Ready to find love?</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Ready to find love?</h2>
+          <p className="text-muted-foreground">
             MatchTime helps you discover compatible people in your area. 
             Let's set up your profile to get started!
           </p>
@@ -41,20 +41,20 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       id: 'profile',
       title: 'Create Your Profile',
       description: 'Tell us about yourself to find better matches',
-      icon: <User className="h-8 w-8 text-blue-500" />,
+      icon: <User className="h-8 w-8 text-primary" />,
       component: (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Your profile is your first impression</h3>
+          <h3 className="text-lg font-semibold text-foreground">Your profile is your first impression</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium mb-2">Be Authentic</h4>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 bg-accent rounded-lg">
+              <h4 className="font-medium mb-2 text-foreground">Be Authentic</h4>
+              <p className="text-sm text-muted-foreground">
                 Share genuine information about yourself, your interests, and what you're looking for.
               </p>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium mb-2">Add Photos</h4>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 bg-accent rounded-lg">
+              <h4 className="font-medium mb-2 text-foreground">Add Photos</h4>
+              <p className="text-sm text-muted-foreground">
                 Upload clear, recent photos that show your personality and lifestyle.
               </p>
             </div>
@@ -66,38 +66,26 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       id: 'photos',
       title: 'Add Your Photos',
       description: 'Photos help others get to know you better',
-      icon: <Camera className="h-8 w-8 text-purple-500" />,
+      icon: <Camera className="h-8 w-8 text-primary" />,
       component: (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Photo Tips</h3>
+          <h3 className="text-lg font-semibold text-foreground">Photo Tips</h3>
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                <span className="text-green-600 text-sm">✓</span>
+            {[
+              { title: 'Use clear, high-quality images', desc: 'Make sure your face is clearly visible' },
+              { title: 'Show your personality', desc: 'Include photos of your hobbies and interests' },
+              { title: 'Recent photos only', desc: 'Use photos taken within the last year' },
+            ].map((tip, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-primary text-sm">✓</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">{tip.title}</p>
+                  <p className="text-sm text-muted-foreground">{tip.desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">Use clear, high-quality images</p>
-                <p className="text-sm text-gray-600">Make sure your face is clearly visible</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                <span className="text-green-600 text-sm">✓</span>
-              </div>
-              <div>
-                <p className="font-medium">Show your personality</p>
-                <p className="text-sm text-gray-600">Include photos of your hobbies and interests</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                <span className="text-green-600 text-sm">✓</span>
-              </div>
-              <div>
-                <p className="font-medium">Recent photos only</p>
-                <p className="text-sm text-gray-600">Use photos taken within the last year</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )
@@ -106,26 +94,22 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       id: 'safety',
       title: 'Stay Safe',
       description: 'Your safety and privacy are our top priorities',
-      icon: <Shield className="h-8 w-8 text-green-500" />,
+      icon: <Shield className="h-8 w-8 text-primary" />,
       component: (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Safety Guidelines</h3>
+          <h3 className="text-lg font-semibold text-foreground">Safety Guidelines</h3>
           <div className="space-y-3">
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Meet in public:</strong> Always meet new people in public places for first dates.
-              </p>
-            </div>
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Trust your instincts:</strong> If something feels off, don't hesitate to block or report.
-              </p>
-            </div>
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm">
-                <strong>Keep personal info private:</strong> Don't share sensitive information too quickly.
-              </p>
-            </div>
+            {[
+              { label: 'Meet in public:', text: 'Always meet new people in public places for first dates.' },
+              { label: 'Trust your instincts:', text: "If something feels off, don't hesitate to block or report." },
+              { label: 'Keep personal info private:', text: "Don't share sensitive information too quickly." },
+            ].map((item, i) => (
+              <div key={i} className="p-3 bg-accent border border-border rounded-lg">
+                <p className="text-sm text-foreground">
+                  <strong>{item.label}</strong> {item.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )
@@ -150,7 +134,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const progressPercentage = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <div className="flex items-center justify-between mb-4">
@@ -161,7 +145,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 <CardDescription>{currentStepData.description}</CardDescription>
               </div>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               {currentStep + 1} of {steps.length}
             </div>
           </div>
@@ -181,10 +165,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
               Previous
             </Button>
             
-            <Button 
-              onClick={handleNext}
-              className="bg-pink-500 hover:bg-pink-600"
-            >
+            <Button onClick={handleNext}>
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
               {currentStep < steps.length - 1 && <ChevronRight className="h-4 w-4 ml-2" />}
             </Button>

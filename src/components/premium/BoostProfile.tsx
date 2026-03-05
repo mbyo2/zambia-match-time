@@ -31,7 +31,6 @@ const BoostProfile = () => {
 
     setIsLoading(true);
     try {
-      // Call the database function directly using SQL
       const { error } = await supabase
         .from('daily_limits')
         .upsert({
@@ -65,15 +64,15 @@ const BoostProfile = () => {
     (new Date().getTime() - lastBoost.getTime()) < (boostDuration * 60 * 1000);
 
   return (
-    <Card className="border-purple-200">
+    <Card className="border-accent">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-purple-500" />
+            <Zap className="h-5 w-5 text-primary" />
             Profile Boost
           </CardTitle>
           {isRecentlyBoosted && (
-            <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+            <Badge variant="secondary">
               <Clock size={12} className="mr-1" />
               Active
             </Badge>
@@ -81,13 +80,13 @@ const BoostProfile = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Boost your profile to be seen by up to 10x more people for the next {boostDuration} minutes.
         </p>
         
         {!canBoost && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-accent border border-border rounded-lg p-3">
+            <p className="text-sm text-muted-foreground">
               Upgrade to premium to use profile boost feature.
             </p>
           </div>
@@ -96,11 +95,11 @@ const BoostProfile = () => {
         <Button 
           onClick={handleBoost}
           disabled={!canBoost || isLoading || isRecentlyBoosted}
-          className="w-full bg-purple-500 hover:bg-purple-600"
+          className="w-full"
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2" />
               Boosting...
             </>
           ) : isRecentlyBoosted ? (

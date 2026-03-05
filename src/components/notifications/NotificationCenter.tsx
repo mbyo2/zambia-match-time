@@ -46,7 +46,6 @@ const NotificationCenter = () => {
 
       if (error) throw error;
 
-      // Type the data properly to match our Notification interface
       const typedNotifications: Notification[] = (data || []).map(item => ({
         id: item.id,
         type: item.type as Notification['type'],
@@ -136,15 +135,15 @@ const NotificationCenter = () => {
     switch (type) {
       case 'like':
       case 'super_like':
-        return <Heart className="h-4 w-4 text-pink-500" />;
+        return <Heart className="h-4 w-4 text-primary" />;
       case 'match':
-        return <Heart className="h-4 w-4 text-red-500" />;
+        return <Heart className="h-4 w-4 text-destructive" />;
       case 'message':
-        return <MessageCircle className="h-4 w-4 text-blue-500" />;
+        return <MessageCircle className="h-4 w-4 text-primary" />;
       case 'profile_view':
-        return <Eye className="h-4 w-4 text-green-500" />;
+        return <Eye className="h-4 w-4 text-primary" />;
       case 'subscription':
-        return <Crown className="h-4 w-4 text-yellow-500" />;
+        return <Crown className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -183,7 +182,7 @@ const NotificationCenter = () => {
       <PopoverContent className="w-80" align="end">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Notifications</h3>
+            <h3 className="font-semibold text-foreground">Notifications</h3>
             {unreadCount > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                 <Check size={16} className="mr-1" />
@@ -194,7 +193,7 @@ const NotificationCenter = () => {
           
           <ScrollArea className="h-96">
             {notifications.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-muted-foreground py-8">
                 <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No notifications yet</p>
               </div>
@@ -205,8 +204,8 @@ const NotificationCenter = () => {
                     key={notification.id}
                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                       notification.is_read
-                        ? 'bg-white'
-                        : 'bg-blue-50 border-blue-200'
+                        ? 'bg-card'
+                        : 'bg-accent border-primary/20'
                     }`}
                     onClick={() => {
                       if (!notification.is_read) {
@@ -217,16 +216,16 @@ const NotificationCenter = () => {
                     <div className="flex items-start gap-3">
                       {getNotificationIcon(notification.type)}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{notification.title}</p>
-                        <p className="text-sm text-gray-600 truncate">
+                        <p className="font-medium text-sm text-foreground">{notification.title}</p>
+                        <p className="text-sm text-muted-foreground truncate">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground/70 mt-1">
                           {formatTime(notification.created_at)}
                         </p>
                       </div>
                       {!notification.is_read && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-1" />
+                        <div className="w-2 h-2 bg-primary rounded-full mt-1" />
                       )}
                     </div>
                   </div>

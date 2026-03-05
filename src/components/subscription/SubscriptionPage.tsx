@@ -16,14 +16,14 @@ const SubscriptionPage = () => {
   const isPremium = subscription.tier !== 'free';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-background py-8">
       <div className="max-w-7xl mx-auto px-4 space-y-8">
         {/* Current Subscription Status */}
-        <Card className="border-pink-200">
+        <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Crown className="h-6 w-6 text-pink-500" />
+                <Crown className="h-6 w-6 text-primary" />
                 <CardTitle>Your Subscription</CardTitle>
               </div>
               <Badge variant={isPremium ? 'default' : 'secondary'}>
@@ -33,19 +33,19 @@ const SubscriptionPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white rounded-lg">
-                <p className="text-sm text-gray-600">Plan</p>
-                <p className="text-lg font-semibold capitalize">{subscription.tier}</p>
+              <div className="text-center p-4 bg-card rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground">Plan</p>
+                <p className="text-lg font-semibold capitalize text-foreground">{subscription.tier}</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg">
-                <p className="text-sm text-gray-600">Daily Swipes</p>
-                <p className="text-lg font-semibold">
+              <div className="text-center p-4 bg-card rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground">Daily Swipes</p>
+                <p className="text-lg font-semibold text-foreground">
                   {subscription.tier === 'free' ? subscription.remainingSwipes : 'Unlimited'}
                 </p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg">
-                <p className="text-sm text-gray-600">Status</p>
-                <p className="text-lg font-semibold capitalize">{subscription.status}</p>
+              <div className="text-center p-4 bg-card rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-lg font-semibold capitalize text-foreground">{subscription.status}</p>
               </div>
             </div>
             
