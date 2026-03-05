@@ -24,13 +24,13 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ open, onOpenChange 
   const getRewardIcon = (type: string) => {
     switch (type) {
       case 'super_like':
-        return <Heart className="h-8 w-8 text-red-500" />;
+        return <Heart className="h-8 w-8 text-destructive" />;
       case 'boost':
-        return <Zap className="h-8 w-8 text-orange-500" />;
+        return <Zap className="h-8 w-8 text-primary" />;
       case 'points':
-        return <Star className="h-8 w-8 text-yellow-500" />;
+        return <Star className="h-8 w-8 text-primary" />;
       default:
-        return <Gift className="h-8 w-8 text-green-500" />;
+        return <Gift className="h-8 w-8 text-primary" />;
     }
   };
 
@@ -77,7 +77,7 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ open, onOpenChange 
             </Button>
           ) : (
             <div className="text-center">
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-primary">
                 ✓ Already Claimed Today
               </Badge>
             </div>

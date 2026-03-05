@@ -35,7 +35,6 @@ const ProfileViews = () => {
 
   const fetchProfileViews = async () => {
     try {
-      // Use explicit join to avoid ambiguous relationship
       const { data, error } = await supabase
         .from('profile_views')
         .select(`
@@ -80,19 +79,19 @@ const ProfileViews = () => {
 
   if (!isPremium) {
     return (
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-accent bg-accent/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-800">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <Eye className="h-5 w-5" />
             Profile Views
-            <Badge variant="secondary" className="bg-yellow-200 text-yellow-800">
+            <Badge variant="secondary">
               <Crown size={12} className="mr-1" />
               Premium
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-yellow-700">
+          <p className="text-sm text-muted-foreground">
             Upgrade to premium to see who has viewed your profile.
           </p>
         </CardContent>
@@ -104,9 +103,9 @@ const ProfileViews = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Eye className="h-5 w-5 text-blue-500" />
+          <Eye className="h-5 w-5 text-primary" />
           Profile Views
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Badge variant="secondary">
             {views.length}
           </Badge>
         </CardTitle>
@@ -116,16 +115,16 @@ const ProfileViews = () => {
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center space-x-3 animate-pulse">
-                <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                <div className="w-10 h-10 bg-muted rounded-full" />
                 <div className="flex-1 space-y-1">
-                  <div className="w-24 h-4 bg-gray-200 rounded" />
-                  <div className="w-16 h-3 bg-gray-200 rounded" />
+                  <div className="w-24 h-4 bg-muted rounded" />
+                  <div className="w-16 h-3 bg-muted rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : views.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">
+          <p className="text-sm text-muted-foreground text-center py-4">
             No profile views yet. Keep swiping to get noticed!
           </p>
         ) : (
@@ -143,15 +142,15 @@ const ProfileViews = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
+                    <p className="font-medium text-sm truncate text-foreground">
                       {view.viewer.first_name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {getTimeAgo(view.created_at)}
                     </p>
                   </div>
                   {view.view_type === 'super_view' && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       <Star size={10} className="mr-1" />
                       Super
                     </Badge>
