@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MapPin, DollarSign } from 'lucide-react';
@@ -22,7 +21,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation }) 
         <CardTitle>{accommodation.name}</CardTitle>
         <CardDescription>{accommodation.description}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2 text-sm text-gray-600">
+      <CardContent className="grid gap-2 text-sm text-muted-foreground">
         {(accommodation.location_city || accommodation.location_country) && (
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
