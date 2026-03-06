@@ -279,7 +279,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
                     className="w-full h-32 object-cover rounded-lg"
                   />
                   {photo.is_primary && (
-                    <div className="absolute top-2 left-2 bg-pink-500 text-white text-xs px-2 py-1 rounded">
+                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
                       Primary
                     </div>
                   )}
@@ -307,10 +307,10 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
               ))}
               
               {photos.length < 6 && (
-                <label className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-pink-500">
+                <label className="border-2 border-dashed border-border rounded-lg h-32 flex items-center justify-center cursor-pointer hover:border-primary">
                   <div className="text-center">
-                    <Upload size={24} className="mx-auto mb-2 text-gray-400" />
-                    <span className="text-sm text-gray-500">Add Photo</span>
+                    <Upload size={24} className="mx-auto mb-2 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Add Photo</span>
                   </div>
                   <input
                     type="file"
@@ -409,7 +409,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
               <Button 
                 onClick={updateProfile}
                 disabled={isLoading}
-                className="bg-pink-500 hover:bg-pink-600"
+                className=""
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
