@@ -216,8 +216,22 @@ const MatchesPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-md mx-auto">
+          <div className="h-8 w-40 bg-muted animate-pulse rounded-lg mx-auto mb-6" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
+                <div className="w-14 h-14 rounded-full bg-muted animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-40 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="h-3 w-10 bg-muted animate-pulse rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
