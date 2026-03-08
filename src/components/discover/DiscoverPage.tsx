@@ -11,8 +11,6 @@ import MatchCelebrationModal from './MatchCelebrationModal';
 import ProfileDetailModal from './ProfileDetailModal';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import NotificationCenter from '../notifications/NotificationCenter';
-import ProfileCompletionGuide from '../onboarding/ProfileCompletionGuide';
-import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import { Button } from '@/components/ui/button';
 import { Filter, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
