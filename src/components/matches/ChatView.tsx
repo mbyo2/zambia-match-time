@@ -263,7 +263,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             {/* Show venue suggestions as icebreaker for new conversations */}
             <VenueSuggestions />
           </div>
-          </div>
         ) : (
           messages.map((message) => (
             <div
