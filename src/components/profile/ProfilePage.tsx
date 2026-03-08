@@ -298,7 +298,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
               </CardContent>
             </Card>
 
-{isSuperAdmin && (
+            {(isLodgeManager || isSuperAdmin) && (
+              <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('manage-venues')}>
+                <CardContent className="flex items-center gap-4 pt-6">
+                  <Building className="h-5 w-5 text-primary" />
+                  <div>
+                    <h3 className="font-medium">Manage Venues</h3>
+                    <p className="text-sm text-muted-foreground">Add and manage lodge/guesthouse listings</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
               <CardContent className="flex items-center gap-4 pt-6">
                 <Shield className="h-5 w-5 text-destructive" />
