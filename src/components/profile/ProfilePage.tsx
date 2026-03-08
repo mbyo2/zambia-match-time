@@ -41,13 +41,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [isLodgeManager, setIsLodgeManager] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchPhotos();
+      checkLodgeManager();
     }
   }, [user]);
+
+  const checkLodgeManager = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'lodge_manager')
+      .maybeSingle();
+    setIsLodgeManager(!!data);
+  };
 
   const fetchProfile = async () => {
     if (!user) return;
