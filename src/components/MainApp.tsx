@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +18,7 @@ import SubPageWrapper from './SubPageWrapper';
 import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
+import ErrorBoundary from './ErrorBoundary';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Flame, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -112,9 +112,11 @@ const MainApp = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 pb-16 overflow-hidden">
-        {currentTab === 'discover' && <DiscoverPage />}
-        {currentTab === 'matches' && <MatchesPage />}
-        {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
+        <ErrorBoundary>
+          {currentTab === 'discover' && <DiscoverPage />}
+          {currentTab === 'matches' && <MatchesPage />}
+          {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
+        </ErrorBoundary>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border z-50">

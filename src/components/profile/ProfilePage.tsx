@@ -1,33 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useDailyRewards } from '@/hooks/useDailyRewards';
 import { supabase } from '@/integrations/supabase/client';
 import UserStatsDisplay from '@/components/gamification/UserStatsDisplay';
 import DailyRewardModal from '@/components/gamification/DailyRewardModal';
 import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSection';
-import PhotoUploadSection from './PhotoUploadSection';
-import ProfileCompletionBanner from './ProfileCompletionBanner';
+import ProfileOverview from './ProfileOverview';
+import ProfileSettings from './ProfileSettings';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { useTheme } from 'next-themes';
-import { 
-  User, 
-  Edit, 
-  Settings, 
-  Shield, 
-  CheckCircle, 
-  FileText, 
-  Gift,
-  Trophy,
-  MessageCircle,
-  Moon,
-  Sun,
-  Building
-} from 'lucide-react';
+import { Edit, Gift, Trophy, MessageCircle } from 'lucide-react';
 
 interface ProfilePageProps {
   setCurrentTab: (tab: string) => void;
@@ -37,7 +20,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const { user } = useAuth();
   const { todayReward } = useDailyRewards();
   const { isSuperAdmin } = useSuperAdmin();
-  const { theme, setTheme } = useTheme();
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -64,48 +46,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (!error) setProfile(data);
   };
 
   const fetchPhotos = async () => {
     if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('profile_photos')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching photos:', error);
-        return;
-      }
-
-      setPhotos(data || []);
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-    }
-  };
-
-  const handlePhotosUpdate = () => {
-    fetchPhotos();
+    const { data, error } = await supabase
+      .from('profile_photos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('order_index', { ascending: true });
+    if (!error) setPhotos(data || []);
   };
 
   return (
@@ -146,78 +102,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <ProfileCompletionBanner onEditProfile={() => setCurrentTab('profile-edit')} />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{user?.email}</p>
-                  </div>
-                  {profile && (
-                    <>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Name</p>
-                        <p className="font-medium">{profile.first_name} {profile.last_name}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Location</p>
-                        <p className="font-medium">{profile.location_city}, {profile.location_state}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Bio</p>
-                        <p className="font-medium">{profile.bio || 'No bio added yet'}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setCurrentTab('profile-edit')}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile Details
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setCurrentTab('verification')}
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Verify Profile
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setCurrentTab('security')}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Security Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <PhotoUploadSection 
-            photos={photos} 
-            onPhotosUpdate={handlePhotosUpdate} 
+        <TabsContent value="overview">
+          <ProfileOverview
+            user={user}
+            profile={profile}
+            photos={photos}
+            onPhotosUpdate={fetchPhotos}
+            onNavigate={setCurrentTab}
           />
         </TabsContent>
 
@@ -229,105 +120,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <IcebreakerPromptsSection />
         </TabsContent>
 
-        <TabsContent value="settings" className="space-y-4">
-          <div className="grid gap-4">
-            {/* Dark Mode Toggle */}
-            <Card>
-              <CardContent className="flex items-center justify-between gap-4 pt-6">
-                <div className="flex items-center gap-4">
-                  {theme === 'dark' ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
-                  <div>
-                    <h3 className="font-medium">Dark Mode</h3>
-                    <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={theme === 'dark'}
-                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('security')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="font-medium">Security Settings</h3>
-                  <p className="text-sm text-muted-foreground">Manage your account security</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('verification')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="font-medium">Profile Verification</h3>
-                  <p className="text-sm text-muted-foreground">Verify your identity</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('moderation')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="font-medium">Content Moderation</h3>
-                  <p className="text-sm text-muted-foreground">Manage content settings</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('privacy')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div>
-                   <h3 className="font-medium">Privacy Policy</h3>
-                   <p className="text-sm text-muted-foreground">Review our privacy policy</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('terms')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <h3 className="font-medium">Terms of Service</h3>
-                  <p className="text-sm text-muted-foreground">Review our terms of service</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {(isLodgeManager || isSuperAdmin) && (
-              <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('manage-venues')}>
-                <CardContent className="flex items-center gap-4 pt-6">
-                  <Building className="h-5 w-5 text-primary" />
-                  <div>
-                    <h3 className="font-medium">Manage Venues</h3>
-                    <p className="text-sm text-muted-foreground">Add and manage lodge/guesthouse listings</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {isSuperAdmin && (
-              <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
-                <CardContent className="flex items-center gap-4 pt-6">
-                  <Shield className="h-5 w-5 text-destructive" />
-                  <div>
-                    <h3 className="font-medium">Developer Actions</h3>
-                    <p className="text-sm text-muted-foreground">Generate users and backfill photos</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        <TabsContent value="settings">
+          <ProfileSettings
+            isSuperAdmin={isSuperAdmin}
+            isLodgeManager={isLodgeManager}
+            onNavigate={setCurrentTab}
+          />
         </TabsContent>
       </Tabs>
 
-      <DailyRewardModal 
-        open={showRewardModal} 
-        onOpenChange={setShowRewardModal} 
+      <DailyRewardModal
+        open={showRewardModal}
+        onOpenChange={setShowRewardModal}
       />
     </div>
   );
