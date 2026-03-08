@@ -25,7 +25,8 @@ import {
   Trophy,
   MessageCircle,
   Moon,
-  Sun
+  Sun,
+  Building
 } from 'lucide-react';
 
 interface ProfilePageProps {
