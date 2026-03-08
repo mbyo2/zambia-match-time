@@ -308,7 +308,7 @@ const MatchesPage = () => {
                       <div className="flex justify-between items-center mt-1">
                         <p className="text-sm text-muted-foreground truncate">
                           {match.lastMessage ? 
-                            `${match.lastMessage.sender_id === user?.id ? 'You: ' : ''}${match.lastMessage.content}`
+                            `${match.lastMessage.sender_id === user?.id ? 'You: ' : ''}${match.lastMessage.content || '📷 Photo'}`
                             : `Matched on ${new Date(match.created_at).toLocaleDateString()}`
                           }
                         </p>
