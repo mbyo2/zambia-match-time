@@ -40,13 +40,20 @@ const MainApp = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name')
+        .select('id, first_name, date_of_birth, gender')
         .eq('id', user?.id)
         .single();
 
-      const profileExists = !!data && !error;
-      setHasProfile(profileExists);
-      if (!profileExists) setShowOnboarding(true);
+      if (!data || error) {
+        setHasProfile(false);
+        setShowOnboarding(true);
+        return;
+      }
+
+      // Profile exists but is incomplete (created by trigger with defaults)
+      const isComplete = data.first_name && data.first_name !== 'New' && data.date_of_birth && data.gender;
+      setHasProfile(!!isComplete);
+      if (!isComplete) setShowOnboarding(true);
     } catch (error) {
       logger.error('Error checking profile:', error);
       setHasProfile(false);
