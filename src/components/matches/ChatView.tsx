@@ -18,6 +18,7 @@ interface Message {
   created_at: string;
   is_read: boolean;
   message_type: 'text' | 'image' | 'voice' | 'video';
+  media_url?: string | null;
   reactions?: { emoji: string; count: number; userReacted: boolean }[];
 }
 
