@@ -244,11 +244,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           
           <div className="flex-1">
             <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
-            <LiveMessageIndicator
-              isOnline={otherUserOnline}
-              isTyping={otherUserTyping}
-              userName={match.other_user.first_name}
-            />
+            {otherUserTyping ? (
+              <LiveMessageIndicator
+                isOnline={otherUserOnline}
+                isTyping={otherUserTyping}
+                userName={match.other_user.first_name}
+              />
+            ) : (
+              <ActivityStatus 
+                userId={match.other_user.id}
+                lastActive={match.other_user.last_active}
+              />
+            )}
           </div>
 
           {/* New message indicator */}
