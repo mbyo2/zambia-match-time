@@ -243,7 +243,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           </div>
           
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+              {match.other_user.has_accommodation_available && (
+                <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  🏠 Has venue
+                </span>
+              )}
+            </div>
             {otherUserTyping ? (
               <LiveMessageIndicator
                 isOnline={otherUserOnline}
