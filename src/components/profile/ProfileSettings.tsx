@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Shield,
   CheckCircle,
@@ -9,6 +11,10 @@ import {
   Moon,
   Sun,
   Building,
+  Crown,
+  Heart,
+  BookOpen,
+  LogOut,
 } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -23,6 +29,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   onNavigate,
 }) => {
   const { theme, setTheme } = useTheme();
+  const { signOut } = useAuth();
 
   const settingsItems = [
     {
