@@ -3,11 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, Shield, Award, FileText } from 'lucide-react';
+import { Camera, Shield, Award } from 'lucide-react';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { validateSecureFile } from '@/utils/secureFileValidation';
@@ -27,52 +26,34 @@ const VerificationFlow = () => {
     e.preventDefault();
     if (!user || !selfieFile) return;
 
-    // Rate limit check - 3 verification requests per day
     const rateCheck = await checkRateLimit('verification_request', 3, 1440);
     if (rateCheck.blocked) {
-      toast({
-        title: "Too many requests",
-        description: "You've reached the limit for verification requests. Please try again tomorrow.",
-        variant: "destructive",
-      });
+      toast({ title: "Too many requests", description: "You've reached the limit for verification requests. Please try again tomorrow.", variant: "destructive" });
       return;
     }
 
-    // Validate selfie file
     const selfieValidation = await validateSecureFile(selfieFile, 'image');
     if (!selfieValidation.isValid) {
-      toast({
-        title: "Invalid file",
-        description: selfieValidation.error || "Please upload a valid image file",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid file", description: selfieValidation.error || "Please upload a valid image file", variant: "destructive" });
       return;
     }
 
-    // Validate document file if provided
     if (verificationType === 'professional' && documentFile) {
       const docValidation = await validateSecureFile(documentFile, 'document');
       if (!docValidation.isValid) {
-        toast({
-          title: "Invalid document",
-          description: docValidation.error || "Please upload a valid document",
-          variant: "destructive",
-        });
+        toast({ title: "Invalid document", description: docValidation.error || "Please upload a valid document", variant: "destructive" });
         return;
       }
     }
 
     setIsSubmitting(true);
     try {
-      // Upload to PRIVATE verification-docs bucket (not public profile-photos)
       const selfieUrl = await uploadFile(selfieFile, { bucket: 'verification-docs', folder: 'selfies' });
-      
       let documentUrl = null;
       if (verificationType === 'professional' && documentFile) {
         documentUrl = await uploadFile(documentFile, { bucket: 'verification-docs', folder: 'documents' });
       }
 
-      // Submit verification request
       const { error } = await supabase
         .from('verification_requests')
         .insert({
@@ -85,21 +66,12 @@ const VerificationFlow = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Verification Submitted",
-        description: "Your verification request has been submitted for review.",
-      });
-
-      // Reset form
+      toast({ title: "Verification Submitted", description: "Your verification request has been submitted for review." });
       setSelfieFile(null);
       setDocumentFile(null);
       setProfession('');
     } catch (error: any) {
-      toast({
-        title: "Submission failed",
-        description: "Unable to submit verification request. Please try again later.",
-        variant: "destructive",
-      });
+      toast({ title: "Submission failed", description: "Unable to submit verification request. Please try again later.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,9 +80,9 @@ const VerificationFlow = () => {
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="text-center space-y-2">
-        <Shield className="h-12 w-12 text-blue-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Verify Your Profile</h1>
-        <p className="text-gray-600">
+        <Shield className="h-12 w-12 text-primary mx-auto" />
+        <h1 className="text-2xl font-bold text-foreground">Verify Your Profile</h1>
+        <p className="text-muted-foreground">
           Increase your credibility and get more matches by verifying your identity
         </p>
       </div>
@@ -118,7 +90,7 @@ const VerificationFlow = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <Card 
           className={`cursor-pointer transition-colors ${
-            verificationType === 'identity' ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+            verificationType === 'identity' ? 'border-primary bg-accent' : 'hover:bg-muted'
           }`}
           onClick={() => setVerificationType('identity')}
         >
@@ -127,15 +99,13 @@ const VerificationFlow = () => {
               <Camera className="h-5 w-5" />
               Identity Verification
             </CardTitle>
-            <CardDescription>
-              Verify your identity with a selfie photo
-            </CardDescription>
+            <CardDescription>Verify your identity with a selfie photo</CardDescription>
           </CardHeader>
         </Card>
 
         <Card 
           className={`cursor-pointer transition-colors ${
-            verificationType === 'professional' ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+            verificationType === 'professional' ? 'border-primary bg-accent' : 'hover:bg-muted'
           }`}
           onClick={() => setVerificationType('professional')}
         >
@@ -144,9 +114,7 @@ const VerificationFlow = () => {
               <Award className="h-5 w-5" />
               Professional Verification
             </CardTitle>
-            <CardDescription>
-              Verify your profession with documents
-            </CardDescription>
+            <CardDescription>Verify your profession with documents</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -159,58 +127,34 @@ const VerificationFlow = () => {
           <CardDescription>
             {verificationType === 'identity' 
               ? 'Take a clear selfie photo to verify your identity'
-              : 'Upload documents to verify your profession'
-            }
+              : 'Upload documents to verify your profession'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Selfie Upload */}
             <div className="space-y-2">
               <Label htmlFor="selfie">Selfie Photo *</Label>
-              <Input
-                id="selfie"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setSelfieFile(e.target.files?.[0] || null)}
-                required
-              />
-              <p className="text-sm text-gray-500">
-                Take a clear photo of yourself looking directly at the camera
-              </p>
+              <Input id="selfie" type="file" accept="image/*" onChange={(e) => setSelfieFile(e.target.files?.[0] || null)} required />
+              <p className="text-sm text-muted-foreground">Take a clear photo of yourself looking directly at the camera</p>
             </div>
 
             {verificationType === 'professional' && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="profession">Profession</Label>
-                  <Input
-                    id="profession"
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    placeholder="e.g. Doctor, Lawyer, Engineer"
-                    required
-                  />
+                  <Input id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} placeholder="e.g. Doctor, Lawyer, Engineer" required />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="document">Professional Document</Label>
-                  <Input
-                    id="document"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-sm text-gray-500">
-                    Upload a professional license, certificate, or ID badge
-                  </p>
+                  <Input id="document" type="file" accept="image/*,.pdf" onChange={(e) => setDocumentFile(e.target.files?.[0] || null)} />
+                  <p className="text-sm text-muted-foreground">Upload a professional license, certificate, or ID badge</p>
                 </div>
               </>
             )}
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Verification Guidelines</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="bg-accent p-4 rounded-lg">
+              <h4 className="font-medium text-accent-foreground mb-2">Verification Guidelines</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Photos must be clear and well-lit</li>
                 <li>• Face must be clearly visible (no sunglasses or masks)</li>
                 <li>• No filters or heavy editing</li>
@@ -219,11 +163,7 @@ const VerificationFlow = () => {
               </ul>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting || isUploading || !selfieFile}
-            >
+            <Button type="submit" className="w-full" disabled={isSubmitting || isUploading || !selfieFile}>
               {isSubmitting || isUploading ? 'Submitting...' : 'Submit for Verification'}
             </Button>
           </form>

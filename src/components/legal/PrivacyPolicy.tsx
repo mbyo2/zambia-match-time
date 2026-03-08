@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
       <Card>
         <CardHeader>
           <CardTitle>Privacy Policy</CardTitle>
-          <p className="text-sm text-gray-600">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-96">
