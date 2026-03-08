@@ -20,7 +20,7 @@ import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { Flame, MessageCircle, User } from 'lucide-react';
+import { Flame, MessageCircle, User, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MainApp = () => {
