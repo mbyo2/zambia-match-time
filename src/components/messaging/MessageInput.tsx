@@ -10,6 +10,8 @@ interface MessageInputProps {
   onSendMessage: (content: string, type?: 'text' | 'image') => void;
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
+  conversationId?: string;
+  userId?: string;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, disabled }) => {
