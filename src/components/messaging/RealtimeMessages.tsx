@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { logger } from '@/utils/logger';
 
 interface Message {
   id: string;
@@ -11,6 +10,7 @@ interface Message {
   created_at: string;
   is_read: boolean;
   message_type: 'text' | 'image' | 'voice' | 'video';
+  media_url?: string | null;
 }
 
 interface RealtimeMessagesProps {
@@ -31,12 +31,23 @@ const RealtimeMessages = ({
   onUserOnlineChange
 }: RealtimeMessagesProps) => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Use refs to avoid stale closures in subscription callbacks
+  const onNewMessageRef = useRef(onNewMessage);
+  const onMessageReadRef = useRef(onMessageRead);
+  const onMessageUpdateRef = useRef(onMessageUpdate);
+  const onTypingChangeRef = useRef(onTypingChange);
+  const onUserOnlineChangeRef = useRef(onUserOnlineChange);
+
+  useEffect(() => { onNewMessageRef.current = onNewMessage; }, [onNewMessage]);
+  useEffect(() => { onMessageReadRef.current = onMessageRead; }, [onMessageRead]);
+  useEffect(() => { onMessageUpdateRef.current = onMessageUpdate; }, [onMessageUpdate]);
+  useEffect(() => { onTypingChangeRef.current = onTypingChange; }, [onTypingChange]);
+  useEffect(() => { onUserOnlineChangeRef.current = onUserOnlineChange; }, [onUserOnlineChange]);
 
   useEffect(() => {
     if (!conversationId || !user) return;
 
-    // Subscribe to real-time message updates
     const messagesChannel = supabase
       .channel(`messages-${conversationId}`)
       .on(
@@ -48,9 +59,7 @@ const RealtimeMessages = ({
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages(prev => [...prev, newMessage]);
-          onNewMessage?.(newMessage);
+          onNewMessageRef.current?.(payload.new as Message);
         }
       )
       .on(
@@ -63,78 +72,70 @@ const RealtimeMessages = ({
         },
         (payload) => {
           const updatedMessage = payload.new as Message;
-          setMessages(prev => prev.map(msg => 
-            msg.id === updatedMessage.id ? updatedMessage : msg
-          ));
-          onMessageUpdate?.(updatedMessage);
+          onMessageUpdateRef.current?.(updatedMessage);
           if (updatedMessage.is_read) {
-            onMessageRead?.(updatedMessage.id);
+            onMessageReadRef.current?.(updatedMessage.id);
           }
         }
       )
       .subscribe();
 
-    // Subscribe to typing indicators
     const typingChannel = supabase
       .channel(`typing-${conversationId}`)
       .on('presence', { event: 'sync' }, () => {
         const state = typingChannel.presenceState();
-        
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
             if (presence.user_id !== user.id) {
-              onTypingChange?.(presence.typing || false, presence.user_id);
+              onTypingChangeRef.current?.(presence.typing || false, presence.user_id);
             }
           });
         });
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
         newPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
-            onTypingChange?.(presence.typing || false, presence.user_id);
+            onTypingChangeRef.current?.(presence.typing || false, presence.user_id);
           }
         });
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
         leftPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
-            onTypingChange?.(false, presence.user_id);
+            onTypingChangeRef.current?.(false, presence.user_id);
           }
         });
       })
       .subscribe();
 
-    // Subscribe to user presence/online status
     const presenceChannel = supabase
       .channel(`presence-${conversationId}`)
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
             if (presence.user_id !== user.id) {
-              onUserOnlineChange?.(true, presence.user_id);
+              onUserOnlineChangeRef.current?.(true, presence.user_id);
             }
           });
         });
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
         newPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
-            onUserOnlineChange?.(true, presence.user_id);
+            onUserOnlineChangeRef.current?.(true, presence.user_id);
           }
         });
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
         leftPresences.forEach((presence: any) => {
           if (presence.user_id !== user.id) {
-            onUserOnlineChange?.(false, presence.user_id);
+            onUserOnlineChangeRef.current?.(false, presence.user_id);
           }
         });
       })
       .subscribe();
 
-    // Track our own presence
     presenceChannel.track({
       user_id: user.id,
       online_at: new Date().toISOString()
@@ -145,38 +146,9 @@ const RealtimeMessages = ({
       supabase.removeChannel(typingChannel);
       supabase.removeChannel(presenceChannel);
     };
-  }, [conversationId, user, onNewMessage, onMessageRead, onMessageUpdate, onTypingChange, onUserOnlineChange]);
+  }, [conversationId, user?.id]);
 
-  // Mark messages as read when they come into view
-  useEffect(() => {
-    const markAsRead = async () => {
-      const unreadMessages = messages.filter(msg => 
-        !msg.is_read && msg.sender_id !== user?.id
-      );
-
-      if (unreadMessages.length > 0) {
-        const messageIds = unreadMessages.map(msg => msg.id);
-        
-        await supabase
-          .from('messages')
-          .update({ is_read: true, read_at: new Date().toISOString() })
-          .in('id', messageIds);
-      }
-    };
-
-    markAsRead();
-  }, [messages, user?.id]);
-
-  // Function to send typing indicator
-  const sendTypingIndicator = (isTyping: boolean) => {
-    const typingChannel = supabase.channel(`typing-${conversationId}`);
-    typingChannel.track({
-      user_id: user?.id,
-      typing: isTyping
-    });
-  };
-
-  return null; // This is a utility component that doesn't render anything
+  return null;
 };
 
 export default RealtimeMessages;

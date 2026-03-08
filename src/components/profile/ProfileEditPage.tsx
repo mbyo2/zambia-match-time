@@ -177,20 +177,16 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
       }
     }
 
-    // Reset file input
     e.target.value = '';
   };
 
   const deletePhoto = async (photo: ProfilePhoto) => {
     try {
-      // Extract file path from URL for deletion
       const urlParts = photo.photo_url.split('/');
       const filePath = `${user?.id}/${urlParts[urlParts.length - 1]}`;
       
-      // Delete from storage
       await deleteFile('profile-photos', filePath);
 
-      // Delete from database
       const { error } = await supabase
         .from('profile_photos')
         .delete()
@@ -203,7 +199,6 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
 
       setPhotos(photos.filter(p => p.id !== photo.id));
       
-      // If this was the primary photo, make the first remaining photo primary
       if (photo.is_primary && photos.length > 1) {
         const remainingPhotos = photos.filter(p => p.id !== photo.id);
         if (remainingPhotos.length > 0) {
@@ -217,13 +212,11 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
 
   const setPrimaryPhoto = async (photoId: string) => {
     try {
-      // First, unset all photos as primary
       await supabase
         .from('profile_photos')
         .update({ is_primary: false })
         .eq('user_id', user?.id);
 
-      // Then set the selected photo as primary
       const { error } = await supabase
         .from('profile_photos')
         .update({ is_primary: true })
@@ -245,14 +238,14 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft size={20} />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Edit Profile</h1>
+          <h1 className="text-2xl font-bold text-foreground">Edit Profile</h1>
         </div>
 
         {/* Photo Management */}
@@ -409,7 +402,6 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
               <Button 
                 onClick={updateProfile}
                 disabled={isLoading}
-                className=""
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>

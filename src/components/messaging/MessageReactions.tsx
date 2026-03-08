@@ -44,7 +44,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
       >
         +
@@ -52,7 +52,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
 
       {/* Emoji picker */}
       {showEmojiPicker && (
-        <div className="absolute bottom-8 left-0 bg-white border rounded-lg shadow-lg p-2 flex gap-1 z-10">
+        <div className="absolute bottom-8 left-0 bg-popover border border-border rounded-lg shadow-lg p-2 flex gap-1 z-10">
           {commonEmojis.map((emoji) => (
             <Button
               key={emoji}
