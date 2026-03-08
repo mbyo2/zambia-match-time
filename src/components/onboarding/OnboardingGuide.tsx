@@ -38,7 +38,7 @@ const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ onComplete }) => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Welcome to JustGrown!</CardTitle>
+        <CardTitle>Welcome to MatchTime!</CardTitle>
         <CardDescription>Let's get you set up for success. Complete these steps to maximize your experience.</CardDescription>
         <Progress value={progress} className="mt-4" />
         <p className="text-sm text-muted-foreground">{completedSteps} of {steps.length} steps completed</p>

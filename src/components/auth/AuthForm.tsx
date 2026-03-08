@@ -88,7 +88,7 @@ const AuthForm = () => {
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
           <Flame className="h-10 w-10 text-primary" />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground">JustGrown</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground">MatchTime</h1>
         <p className="text-muted-foreground mt-1 text-sm">Meet real people near you</p>
       </div>
 

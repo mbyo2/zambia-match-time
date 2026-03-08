@@ -13,7 +13,7 @@ const SafetyCenter = () => {
     {
       icon: <MessageSquare className="h-5 w-5" />,
       title: "Keep Conversations on the App",
-      description: "Stay on JustGrown for initial conversations. Don't share personal contact information too quickly."
+      description: "Stay on MatchTime for initial conversations. Don't share personal contact information too quickly."
     },
     {
       icon: <Users className="h-5 w-5" />,
@@ -31,13 +31,13 @@ const SafetyCenter = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">Safety Center</h1>
-        <p className="text-gray-600">Your safety is our priority. Learn how to stay safe while dating.</p>
+        <p className="text-muted-foreground">Your safety is our priority. Learn how to stay safe while dating.</p>
       </div>
 
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertDescription>
-          <strong>Safety First:</strong> JustGrown has built-in safety features including user verification, photo moderation, and a robust reporting system. However, your personal safety awareness is the most important protection.
+          <strong>Safety First:</strong> MatchTime has built-in safety features including user verification, photo moderation, and a robust reporting system. However, your personal safety awareness is the most important protection.
         </AlertDescription>
       </Alert>
 

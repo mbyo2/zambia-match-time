@@ -227,8 +227,14 @@ const DiscoverPage = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+      <div className="h-full flex flex-col bg-background">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="h-8 w-32 bg-muted animate-pulse rounded-lg" />
+          <div className="h-9 w-9 bg-muted animate-pulse rounded-full" />
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4 pb-4">
+          <div className="w-full max-w-sm aspect-[3/4] bg-muted animate-pulse rounded-2xl" />
+        </div>
       </div>
     );
   }
@@ -239,7 +245,7 @@ const DiscoverPage = () => {
     <div className="h-full flex flex-col bg-background">
       {/* Minimal top bar — just logo + filter/undo */}
       <div className="flex items-center justify-between px-4 py-3">
-        <h1 className="text-2xl font-bold text-primary tracking-tight">JustGrown</h1>
+        <h1 className="text-2xl font-bold text-primary tracking-tight">MatchTime</h1>
         <div className="flex gap-1">
           {lastSwipe && (
             <Button variant="ghost" size="icon" onClick={handleUndo} disabled={isUndoing} className="rounded-full h-9 w-9">

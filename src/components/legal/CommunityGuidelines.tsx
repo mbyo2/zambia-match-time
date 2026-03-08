@@ -61,7 +61,7 @@ const CommunityGuidelines = () => {
               <li>• Hate speech, discrimination, or harassment</li>
               <li>• Violence, threats, or illegal activities</li>
               <li>• Spam, scams, or solicitation</li>
-              <li>• Minors (must be 18+ to use JustGrown)</li>
+              <li>• Minors (must be 18+ to use MatchTime)</li>
               <li>• Prostitution or escort services</li>
               <li>• Drug-related content</li>
             </ul>
@@ -86,7 +86,7 @@ const CommunityGuidelines = () => {
         <CardHeader><CardTitle>Reporting Violations</CardTitle></CardHeader>
         <CardContent>
           <CardDescription>
-            Help us keep JustGrown safe by reporting violations. You can report users or content directly from their profile or messages. All reports are reviewed by our moderation team within 24 hours.
+            Help us keep MatchTime safe by reporting violations. You can report users or content directly from their profile or messages. All reports are reviewed by our moderation team within 24 hours.
           </CardDescription>
         </CardContent>
       </Card>
@@ -95,7 +95,7 @@ const CommunityGuidelines = () => {
         <CardHeader><CardTitle>Questions?</CardTitle></CardHeader>
         <CardContent>
           <CardDescription>
-            If you have questions about these guidelines or need help with your account, contact our support team at support@justgrown.com.
+            If you have questions about these guidelines or need help with your account, contact our support team at support@matchtime.com.
           </CardDescription>
         </CardContent>
       </Card>

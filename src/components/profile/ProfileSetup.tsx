@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
 import { Button } from '@/components/ui/button';
@@ -18,21 +17,14 @@ type EducationLevel = Database['public']['Enums']['education_level'];
 type GenderType = Database['public']['Enums']['gender_type'];
 
 const zambianProvinces = [
-  'Central Province',
-  'Copperbelt Province', 
-  'Eastern Province',
-  'Luapula Province',
-  'Lusaka Province',
-  'Muchinga Province',
-  'Northern Province',
-  'North-Western Province',
-  'Southern Province',
-  'Western Province'
+  'Central Province', 'Copperbelt Province', 'Eastern Province', 'Luapula Province',
+  'Lusaka Province', 'Muchinga Province', 'Northern Province', 'North-Western Province',
+  'Southern Province', 'Western Province'
 ];
 
 const zambianCities = [
   'Lusaka', 'Ndola', 'Kitwe', 'Kabwe', 'Chingola', 'Mufulira', 'Luanshya',
-  'Arusha', 'Kasama', 'Chipata', 'Livingstone', 'Mongu', 'Solwezi',
+  'Kasama', 'Chipata', 'Livingstone', 'Mongu', 'Solwezi',
   'Mansa', 'Choma', 'Kapiri Mposhi', 'Mazabuka', 'Kafue'
 ];
 
@@ -109,25 +101,14 @@ const ProfileSetup = () => {
 
       if (error) {
         logger.error('Profile creation error:', error);
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({
-          title: "Success",
-          description: "Profile created successfully!",
-        });
+        toast({ title: "Success", description: "Profile created successfully!" });
         window.location.reload();
       }
     } catch (error) {
       logger.error('Unexpected error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -150,13 +131,13 @@ const ProfileSetup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold text-primary">
             Complete Your Profile
           </CardTitle>
-          <CardDescription>Let's get you set up to meet amazing people in Zambia!</CardDescription>
+          <CardDescription>Let's get you set up to meet amazing people!</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -164,42 +145,24 @@ const ProfileSetup = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={profileData.first_name}
-                  onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })}
-                  required
-                />
+                <Input id="firstName" value={profileData.first_name} onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} required />
               </div>
               <div>
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={profileData.last_name}
-                  onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })}
-                />
+                <Input id="lastName" value={profileData.last_name} onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} />
               </div>
             </div>
 
-            {/* Date of Birth and Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={profileData.date_of_birth}
-                  onChange={(e) => setProfileData({ ...profileData, date_of_birth: e.target.value })}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                  required
-                />
+                <Input id="dateOfBirth" type="date" value={profileData.date_of_birth} onChange={(e) => setProfileData({ ...profileData, date_of_birth: e.target.value })}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]} required />
               </div>
               <div>
                 <Label htmlFor="gender">Gender *</Label>
                 <Select value={profileData.gender} onValueChange={(value: GenderType) => setProfileData({ ...profileData, gender: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your gender" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select your gender" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
@@ -211,37 +174,20 @@ const ProfileSetup = () => {
               </div>
             </div>
 
-            {/* Bio */}
             <div>
               <Label htmlFor="bio">About Me</Label>
-              <Textarea
-                id="bio"
-                placeholder="Tell people about yourself..."
-                value={profileData.bio}
-                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                rows={3}
-              />
+              <Textarea id="bio" placeholder="Tell people about yourself..." value={profileData.bio} onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })} rows={3} />
             </div>
 
-            {/* Occupation and Education */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="occupation">Occupation</Label>
-                <Input
-                  id="occupation"
-                  value={profileData.occupation}
-                  onChange={(e) => setProfileData({ ...profileData, occupation: e.target.value })}
-                />
+                <Input id="occupation" value={profileData.occupation} onChange={(e) => setProfileData({ ...profileData, occupation: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="education">Education</Label>
-                <Select 
-                  value={profileData.education} 
-                  onValueChange={(value: EducationLevel) => setProfileData({ ...profileData, education: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select education level" />
-                  </SelectTrigger>
+                <Select value={profileData.education} onValueChange={(value: EducationLevel) => setProfileData({ ...profileData, education: value })}>
+                  <SelectTrigger><SelectValue placeholder="Select education level" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="high_school">High School</SelectItem>
                     <SelectItem value="some_college">Some College</SelectItem>
@@ -255,67 +201,56 @@ const ProfileSetup = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city">City</Label>
                 <Select value={profileData.location_city} onValueChange={(value) => setProfileData({ ...profileData, location_city: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your city" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select your city" /></SelectTrigger>
                   <SelectContent>
-                    {zambianCities.map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
+                    {zambianCities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="state">Province</Label>
                 <Select value={profileData.location_state} onValueChange={(value) => setProfileData({ ...profileData, location_state: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your province" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select your province" /></SelectTrigger>
                   <SelectContent>
-                    {zambianProvinces.map(province => (
-                      <SelectItem key={province} value={province}>{province}</SelectItem>
-                    ))}
+                    {zambianProvinces.map(province => <SelectItem key={province} value={province}>{province}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Interests */}
             <div>
               <Label className="text-sm font-medium">Interests (Select up to 5)</Label>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {interests.map((interest) => (
-                  <div key={interest} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={interest}
-                      checked={profileData.selected_interests.includes(interest)}
-                      onCheckedChange={() => toggleInterest(interest)}
-                      disabled={profileData.selected_interests.length >= 5 && !profileData.selected_interests.includes(interest)}
-                    />
-                    <Label htmlFor={interest} className="text-sm">
+              <div className="flex flex-wrap gap-2 mt-2">
+                {interests.map((interest) => {
+                  const selected = profileData.selected_interests.includes(interest);
+                  return (
+                    <button
+                      key={interest}
+                      type="button"
+                      onClick={() => toggleInterest(interest)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                        selected
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-card text-foreground border-border hover:border-primary/50'
+                      }`}
+                    >
                       {interest}
-                    </Label>
-                  </div>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Interested In */}
             <div>
               <Label className="text-sm font-medium">Interested In</Label>
               <div className="flex gap-4 mt-2">
                 {(['male', 'female', 'non_binary'] as GenderType[]).map((gender) => (
                   <div key={gender} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`interested-${gender}`}
-                      checked={profileData.interested_in.includes(gender)}
-                      onCheckedChange={() => toggleInterestedIn(gender)}
-                    />
+                    <Checkbox id={`interested-${gender}`} checked={profileData.interested_in.includes(gender)} onCheckedChange={() => toggleInterestedIn(gender)} />
                     <Label htmlFor={`interested-${gender}`} className="text-sm capitalize">
                       {gender === 'non_binary' ? 'Non-binary' : gender}
                     </Label>
@@ -324,49 +259,23 @@ const ProfileSetup = () => {
               </div>
             </div>
 
-            {/* Age Range */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="ageMin">Minimum Age (18-99)</Label>
-                <Input
-                  id="ageMin"
-                  type="number"
-                  min="18"
-                  max="99"
-                  value={profileData.age_min}
-                  onChange={(e) => setProfileData({ ...profileData, age_min: parseInt(e.target.value) })}
-                />
+                <Label htmlFor="ageMin">Minimum Age</Label>
+                <Input id="ageMin" type="number" min="18" max="99" value={profileData.age_min} onChange={(e) => setProfileData({ ...profileData, age_min: parseInt(e.target.value) })} />
               </div>
               <div>
-                <Label htmlFor="ageMax">Maximum Age (18-99)</Label>
-                <Input
-                  id="ageMax"
-                  type="number"
-                  min="18"
-                  max="99"
-                  value={profileData.age_max}
-                  onChange={(e) => setProfileData({ ...profileData, age_max: parseInt(e.target.value) })}
-                />
+                <Label htmlFor="ageMax">Maximum Age</Label>
+                <Input id="ageMax" type="number" min="18" max="99" value={profileData.age_max} onChange={(e) => setProfileData({ ...profileData, age_max: parseInt(e.target.value) })} />
               </div>
             </div>
 
-            {/* Accommodation Toggle */}
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border">
+            <div className="flex items-center justify-between p-4 bg-accent/50 rounded-lg border border-border">
               <div>
-                <Label htmlFor="accommodation" className="text-sm font-medium">
-                  I have accommodation available
-                </Label>
-                <p className="text-xs text-gray-600 mt-1">
-                  Let travelers know if you can offer a place to stay
-                </p>
+                <Label htmlFor="accommodation" className="text-sm font-medium">I have accommodation available</Label>
+                <p className="text-xs text-muted-foreground mt-1">Let travelers know if you can offer a place to stay</p>
               </div>
-              <Switch
-                id="accommodation"
-                checked={profileData.has_accommodation_available}
-                onCheckedChange={(checked) => 
-                  setProfileData({ ...profileData, has_accommodation_available: checked })
-                }
-              />
+              <Switch id="accommodation" checked={profileData.has_accommodation_available} onCheckedChange={(checked) => setProfileData({ ...profileData, has_accommodation_available: checked })} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
