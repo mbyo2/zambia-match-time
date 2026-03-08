@@ -279,6 +279,12 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         {messages.length === 0 ? (
           <div className="text-center space-y-6 mt-8">
             <p className="text-muted-foreground">Start the conversation! 👋</p>
+            {match.other_user.has_accommodation_available && (
+              <div className="mx-auto max-w-xs bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-sm">
+                <p className="font-semibold text-emerald-700 dark:text-emerald-400">🏠 {match.other_user.first_name} has a venue available!</p>
+                <p className="text-muted-foreground text-xs mt-1">They can host — ask about their place for a date!</p>
+              </div>
+            )}
             {/* Show venue suggestions as icebreaker for new conversations */}
             <VenueSuggestions />
           </div>
