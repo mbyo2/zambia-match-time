@@ -7,6 +7,7 @@ import ProfileSetup from './profile/ProfileSetup';
 import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
+import AccommodationsPage from './accommodations/AccommodationsPage';
 import SecuritySettings from './security/SecuritySettings';
 import ContentModerationManager from './safety/ContentModerationManager';
 import VerificationManager from './safety/VerificationManager';
