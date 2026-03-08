@@ -70,7 +70,10 @@ const MainApp = () => {
   }
 
   if (showOnboarding) {
-    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
+    return <OnboardingFlow onComplete={() => {
+      setShowOnboarding(false);
+      setHasProfile(true);
+    }} />;
   }
 
   if (!hasProfile) {
