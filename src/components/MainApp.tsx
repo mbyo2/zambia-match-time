@@ -18,6 +18,7 @@ import SubPageWrapper from './SubPageWrapper';
 import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
+import SubscriptionPage from './subscription/SubscriptionPage';
 import ErrorBoundary from './ErrorBoundary';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Flame, MessageCircle, User } from 'lucide-react';
@@ -29,12 +30,54 @@ const MainApp = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTab, setCurrentTab] = useState('discover');
   const { isSuperAdmin } = useSuperAdmin();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       checkProfile();
+      fetchUnreadCount();
     }
   }, [user]);
+
+  // Subscribe to new messages for unread badge
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('unread-messages-badge')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => { fetchUnreadCount(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // Reset unread when viewing matches
+  useEffect(() => {
+    if (currentTab === 'matches') {
+      // Small delay to let user see the count before clearing
+      const t = setTimeout(() => setUnreadCount(0), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [currentTab]);
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    try {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .neq('sender_id', user.id)
+        .eq('is_read', false);
+
+      if (!error && count !== null) setUnreadCount(count);
+    } catch (e) {
+      // silent fail
+    }
+  };
 
   const checkProfile = async () => {
     try {
@@ -50,7 +93,6 @@ const MainApp = () => {
         return;
       }
 
-      // Profile exists but is incomplete (created by trigger with defaults)
       const isComplete = data.first_name && data.first_name !== 'New' && data.date_of_birth && data.gender;
       setHasProfile(!!isComplete);
       if (!isComplete) setShowOnboarding(true);
@@ -89,6 +131,7 @@ const MainApp = () => {
     safety: { title: 'Safety Center', component: <SafetyCenter /> },
     guidelines: { title: 'Community Guidelines', component: <CommunityGuidelines /> },
     admin: { title: 'Admin Panel', component: <DevActions /> },
+    subscription: { title: 'Subscription', component: <SubscriptionPage /> },
     'manage-venues': { title: 'Manage Venues', component: <AccommodationsPage /> },
   };
 
@@ -138,13 +181,18 @@ const MainApp = () => {
                 key={id}
                 onClick={() => setCurrentTab(id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors",
+                  "relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
                 aria-label={label}
               >
                 <Icon className={cn("h-6 w-6", isActive && id === 'discover' && "fill-primary")} strokeWidth={isActive ? 2.5 : 1.8} />
                 <span className="text-[10px] font-medium">{label}</span>
+                {id === 'matches' && unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}

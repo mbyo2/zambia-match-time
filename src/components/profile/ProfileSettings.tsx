@@ -31,49 +31,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
 
-  const settingsItems = [
-    {
-      icon: theme === 'dark' ? Moon : Sun,
-      iconColor: 'text-primary',
-      title: 'Dark Mode',
-      description: 'Switch between light and dark themes',
-      action: 'toggle',
-    },
-    {
-      icon: Shield,
-      iconColor: 'text-primary',
-      title: 'Security Settings',
-      description: 'Manage your account security',
-      tab: 'security',
-    },
-    {
-      icon: CheckCircle,
-      iconColor: 'text-primary',
-      title: 'Profile Verification',
-      description: 'Verify your identity',
-      tab: 'verification',
-    },
-    {
-      icon: Shield,
-      iconColor: 'text-primary',
-      title: 'Content Moderation',
-      description: 'Manage content settings',
-      tab: 'moderation',
-    },
-    {
-      icon: FileText,
-      iconColor: 'text-muted-foreground',
-      title: 'Privacy Policy',
-      description: 'Review our privacy policy',
-      tab: 'privacy',
-    },
-    {
-      icon: FileText,
-      iconColor: 'text-muted-foreground',
-      title: 'Terms of Service',
-      description: 'Review our terms of service',
-      tab: 'terms',
-    },
+  const navItems = [
+    { icon: Crown, iconColor: 'text-primary', title: 'Subscription', description: 'Manage your plan and premium features', tab: 'subscription' },
+    { icon: Shield, iconColor: 'text-primary', title: 'Security Settings', description: 'Manage your account security', tab: 'security' },
+    { icon: CheckCircle, iconColor: 'text-primary', title: 'Profile Verification', description: 'Verify your identity', tab: 'verification' },
+    { icon: Shield, iconColor: 'text-primary', title: 'Content Moderation', description: 'Manage content settings', tab: 'moderation' },
+    { icon: Heart, iconColor: 'text-primary', title: 'Safety Center', description: 'Safety resources and tools', tab: 'safety' },
+    { icon: BookOpen, iconColor: 'text-muted-foreground', title: 'Community Guidelines', description: 'Our community standards', tab: 'guidelines' },
+    { icon: FileText, iconColor: 'text-muted-foreground', title: 'Privacy Policy', description: 'Review our privacy policy', tab: 'privacy' },
+    { icon: FileText, iconColor: 'text-muted-foreground', title: 'Terms of Service', description: 'Review our terms of service', tab: 'terms' },
   ];
 
   return (
@@ -100,11 +66,11 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       </Card>
 
       {/* Navigation cards */}
-      {settingsItems.slice(1).map((item) => (
+      {navItems.map((item) => (
         <Card
           key={item.tab}
           className="cursor-pointer hover:bg-muted/50"
-          onClick={() => onNavigate(item.tab!)}
+          onClick={() => onNavigate(item.tab)}
         >
           <CardContent className="flex items-center gap-4 pt-6">
             <item.icon className={`h-5 w-5 ${item.iconColor}`} />
@@ -139,6 +105,16 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Sign Out */}
+      <Button
+        variant="outline"
+        className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        onClick={() => signOut()}
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Sign Out
+      </Button>
     </div>
   );
 };
