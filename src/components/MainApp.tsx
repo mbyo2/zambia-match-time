@@ -106,6 +106,7 @@ const MainApp = () => {
   const tabs = [
     { id: 'discover', icon: Flame, label: 'Discover' },
     { id: 'matches', icon: MessageCircle, label: 'Matches' },
+    { id: 'venues', icon: Building, label: 'Venues' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
