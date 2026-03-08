@@ -154,14 +154,14 @@ const ProfileCompletionBanner: React.FC<ProfileCompletionBannerProps> = ({ onEdi
   if (completionData.percentage >= 80) return null;
 
   const getCompletionColor = () => {
-    if (completionData.percentage >= 60) return 'text-green-600';
-    if (completionData.percentage >= 30) return 'text-yellow-600';
-    return 'text-red-600';
+    if (completionData.percentage >= 60) return 'text-primary';
+    if (completionData.percentage >= 30) return 'text-muted-foreground';
+    return 'text-destructive';
   };
 
   const getCompletionIcon = () => {
-    if (completionData.percentage >= 60) return <CheckCircle className="w-5 h-5 text-green-600" />;
-    return <AlertCircle className="w-5 h-5 text-yellow-600" />;
+    if (completionData.percentage >= 60) return <CheckCircle className="w-5 h-5 text-primary" />;
+    return <AlertCircle className="w-5 h-5 text-muted-foreground" />;
   };
 
   return (
