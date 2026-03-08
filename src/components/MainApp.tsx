@@ -7,6 +7,7 @@ import ProfileSetup from './profile/ProfileSetup';
 import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
+import AccommodationsPage from './accommodations/AccommodationsPage';
 import SecuritySettings from './security/SecuritySettings';
 import ContentModerationManager from './safety/ContentModerationManager';
 import VerificationManager from './safety/VerificationManager';
@@ -19,7 +20,7 @@ import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { Flame, MessageCircle, User } from 'lucide-react';
+import { Flame, MessageCircle, User, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MainApp = () => {
@@ -105,6 +106,7 @@ const MainApp = () => {
   const tabs = [
     { id: 'discover', icon: Flame, label: 'Discover' },
     { id: 'matches', icon: MessageCircle, label: 'Matches' },
+    { id: 'venues', icon: Building, label: 'Venues' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
@@ -114,6 +116,7 @@ const MainApp = () => {
       <main className="flex-1 pb-16 overflow-hidden">
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
+        {currentTab === 'venues' && <AccommodationsPage />}
         {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
       </main>
 
