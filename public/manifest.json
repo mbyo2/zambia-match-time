@@ -1,6 +1,6 @@
 {
-  "name": "JustGrown",
-  "short_name": "JustGrown",
+  "name": "MatchTime",
+  "short_name": "MatchTime",
   "description": "Meet real people near you",
   "start_url": "/",
   "display": "standalone",
