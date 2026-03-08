@@ -7,29 +7,23 @@ import ProfileSetup from './profile/ProfileSetup';
 import ProfileEditPage from './profile/ProfileEditPage';
 import DiscoverPage from './discover/DiscoverPage';
 import MatchesPage from './matches/MatchesPage';
-import AccommodationsPage from './accommodations/AccommodationsPage';
-import SubscriptionPage from './subscription/SubscriptionPage';
 import SecuritySettings from './security/SecuritySettings';
 import ContentModerationManager from './safety/ContentModerationManager';
 import VerificationManager from './safety/VerificationManager';
-import VerificationFlow from './verification/VerificationFlow';
 import PrivacyPolicy from './legal/PrivacyPolicy';
 import TermsOfService from './legal/TermsOfService';
-import NotificationCenter from './notifications/NotificationCenter';
 import OnboardingFlow from './onboarding/OnboardingFlow';
-import { Button } from '@/components/ui/button';
-import { LogOut, User, Heart, MessageCircle, Crown, Shield, FileText, CheckCircle, CalendarDays, Building } from 'lucide-react';
 import ProfilePage from './profile/ProfilePage';
 import SubPageWrapper from './SubPageWrapper';
-import { useNotifications } from '@/services/notificationService';
 import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { Flame, MessageCircle, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
-  const { initNotifications, subscribeToNotifications } = useNotifications();
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTab, setCurrentTab] = useState('discover');
@@ -38,7 +32,6 @@ const MainApp = () => {
   useEffect(() => {
     if (user) {
       checkProfile();
-      setupNotifications();
     }
   }, [user]);
 
@@ -52,11 +45,7 @@ const MainApp = () => {
 
       const profileExists = !!data && !error;
       setHasProfile(profileExists);
-      
-      // Show onboarding for new users
-      if (!profileExists) {
-        setShowOnboarding(true);
-      }
+      if (!profileExists) setShowOnboarding(true);
     } catch (error) {
       logger.error('Error checking profile:', error);
       setHasProfile(false);
@@ -64,42 +53,23 @@ const MainApp = () => {
     }
   };
 
-  const setupNotifications = async () => {
-    try {
-      const granted = await initNotifications();
-      if (granted && user) {
-        await subscribeToNotifications(user.id);
-      }
-    } catch (error) {
-      logger.error('Error setting up notifications:', error);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    // Profile setup will be shown next
-  };
-
   if (hasProfile === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-accent to-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
   if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
   }
 
   if (!hasProfile) {
     return <ProfileSetup />;
   }
 
+  // Sub-pages that navigate away from the main tabs
   const subPages: Record<string, { title: string; component: React.ReactNode }> = {
     security: { title: 'Security Settings', component: <SecuritySettings /> },
     moderation: { title: 'Content Moderation', component: <ContentModerationManager /> },
@@ -111,10 +81,10 @@ const MainApp = () => {
     admin: { title: 'Admin Panel', component: <DevActions /> },
   };
 
-if (currentTab === 'admin' && !isSuperAdmin) {
+  if (currentTab === 'admin' && !isSuperAdmin) {
     return (
       <SubPageWrapper title="Access Denied" onBack={() => setCurrentTab('profile')}>
-        <div className="p-4">You do not have permission to view this page.</div>
+        <div className="p-4 text-muted-foreground">You do not have permission to view this page.</div>
       </SubPageWrapper>
     );
   }
@@ -132,81 +102,41 @@ if (currentTab === 'admin' && !isSuperAdmin) {
     return <ProfileEditPage onBack={() => setCurrentTab('profile')} />;
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary">
-              JustGrown
-            </h1>
-            <div className="flex items-center gap-2">
-              <NotificationCenter />
-              <Button variant="ghost" onClick={handleSignOut}>
-                <LogOut size={20} />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+  const tabs = [
+    { id: 'discover', icon: Flame, label: 'Discover' },
+    { id: 'matches', icon: MessageCircle, label: 'Matches' },
+    { id: 'profile', icon: User, label: 'Profile' },
+  ];
 
-      {/* Main Content */}
-      <main className="flex-1 pb-20">
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Main Content — full bleed, no header on discover */}
+      <main className="flex-1 pb-16 overflow-hidden">
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
-        {currentTab === 'accommodations' && <AccommodationsPage />}
-        {currentTab === 'subscription' && <SubscriptionPage />}
         {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
-        <div className="flex justify-around py-2">
-          <Button
-            variant={currentTab === 'discover' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('discover')}
-          >
-            <Heart size={20} />
-            <span className="text-xs">Discover</span>
-          </Button>
-          
-          <Button
-            variant={currentTab === 'matches' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('matches')}
-          >
-            <MessageCircle size={20} />
-            <span className="text-xs">Matches</span>
-          </Button>
-
-          <Button
-            variant={currentTab === 'accommodations' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('accommodations')}
-          >
-            <Building size={20} />
-            <span className="text-xs">Stays</span>
-          </Button>
-
-          <Button
-            variant={currentTab === 'subscription' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('subscription')}
-          >
-            <Crown size={20} />
-            <span className="text-xs">Premium</span>
-          </Button>
-          
-          <Button
-            variant={currentTab === 'profile' ? 'default' : 'ghost'}
-            className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => setCurrentTab('profile')}
-          >
-            <User size={20} />
-            <span className="text-xs">Profile</span>
-          </Button>
+      {/* Bottom Navigation — Tinder-style 3 icons */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border z-50">
+        <div className="flex justify-around items-center h-14 max-w-lg mx-auto">
+          {tabs.map(({ id, icon: Icon, label }) => {
+            const isActive = currentTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setCurrentTab(id)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}
+                aria-label={label}
+              >
+                <Icon className={cn("h-6 w-6", isActive && id === 'discover' && "fill-primary")} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className="text-[10px] font-medium">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>

@@ -1,19 +1,17 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
 import { useDiscoveryRateLimit } from '@/hooks/useDiscoveryRateLimit';
-import { useProfileCompletion } from '../profile/ProfileCompletionChecker';
 import SwipeCard from './SwipeCard';
 import EnhancedSearchFilters from './EnhancedSearchFilters';
-import SwipeLimitDisplay from './SwipeLimitDisplay';
 import MatchCelebrationModal from './MatchCelebrationModal';
 import ProfileDetailModal from './ProfileDetailModal';
-import WhoLikedYou from './WhoLikedYou';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
 import { Button } from '@/components/ui/button';
-import { Filter, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
+import { Filter, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
 
@@ -42,8 +40,7 @@ const DiscoverPage = () => {
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
-  const { checkRateLimit, rateLimitState } = useDiscoveryRateLimit();
-  const { status: profileStatus } = useProfileCompletion();
+  const { checkRateLimit } = useDiscoveryRateLimit();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -53,7 +50,6 @@ const DiscoverPage = () => {
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [detailProfile, setDetailProfile] = useState<Profile | null>(null);
-  const [needsLocation, setNeedsLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
     ageRange: [18, 99] as [number, number],
@@ -69,12 +65,6 @@ const DiscoverPage = () => {
     drinking: ''
   });
 
-  // Pull-to-refresh state
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const touchStartY = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (!authLoading && user) {
       checkLocationAndLoadProfiles();
@@ -82,11 +72,7 @@ const DiscoverPage = () => {
   }, [authLoading, user?.id]);
 
   const checkLocationAndLoadProfiles = async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
-
+    if (!user?.id) { setLoading(false); return; }
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -94,25 +80,12 @@ const DiscoverPage = () => {
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        logger.error('Error fetching profile location:', error);
-        setNeedsLocation(true);
+      if (error || !profile?.location_lat || !profile?.location_lng) {
         setShowLocationPrompt(true);
-        setLoading(false);
-        return;
       }
-
-      if (!profile?.location_lat || !profile?.location_lng) {
-        setNeedsLocation(true);
-        setShowLocationPrompt(true);
-      } else {
-        setNeedsLocation(false);
-      }
-      // Always load profiles regardless of location status
       loadProfiles();
     } catch (error) {
       logger.error('Error checking location:', error);
-      setNeedsLocation(true);
       setShowLocationPrompt(true);
       setLoading(false);
     }
@@ -121,20 +94,11 @@ const DiscoverPage = () => {
   const loadProfiles = async () => {
     setLoading(true);
     try {
-      if (!user?.id) {
-        setProfiles([]);
-        setLoading(false);
-        return;
-      }
+      if (!user?.id) { setProfiles([]); setLoading(false); return; }
 
-      // Check rate limit before loading profiles
       const canProceed = await checkRateLimit();
-      if (!canProceed) {
-        setLoading(false);
-        return;
-      }
+      if (!canProceed) { setLoading(false); return; }
 
-      // Use the main discovery function with filters as JSON
       const { data: profilesData, error: profilesError } = await supabase.rpc('get_discovery_profiles', {
         _user_id: user.id,
         _filters: {
@@ -154,32 +118,17 @@ const DiscoverPage = () => {
         }
       });
 
-      if (profilesError) {
-        logger.error('Error loading profiles:', profilesError);
-        return;
-      }
+      if (profilesError) { logger.error('Error loading profiles:', profilesError); return; }
+      if (!profilesData || profilesData.length === 0) { setProfiles([]); setCurrentIndex(0); return; }
 
-      if (!profilesData || profilesData.length === 0) {
-        setProfiles([]);
-        setCurrentIndex(0);
-        return;
-      }
-
-      // Get profile photos for each profile
       const profileIds = profilesData.map(p => p.id);
-      
-      const { data: photosData, error: photosError } = await supabase
+      const { data: photosData } = await supabase
         .from('profile_photos')
         .select('user_id, photo_url, is_primary')
         .in('user_id', profileIds)
         .order('is_primary', { ascending: false })
         .order('order_index', { ascending: true });
 
-      if (photosError) {
-        logger.error('Error loading photos:', photosError);
-      }
-
-      // Combine profiles with their photos
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
         profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
@@ -196,62 +145,33 @@ const DiscoverPage = () => {
 
   const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
     if (currentIndex >= profiles.length) return;
-
     const currentProfile = profiles[currentIndex];
-    
-    // Save for undo
     setLastSwipe({ profile: currentProfile, index: currentIndex, action });
-    
-    // Safety guard: never allow swiping on your own profile
+
     if (user?.id && currentProfile.id === user.id) {
       setCurrentIndex(prev => prev + 1);
       return;
     }
 
-    // Check swipe limits
-    if (!canSwipe()) {
-      return;
-    }
+    if (!canSwipe()) return;
 
-    // OPTIMISTIC UPDATE: Move to next profile immediately
     const previousIndex = currentIndex;
     setCurrentIndex(prev => prev + 1);
 
-    // Load more profiles if running low
-    if (currentIndex >= profiles.length - 3) {
-      loadProfiles();
-    }
+    if (currentIndex >= profiles.length - 3) loadProfiles();
 
     try {
-      // Consume swipe in background
       const swipeSuccess = await consumeSwipe();
-      if (!swipeSuccess) {
-        // Rollback on swipe limit failure
-        setCurrentIndex(previousIndex);
-        return;
-      }
-      
-      // Record the swipe in the database
+      if (!swipeSuccess) { setCurrentIndex(previousIndex); return; }
+
       const { error: swipeError } = await supabase
         .from('swipes')
-        .insert({
-          swiper_id: user?.id,
-          swiped_id: currentProfile.id,
-          action: action
-        });
+        .insert({ swiper_id: user?.id, swiped_id: currentProfile.id, action });
 
-      if (swipeError) {
-        logger.error('Error recording swipe:', swipeError);
-        // Don't rollback UI - user already saw next profile
-      } else {
-        // Update user stats in background
-        if (action === 'like') {
-          incrementStat('likes_given');
-        } else if (action === 'super_like') {
-          incrementStat('super_likes_given');
-        }
+      if (!swipeError) {
+        if (action === 'like') incrementStat('likes_given');
+        else if (action === 'super_like') incrementStat('super_likes_given');
 
-        // Check if it's a match (other user already liked us)
         if (action === 'like' || action === 'super_like') {
           const { data: matchData } = await supabase
             .from('matches')
@@ -267,23 +187,13 @@ const DiscoverPage = () => {
       }
     } catch (error) {
       logger.error('Error handling swipe:', error);
-      // Don't rollback - optimistic update already happened
     }
-  };
-
-  const shuffleProfiles = () => {
-    const shuffled = [...profiles].sort(() => Math.random() - 0.5);
-    setProfiles(shuffled);
-    setCurrentIndex(0);
-    setLastSwipe(null);
   };
 
   const handleUndo = async () => {
     if (!lastSwipe || isUndoing || !user?.id) return;
-    
     setIsUndoing(true);
     try {
-      // Delete the last swipe from the database
       const { error } = await supabase
         .from('swipes')
         .delete()
@@ -292,16 +202,11 @@ const DiscoverPage = () => {
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (error) {
-        logger.error('Error undoing swipe:', error);
-        toast({ title: "Couldn't undo", description: "Please try again", variant: "destructive" });
-        return;
+      if (!error) {
+        setCurrentIndex(lastSwipe.index);
+        setLastSwipe(null);
+        toast({ title: "Undo!", description: "Swipe undone ↩️" });
       }
-
-      // Go back to the previous card
-      setCurrentIndex(lastSwipe.index);
-      setLastSwipe(null);
-      toast({ title: "Undo!", description: "Swipe undone ↩️" });
     } catch (error) {
       logger.error('Error in handleUndo:', error);
     } finally {
@@ -309,54 +214,12 @@ const DiscoverPage = () => {
     }
   };
 
-  // Pull-to-refresh handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (containerRef.current && containerRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isRefreshing) return;
-    
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - touchStartY.current;
-    
-    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
-      setPullDistance(Math.min(diff * 0.5, 100));
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (pullDistance > 60 && !isRefreshing) {
-      setIsRefreshing(true);
-      await loadProfiles();
-      toast({
-        title: "Refreshed",
-        description: "Profile feed updated",
-      });
-      setIsRefreshing(false);
-    }
-    setPullDistance(0);
-    touchStartY.current = 0;
-  };
-
-  const currentProfile = profiles[currentIndex];
-
   if (showLocationPrompt) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-accent to-background p-4 flex items-center justify-center">
+      <div className="h-full flex items-center justify-center p-4">
         <LocationPermissionPrompt
-          onLocationSet={() => {
-            setShowLocationPrompt(false);
-            setNeedsLocation(false);
-            loadProfiles();
-          }}
-          onSkip={() => {
-            setShowLocationPrompt(false);
-            setNeedsLocation(false);
-            loadProfiles();
-          }}
+          onLocationSet={() => { setShowLocationPrompt(false); loadProfiles(); }}
+          onSkip={() => { setShowLocationPrompt(false); loadProfiles(); }}
         />
       </div>
     );
@@ -364,149 +227,73 @@ const DiscoverPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
-  // Get visible profiles for card stack (current + next 2)
   const visibleProfiles = profiles.slice(currentIndex, currentIndex + 3);
 
   return (
-    <div 
-      ref={containerRef}
-      className="min-h-screen bg-background flex flex-col"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Pull-to-refresh indicator */}
-      <div 
-        className="fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-200"
-        style={{ 
-          transform: `translateY(${pullDistance}px)`,
-          opacity: pullDistance / 100
-        }}
-      >
-        <div className="bg-background border border-border rounded-full p-3 shadow-lg mt-4">
-          <RefreshCw 
-            className={`h-5 w-5 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
-            style={{
-              transform: `rotate(${pullDistance * 3.6}deg)`
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-        <h1 className="text-2xl font-bold text-foreground">Discover</h1>
-        <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleUndo}
-            disabled={!lastSwipe || isUndoing}
-            className="rounded-full"
-            title="Undo last swipe"
-          >
-            <Undo2 className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={shuffleProfiles}
-            disabled={profiles.length === 0}
-            className="rounded-full"
-          >
-            <Shuffle className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-            className="rounded-full"
-          >
+    <div className="h-full flex flex-col bg-background">
+      {/* Minimal top bar — just logo + filter/undo */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <h1 className="text-2xl font-bold text-primary tracking-tight">JustGrown</h1>
+        <div className="flex gap-1">
+          {lastSwipe && (
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={isUndoing} className="rounded-full h-9 w-9">
+              <Undo2 className="h-5 w-5" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setShowFilters(!showFilters)} className="rounded-full h-9 w-9">
             <Filter className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-
-      {/* Swipe Limit Display */}
-      <div className="px-4 py-2">
-        <SwipeLimitDisplay />
-      </div>
-
-      {/* Filters */}
+      {/* Filters panel */}
       {showFilters && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-3">
           <EnhancedSearchFilters
             filters={filters}
             onFiltersChange={setFilters}
-            onApply={() => {
-              loadProfiles();
-              setShowFilters(false);
-            }}
+            onApply={() => { loadProfiles(); setShowFilters(false); }}
           />
         </div>
       )}
 
-      {/* Card Stack Area */}
+      {/* Card Stack — the core experience */}
       <div className="flex-1 flex items-center justify-center px-4 pb-4">
         <div className="relative w-full max-w-sm aspect-[3/4]">
           {visibleProfiles.length > 0 ? (
-            <>
-              {/* Render cards in reverse order so first is on top */}
-              {visibleProfiles.slice().reverse().map((profile, reversedIndex) => {
-                const actualIndex = visibleProfiles.length - 1 - reversedIndex;
-                const isTopCard = actualIndex === 0;
-                
-                return (
-                  <SwipeCard
-                    key={profile.id}
-                    profile={profile}
-                    isTop={isTopCard}
-                    onSwipe={isTopCard ? handleSwipe : undefined}
-                    onTapProfile={(p) => setDetailProfile(p)}
-                    style={{
-                      transform: `scale(${1 - actualIndex * 0.04}) translateY(${actualIndex * 8}px)`,
-                      zIndex: visibleProfiles.length - actualIndex,
-                    }}
-                  />
-                );
-              })}
-            </>
+            visibleProfiles.slice().reverse().map((profile, reversedIndex) => {
+              const actualIndex = visibleProfiles.length - 1 - reversedIndex;
+              const isTopCard = actualIndex === 0;
+              return (
+                <SwipeCard
+                  key={profile.id}
+                  profile={profile}
+                  isTop={isTopCard}
+                  onSwipe={isTopCard ? handleSwipe : undefined}
+                  onTapProfile={(p) => setDetailProfile(p)}
+                  style={{
+                    transform: `scale(${1 - actualIndex * 0.04}) translateY(${actualIndex * 8}px)`,
+                    zIndex: visibleProfiles.length - actualIndex,
+                  }}
+                />
+              );
+            })
           ) : (
-            <div className="text-center space-y-6 p-8">
-              <div className="text-7xl">💫</div>
-              <div className="space-y-3">
-                <h3 className="text-2xl font-bold text-foreground">
-                  That's everyone!
-                </h3>
-                <p className="text-muted-foreground">
-                  Check back later for new people, or adjust your discovery settings.
-                </p>
-                <Button onClick={loadProfiles} className="mt-6" size="lg">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
+            <div className="text-center space-y-4 p-8">
+              <div className="text-6xl">✨</div>
+              <h3 className="text-xl font-bold text-foreground">No more profiles</h3>
+              <p className="text-muted-foreground text-sm">Check back later or adjust your filters</p>
+              <Button onClick={loadProfiles} size="sm">Refresh</Button>
             </div>
           )}
         </div>
       </div>
-
-      {/* Profile Counter */}
-      {profiles.length > 0 && currentIndex < profiles.length && (
-        <div className="text-center pb-2 text-sm text-muted-foreground">
-          {currentIndex + 1} of {profiles.length}
-        </div>
-      )}
-
-      {/* Who Liked You */}
-      <WhoLikedYou />
 
       {/* Profile Detail Modal */}
       {detailProfile && (
@@ -518,16 +305,13 @@ const DiscoverPage = () => {
         />
       )}
 
-      {/* Match Celebration Modal */}
+      {/* Match Celebration */}
       <MatchCelebrationModal
         open={showMatchModal}
         onOpenChange={setShowMatchModal}
         matchedProfile={matchedProfile}
         onSendMessage={() => {
-          toast({
-            title: "Send a message!",
-            description: `Go to Matches to chat with ${matchedProfile?.first_name}`,
-          });
+          toast({ title: "It's a Match!", description: `Go to Matches to chat with ${matchedProfile?.first_name}` });
         }}
         onKeepSwiping={() => setShowMatchModal(false)}
       />
