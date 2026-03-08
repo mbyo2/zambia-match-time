@@ -290,9 +290,14 @@ const MatchesPage = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-foreground truncate">
-                          {match.other_user.first_name}
-                        </h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {match.other_user.first_name}
+                          </h3>
+                          {match.other_user.has_accommodation_available && (
+                            <span className="text-xs" title="Has a venue available">🏠</span>
+                          )}
+                        </div>
                         {match.lastMessage && (
                            <p className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                             {new Date(match.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
