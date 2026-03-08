@@ -276,6 +276,12 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
           <div className="flex items-end gap-2">
             <h2 className="text-[28px] font-bold leading-tight tracking-tight">{profile.first_name}</h2>
             <span className="text-[22px] font-light opacity-90 mb-0.5">{profile.age}</span>
+            {profile.last_active && (() => {
+              const diffMin = Math.floor((Date.now() - new Date(profile.last_active).getTime()) / 60000);
+              return diffMin < 5 ? (
+                <Circle size={8} className="fill-emerald-500 text-emerald-500 mb-2" />
+              ) : null;
+            })()}
           </div>
           
           {/* Quick info row */}
