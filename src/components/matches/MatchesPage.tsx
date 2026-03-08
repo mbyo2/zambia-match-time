@@ -135,12 +135,16 @@ const MatchesPage = () => {
             id: otherUserId,
             first_name: otherProfile?.first_name || 'Unknown',
             bio: otherProfile?.bio || '',
+            last_active: otherProfile?.last_active,
+            has_accommodation_available: otherProfile?.has_accommodation_available,
             profile_photos: otherPhotos
           },
           user2: match.user2_id === user.id ? null : {
             id: otherUserId,
             first_name: otherProfile?.first_name || 'Unknown',
             bio: otherProfile?.bio || '',
+            last_active: otherProfile?.last_active,
+            has_accommodation_available: otherProfile?.has_accommodation_available,
             profile_photos: otherPhotos
           },
           conversations: conversation ? [conversation] : []
