@@ -17,6 +17,8 @@ interface Match {
     id: string;
     first_name: string;
     bio?: string;
+    last_active?: string;
+    has_accommodation_available?: boolean;
     profile_photos: { photo_url: string; is_primary: boolean }[];
   };
   conversation: {
@@ -110,7 +112,7 @@ const MatchesPage = () => {
 
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, first_name, bio')
+        .select('id, first_name, bio, last_active, has_accommodation_available')
         .in('id', Array.from(userIds));
 
       // Get photos for matched users
