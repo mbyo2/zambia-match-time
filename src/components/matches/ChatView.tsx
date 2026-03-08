@@ -9,6 +9,7 @@ import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
 import MessageReactions from '@/components/messaging/MessageReactions';
 import VenueSuggestions from '@/components/venues/VenueSuggestions';
+import ActivityStatus from '@/components/social/ActivityStatus';
 import { logger } from '@/utils/logger';
 
 interface Message {
