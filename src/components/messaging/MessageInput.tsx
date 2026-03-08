@@ -14,8 +14,9 @@ interface MessageInputProps {
   userId?: string;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, disabled }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, disabled, conversationId, userId }) => {
   const [message, setMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
   const { checkRateLimit } = useRateLimit();
