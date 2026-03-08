@@ -243,7 +243,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           </div>
           
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
+              {match.other_user.has_accommodation_available && (
+                <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  🏠 Has venue
+                </span>
+              )}
+            </div>
             {otherUserTyping ? (
               <LiveMessageIndicator
                 isOnline={otherUserOnline}
@@ -272,6 +279,12 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         {messages.length === 0 ? (
           <div className="text-center space-y-6 mt-8">
             <p className="text-muted-foreground">Start the conversation! 👋</p>
+            {match.other_user.has_accommodation_available && (
+              <div className="mx-auto max-w-xs bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-sm">
+                <p className="font-semibold text-emerald-700 dark:text-emerald-400">🏠 {match.other_user.first_name} has a venue available!</p>
+                <p className="text-muted-foreground text-xs mt-1">They can host — ask about their place for a date!</p>
+              </div>
+            )}
             {/* Show venue suggestions as icebreaker for new conversations */}
             <VenueSuggestions />
           </div>

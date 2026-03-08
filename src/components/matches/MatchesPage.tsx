@@ -17,6 +17,8 @@ interface Match {
     id: string;
     first_name: string;
     bio?: string;
+    last_active?: string;
+    has_accommodation_available?: boolean;
     profile_photos: { photo_url: string; is_primary: boolean }[];
   };
   conversation: {
@@ -110,7 +112,7 @@ const MatchesPage = () => {
 
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, first_name, bio')
+        .select('id, first_name, bio, last_active, has_accommodation_available')
         .in('id', Array.from(userIds));
 
       // Get photos for matched users
@@ -133,12 +135,16 @@ const MatchesPage = () => {
             id: otherUserId,
             first_name: otherProfile?.first_name || 'Unknown',
             bio: otherProfile?.bio || '',
+            last_active: otherProfile?.last_active,
+            has_accommodation_available: otherProfile?.has_accommodation_available,
             profile_photos: otherPhotos
           },
           user2: match.user2_id === user.id ? null : {
             id: otherUserId,
             first_name: otherProfile?.first_name || 'Unknown',
             bio: otherProfile?.bio || '',
+            last_active: otherProfile?.last_active,
+            has_accommodation_available: otherProfile?.has_accommodation_available,
             profile_photos: otherPhotos
           },
           conversations: conversation ? [conversation] : []
@@ -284,9 +290,14 @@ const MatchesPage = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-foreground truncate">
-                          {match.other_user.first_name}
-                        </h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {match.other_user.first_name}
+                          </h3>
+                          {match.other_user.has_accommodation_available && (
+                            <span className="text-xs" title="Has a venue available">🏠</span>
+                          )}
+                        </div>
                         {match.lastMessage && (
                            <p className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                             {new Date(match.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
