@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Briefcase, Heart, X, Star, ChevronLeft, ChevronRight, GraduationCap, Ruler, Shield } from 'lucide-react';
+import { MapPin, Briefcase, Heart, X, Star, ChevronLeft, ChevronRight, GraduationCap, Ruler, Shield, Circle } from 'lucide-react';
+import ActivityStatus from '@/components/social/ActivityStatus';
 import { cn } from '@/lib/utils';
 import { useNativeHaptics } from '@/hooks/useNativeHaptics';
 
@@ -22,6 +23,7 @@ interface Profile {
   professional_badge: string;
   has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  last_active?: string;
 }
 
 interface SwipeCardProps {
@@ -274,6 +276,12 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
           <div className="flex items-end gap-2">
             <h2 className="text-[28px] font-bold leading-tight tracking-tight">{profile.first_name}</h2>
             <span className="text-[22px] font-light opacity-90 mb-0.5">{profile.age}</span>
+            {profile.last_active && (() => {
+              const diffMin = Math.floor((Date.now() - new Date(profile.last_active).getTime()) / 60000);
+              return diffMin < 5 ? (
+                <Circle size={8} className="fill-emerald-500 text-emerald-500 mb-2" />
+              ) : null;
+            })()}
           </div>
           
           {/* Quick info row */}

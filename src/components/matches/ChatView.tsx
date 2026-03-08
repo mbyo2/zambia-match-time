@@ -9,6 +9,7 @@ import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
 import MessageReactions from '@/components/messaging/MessageReactions';
 import VenueSuggestions from '@/components/venues/VenueSuggestions';
+import ActivityStatus from '@/components/social/ActivityStatus';
 import { logger } from '@/utils/logger';
 
 interface Message {
@@ -18,6 +19,7 @@ interface Message {
   created_at: string;
   is_read: boolean;
   message_type: 'text' | 'image' | 'voice' | 'video';
+  media_url?: string | null;
   reactions?: { emoji: string; count: number; userReacted: boolean }[];
 }
 
@@ -133,14 +135,17 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     if (!content.trim() || !user) return;
 
     try {
+      const insertData: any = {
+        conversation_id: match.conversation.id,
+        sender_id: user.id,
+        content: messageType === 'image' ? null : content.trim(),
+        message_type: messageType,
+        ...(messageType === 'image' ? { media_url: content } : {})
+      };
+
       const { error } = await supabase
         .from('messages')
-        .insert({
-          conversation_id: match.conversation.id,
-          sender_id: user.id,
-          content: content.trim(),
-          message_type: messageType
-        });
+        .insert(insertData);
 
       if (error) {
         logger.error('Error sending message:', error);
@@ -239,11 +244,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           
           <div className="flex-1">
             <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
-            <LiveMessageIndicator
-              isOnline={otherUserOnline}
-              isTyping={otherUserTyping}
-              userName={match.other_user.first_name}
-            />
+            {otherUserTyping ? (
+              <LiveMessageIndicator
+                isOnline={otherUserOnline}
+                isTyping={otherUserTyping}
+                userName={match.other_user.first_name}
+              />
+            ) : (
+              <ActivityStatus 
+                userId={match.other_user.id}
+                lastActive={match.other_user.last_active}
+              />
+            )}
           </div>
 
           {/* New message indicator */}
@@ -277,7 +289,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
                       : 'bg-card border border-border shadow-sm'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  {message.message_type === 'image' && message.media_url ? (
+                    <img src={message.media_url} alt="Shared image" className="max-w-full rounded-lg max-h-60 object-cover" />
+                  ) : (
+                    <p className="text-sm">{message.content}</p>
+                  )}
                   <div className="flex items-center justify-between mt-1">
                     <p className={`text-xs ${
                       message.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
@@ -318,6 +334,8 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         onSendMessage={sendMessage}
         onTyping={handleTyping}
         disabled={false}
+        conversationId={match.conversation.id}
+        userId={user?.id}
       />
     </div>
   );

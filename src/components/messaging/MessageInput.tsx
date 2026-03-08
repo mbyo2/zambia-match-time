@@ -10,10 +10,13 @@ interface MessageInputProps {
   onSendMessage: (content: string, type?: 'text' | 'image') => void;
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
+  conversationId?: string;
+  userId?: string;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, disabled }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, disabled, conversationId, userId }) => {
   const [message, setMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
   const { checkRateLimit } = useRateLimit();
@@ -55,14 +58,24 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, di
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !userId || !conversationId) return;
+    
+    setIsUploading(true);
     try {
       const { validateSecureFile } = await import('@/utils/secureFileValidation');
       const validation = await validateSecureFile(file, 'image');
       if (!validation.isValid) throw new Error(validation.error);
-      onSendMessage(`[Image: ${file.name}]`, 'image');
+
+      const { uploadChatMedia } = await import('@/utils/secureFileUpload');
+      const result = await uploadChatMedia(file, userId, conversationId);
+      if (result.error) throw new Error(result.error);
+      
+      onSendMessage(result.url!, 'image');
     } catch (error) {
-      toast({ title: "Invalid File", description: error instanceof Error ? error.message : "File is not valid", variant: "destructive" });
+      toast({ title: "Upload Failed", description: error instanceof Error ? error.message : "Could not upload image", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -76,11 +89,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, di
             </Button>
           </label>
           <input id="image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          <Button variant="ghost" size="sm"><Camera size={20} /></Button>
+           <Button variant="ghost" size="sm"><Camera size={20} /></Button>
         </div>
-        <Input value={message} onChange={handleInputChange} onKeyPress={handleKeyPress} placeholder="Type a message..." className="flex-1" disabled={disabled} />
-        <Button onClick={handleSendMessage} disabled={!message.trim() || disabled}>
-          <Send size={20} />
+        <Input value={message} onChange={handleInputChange} onKeyPress={handleKeyPress} placeholder="Type a message..." className="flex-1" disabled={disabled || isUploading} />
+        <Button onClick={handleSendMessage} disabled={(!message.trim() && !isUploading) || disabled}>
+          {isUploading ? <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <Send size={20} />}
         </Button>
       </div>
     </div>
