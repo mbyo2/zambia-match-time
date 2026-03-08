@@ -89,11 +89,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping, di
             </Button>
           </label>
           <input id="image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          <Button variant="ghost" size="sm"><Camera size={20} /></Button>
+           <Button variant="ghost" size="sm"><Camera size={20} /></Button>
         </div>
-        <Input value={message} onChange={handleInputChange} onKeyPress={handleKeyPress} placeholder="Type a message..." className="flex-1" disabled={disabled} />
-        <Button onClick={handleSendMessage} disabled={!message.trim() || disabled}>
-          <Send size={20} />
+        <Input value={message} onChange={handleInputChange} onKeyPress={handleKeyPress} placeholder="Type a message..." className="flex-1" disabled={disabled || isUploading} />
+        <Button onClick={handleSendMessage} disabled={(!message.trim() && !isUploading) || disabled}>
+          {isUploading ? <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <Send size={20} />}
         </Button>
       </div>
     </div>
