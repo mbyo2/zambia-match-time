@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Briefcase, Heart, X, Star, ChevronLeft, ChevronRight, GraduationCap, Ruler, Shield } from 'lucide-react';
+import { MapPin, Briefcase, Heart, X, Star, ChevronLeft, ChevronRight, GraduationCap, Ruler, Shield, Circle } from 'lucide-react';
+import ActivityStatus from '@/components/social/ActivityStatus';
 import { cn } from '@/lib/utils';
 import { useNativeHaptics } from '@/hooks/useNativeHaptics';
 
@@ -22,6 +23,7 @@ interface Profile {
   professional_badge: string;
   has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  last_active?: string;
 }
 
 interface SwipeCardProps {
