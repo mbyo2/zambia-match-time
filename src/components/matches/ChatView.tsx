@@ -258,8 +258,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="text-center text-muted-foreground mt-8">
-            <p>Start the conversation! 👋</p>
+          <div className="text-center space-y-6 mt-8">
+            <p className="text-muted-foreground">Start the conversation! 👋</p>
+            {/* Show venue suggestions as icebreaker for new conversations */}
+            <VenueSuggestions />
+          </div>
           </div>
         ) : (
           messages.map((message) => (
