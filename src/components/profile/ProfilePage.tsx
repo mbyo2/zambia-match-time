@@ -25,7 +25,8 @@ import {
   Trophy,
   MessageCircle,
   Moon,
-  Sun
+  Sun,
+  Building
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -40,13 +41,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [isLodgeManager, setIsLodgeManager] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchPhotos();
+      checkLodgeManager();
     }
   }, [user]);
+
+  const checkLodgeManager = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'lodge_manager')
+      .maybeSingle();
+    setIsLodgeManager(!!data);
+  };
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -284,16 +298,28 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
               </CardContent>
             </Card>
 
-{isSuperAdmin && (
-            <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <Shield className="h-5 w-5 text-destructive" />
-                <div>
-                  <h3 className="font-medium">Developer Actions</h3>
-                  <p className="text-sm text-muted-foreground">Generate users and backfill photos</p>
-                </div>
-              </CardContent>
-            </Card>
+            {(isLodgeManager || isSuperAdmin) && (
+              <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('manage-venues')}>
+                <CardContent className="flex items-center gap-4 pt-6">
+                  <Building className="h-5 w-5 text-primary" />
+                  <div>
+                    <h3 className="font-medium">Manage Venues</h3>
+                    <p className="text-sm text-muted-foreground">Add and manage lodge/guesthouse listings</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {isSuperAdmin && (
+              <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setCurrentTab('admin')}>
+                <CardContent className="flex items-center gap-4 pt-6">
+                  <Shield className="h-5 w-5 text-destructive" />
+                  <div>
+                    <h3 className="font-medium">Developer Actions</h3>
+                    <p className="text-sm text-muted-foreground">Generate users and backfill photos</p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </TabsContent>
