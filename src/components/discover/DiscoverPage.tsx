@@ -10,6 +10,7 @@ import EnhancedSearchFilters from './EnhancedSearchFilters';
 import MatchCelebrationModal from './MatchCelebrationModal';
 import ProfileDetailModal from './ProfileDetailModal';
 import LocationPermissionPrompt from '../location/LocationPermissionPrompt';
+import NotificationCenter from '../notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import { Filter, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -243,10 +244,11 @@ const DiscoverPage = () => {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Minimal top bar — just logo + filter/undo */}
+      {/* Top bar — logo + notifications + filter/undo */}
       <div className="flex items-center justify-between px-4 py-3">
         <h1 className="text-2xl font-bold text-primary tracking-tight">MatchTime</h1>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          <NotificationCenter />
           {lastSwipe && (
             <Button variant="ghost" size="icon" onClick={handleUndo} disabled={isUndoing} className="rounded-full h-9 w-9">
               <Undo2 className="h-5 w-5" />
