@@ -116,6 +116,7 @@ const MainApp = () => {
       <main className="flex-1 pb-16 overflow-hidden">
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
+        {currentTab === 'venues' && <AccommodationsPage />}
         {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
       </main>
 
