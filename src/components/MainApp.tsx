@@ -20,7 +20,7 @@ import SafetyCenter from './safety/SafetyCenter';
 import CommunityGuidelines from './legal/CommunityGuidelines';
 import DevActions from './admin/DevActions';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { Flame, MessageCircle, User, Building } from 'lucide-react';
+import { Flame, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MainApp = () => {
@@ -70,7 +70,6 @@ const MainApp = () => {
     return <ProfileSetup />;
   }
 
-  // Sub-pages that navigate away from the main tabs
   const subPages: Record<string, { title: string; component: React.ReactNode }> = {
     security: { title: 'Security Settings', component: <SecuritySettings /> },
     moderation: { title: 'Content Moderation', component: <ContentModerationManager /> },
@@ -80,6 +79,7 @@ const MainApp = () => {
     safety: { title: 'Safety Center', component: <SafetyCenter /> },
     guidelines: { title: 'Community Guidelines', component: <CommunityGuidelines /> },
     admin: { title: 'Admin Panel', component: <DevActions /> },
+    'manage-venues': { title: 'Manage Venues', component: <AccommodationsPage /> },
   };
 
   if (currentTab === 'admin' && !isSuperAdmin) {
@@ -106,21 +106,17 @@ const MainApp = () => {
   const tabs = [
     { id: 'discover', icon: Flame, label: 'Discover' },
     { id: 'matches', icon: MessageCircle, label: 'Matches' },
-    { id: 'venues', icon: Building, label: 'Venues' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Main Content — full bleed, no header on discover */}
       <main className="flex-1 pb-16 overflow-hidden">
         {currentTab === 'discover' && <DiscoverPage />}
         {currentTab === 'matches' && <MatchesPage />}
-        {currentTab === 'venues' && <AccommodationsPage />}
         {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
       </main>
 
-      {/* Bottom Navigation — Tinder-style 3 icons */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border z-50">
         <div className="flex justify-around items-center h-14 max-w-lg mx-auto">
           {tabs.map(({ id, icon: Icon, label }) => {
