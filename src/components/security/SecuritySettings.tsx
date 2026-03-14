@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Lock, Eye, UserX, AlertTriangle, Trash2 } from 'lucide-react';
+import { Shield, Lock, Eye, UserX, AlertTriangle, Trash2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -20,24 +20,35 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { logger } from '@/utils/logger';
 
 interface SecuritySettingsState {
-  two_factor_enabled: boolean;
-  profile_visibility: 'public' | 'private' | 'friends_only';
-  location_sharing: boolean;
   show_online_status: boolean;
+  location_sharing: boolean;
   allow_message_requests: boolean;
   block_screenshots: boolean;
+}
+
+interface BlockedUser {
+  id: string;
+  blocked_id: string;
+  reason: string | null;
+  created_at: string;
+  profile?: { first_name: string };
 }
 
 const SecuritySettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [settings, setSettings] = useState<SecuritySettingsState>({
-    two_factor_enabled: false,
-    profile_visibility: 'public',
-    location_sharing: true,
     show_online_status: true,
+    location_sharing: true,
     allow_message_requests: true,
     block_screenshots: false,
   });
@@ -47,6 +58,9 @@ const SecuritySettings = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -55,26 +69,45 @@ const SecuritySettings = () => {
   }, [user]);
 
   const loadSecuritySettings = async () => {
+    if (!user) return;
     try {
-      // In a real implementation, load from database
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('privacy_settings')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data?.privacy_settings) {
+        const ps = data.privacy_settings as Record<string, boolean>;
+        setSettings({
+          show_online_status: ps.show_online_status ?? true,
+          location_sharing: ps.location_sharing ?? true,
+          allow_message_requests: ps.allow_message_requests ?? true,
+          block_screenshots: ps.block_screenshots ?? false,
+        });
+      }
     } catch (error) {
-      // Error loading security settings
+      logger.error('Error loading security settings:', error);
     }
   };
 
-  const updateSetting = async (key: keyof SecuritySettingsState, value: any) => {
+  const updateSetting = async (key: keyof SecuritySettingsState, value: boolean) => {
+    if (!user) return;
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+
     try {
-      setSettings(prev => ({ ...prev, [key]: value }));
-      toast({
-        title: "Settings Updated",
-        description: "Your security settings have been updated successfully.",
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({ privacy_settings: newSettings })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      toast({ title: "Settings Updated", description: "Your privacy settings have been saved." });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update security settings",
-        variant: "destructive",
-      });
+      // Revert on failure
+      setSettings(settings);
+      toast({ title: "Error", description: "Failed to update settings", variant: "destructive" });
     }
   };
 
@@ -104,8 +137,53 @@ const SecuritySettings = () => {
     }
   };
 
-  const enable2FA = async () => {
-    toast({ title: "2FA Setup", description: "Two-factor authentication setup would be implemented here." });
+  const fetchBlockedUsers = async () => {
+    if (!user) return;
+    setLoadingBlocked(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('user_blocks')
+        .select('id, blocked_id, reason, created_at')
+        .eq('blocker_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (blocks && blocks.length > 0) {
+        const blockedIds = blocks.map(b => b.blocked_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name')
+          .in('id', blockedIds);
+
+        const enriched = blocks.map(b => ({
+          ...b,
+          profile: profiles?.find(p => p.id === b.blocked_id),
+        }));
+        setBlockedUsers(enriched);
+      } else {
+        setBlockedUsers([]);
+      }
+    } catch (error) {
+      logger.error('Error fetching blocked users:', error);
+    } finally {
+      setLoadingBlocked(false);
+    }
+  };
+
+  const unblockUser = async (blockId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_blocks')
+        .delete()
+        .eq('id', blockId);
+
+      if (error) throw error;
+      setBlockedUsers(prev => prev.filter(b => b.id !== blockId));
+      toast({ title: "User Unblocked", description: "The user has been unblocked." });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to unblock user", variant: "destructive" });
+    }
   };
 
   return (
@@ -145,34 +223,6 @@ const SecuritySettings = () => {
         </CardContent>
       </Card>
 
-      {/* Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Two-Factor Authentication
-          </CardTitle>
-          <CardDescription>Add an extra layer of security to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">Enable 2FA</Label>
-              <p className="text-sm text-muted-foreground">
-                {settings.two_factor_enabled ? 'Two-factor authentication is enabled' : 'Secure your account with 2FA'}
-              </p>
-            </div>
-            <Switch
-              checked={settings.two_factor_enabled}
-              onCheckedChange={(checked) => {
-                if (checked) enable2FA();
-                else updateSetting('two_factor_enabled', false);
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Privacy Settings */}
       <Card>
         <CardHeader>
@@ -183,12 +233,12 @@ const SecuritySettings = () => {
           <CardDescription>Control how others can see and interact with you</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {[
+          {([
             { key: 'show_online_status' as const, label: 'Show Online Status', desc: "Let others see when you're online" },
             { key: 'location_sharing' as const, label: 'Location Sharing', desc: 'Share your location for better matches' },
             { key: 'allow_message_requests' as const, label: 'Allow Message Requests', desc: 'Allow non-matches to send you messages' },
             { key: 'block_screenshots' as const, label: 'Block Screenshots', desc: 'Prevent others from taking screenshots of your profile' },
-          ].map(({ key, label, desc }) => (
+          ]).map(({ key, label, desc }) => (
             <div key={key} className="flex items-center justify-between">
               <div>
                 <Label className="text-base font-medium">{label}</Label>
@@ -210,16 +260,62 @@ const SecuritySettings = () => {
           <CardDescription>Tools to help keep you safe on the platform</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline" className="w-full justify-start">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => {
+              setShowBlockedUsers(true);
+              fetchBlockedUsers();
+            }}
+          >
             <UserX className="mr-2 h-4 w-4" />
             View Blocked Users
           </Button>
-          <Button variant="outline" className="w-full justify-start">
-            <Shield className="mr-2 h-4 w-4" />
-            Safety Center
-          </Button>
         </CardContent>
       </Card>
+
+      {/* Blocked Users Dialog */}
+      <Dialog open={showBlockedUsers} onOpenChange={setShowBlockedUsers}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserX className="h-5 w-5" />
+              Blocked Users
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {loadingBlocked ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : blockedUsers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <UserX className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>No blocked users</p>
+              </div>
+            ) : (
+              blockedUsers.map((block) => (
+                <div key={block.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {block.profile?.first_name || 'Unknown User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Blocked {new Date(block.created_at).toLocaleDateString()}
+                      {block.reason && ` · ${block.reason}`}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => unblockUser(block.id)}
+                  >
+                    Unblock
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Account */}
       <Card className="border-destructive/50">

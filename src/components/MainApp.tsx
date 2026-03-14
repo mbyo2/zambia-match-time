@@ -39,7 +39,6 @@ const MainApp = () => {
     }
   }, [user]);
 
-  // Subscribe to new messages for unread badge
   useEffect(() => {
     if (!user) return;
 
@@ -55,10 +54,8 @@ const MainApp = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // Reset unread when viewing matches
   useEffect(() => {
     if (currentTab === 'matches') {
-      // Small delay to let user see the count before clearing
       const t = setTimeout(() => setUnreadCount(0), 1500);
       return () => clearTimeout(t);
     }
@@ -101,6 +98,11 @@ const MainApp = () => {
       setHasProfile(false);
       setShowOnboarding(true);
     }
+  };
+
+  // Navigate to matches tab (used by match celebration)
+  const navigateToMatches = () => {
+    setCurrentTab('matches');
   };
 
   if (hasProfile === null) {
@@ -166,7 +168,7 @@ const MainApp = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 pb-16 overflow-hidden">
         <ErrorBoundary>
-          {currentTab === 'discover' && <DiscoverPage />}
+          {currentTab === 'discover' && <DiscoverPage onNavigateToMatches={navigateToMatches} />}
           {currentTab === 'matches' && <MatchesPage />}
           {currentTab === 'profile' && <ProfilePage setCurrentTab={setCurrentTab} />}
         </ErrorBoundary>

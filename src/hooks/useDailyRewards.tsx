@@ -42,26 +42,28 @@ export const useDailyRewards = () => {
       }
 
       if (!data) {
-        // Create today's reward
+        // Create today's reward using the security definer function
         const rewardTypes = ['super_like', 'boost', 'points'];
         const randomType = rewardTypes[Math.floor(Math.random() * rewardTypes.length)];
         const rewardValue = randomType === 'points' ? 50 : 1;
 
-        const { data: newReward, error: createError } = await supabase
-          .from('daily_rewards')
-          .insert({
-            user_id: user?.id,
-            reward_type: randomType,
-            reward_value: rewardValue,
-            reward_date: today
-          })
-          .select()
-          .single();
+        const { data: rewardId, error: createError } = await supabase.rpc('create_daily_reward', {
+          p_user_id: user?.id,
+          p_reward_type: randomType,
+          p_reward_value: rewardValue,
+        });
 
         if (createError) {
           logger.error('Error creating daily reward:', createError);
         } else {
-          setTodayReward(newReward);
+          // Fetch the created reward
+          const { data: newReward } = await supabase
+            .from('daily_rewards')
+            .select('*')
+            .eq('id', rewardId)
+            .single();
+
+          if (newReward) setTodayReward(newReward);
         }
       } else {
         setTodayReward(data);
