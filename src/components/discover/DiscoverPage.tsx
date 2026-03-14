@@ -36,7 +36,11 @@ interface Profile {
   profile_photos: { photo_url: string; is_primary: boolean }[];
 }
 
-const DiscoverPage = () => {
+interface DiscoverPageProps {
+  onNavigateToMatches?: () => void;
+}
+
+const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
@@ -244,7 +248,7 @@ const DiscoverPage = () => {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Top bar — logo + notifications + filter/undo */}
+      {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
         <h1 className="text-2xl font-bold text-primary tracking-tight">MatchTime</h1>
         <div className="flex gap-1 items-center">
@@ -260,7 +264,6 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      {/* Filters panel */}
       {showFilters && (
         <div className="px-4 pb-3">
           <EnhancedSearchFilters
@@ -271,7 +274,7 @@ const DiscoverPage = () => {
         </div>
       )}
 
-      {/* Card Stack — the core experience */}
+      {/* Card Stack */}
       <div className="flex-1 flex items-center justify-center px-4 pb-4">
         <div className="relative w-full max-w-sm aspect-[3/4]">
           {visibleProfiles.length > 0 ? (
@@ -319,7 +322,8 @@ const DiscoverPage = () => {
         onOpenChange={setShowMatchModal}
         matchedProfile={matchedProfile}
         onSendMessage={() => {
-          toast({ title: "It's a Match!", description: `Go to Matches to chat with ${matchedProfile?.first_name}` });
+          setShowMatchModal(false);
+          onNavigateToMatches?.();
         }}
         onKeepSwiping={() => setShowMatchModal(false)}
       />

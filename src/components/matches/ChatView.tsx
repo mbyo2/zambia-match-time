@@ -12,6 +12,12 @@ import VenueSuggestions from '@/components/venues/VenueSuggestions';
 import ActivityStatus from '@/components/social/ActivityStatus';
 import { logger } from '@/utils/logger';
 
+interface Reaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -20,7 +26,7 @@ interface Message {
   is_read: boolean;
   message_type: 'text' | 'image' | 'voice' | 'video';
   media_url?: string | null;
-  reactions?: { emoji: string; count: number; userReacted: boolean }[];
+  reactions?: Reaction[];
 }
 
 interface ChatViewProps {
@@ -50,7 +56,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     scrollToBottom();
   }, [messages]);
 
-  // Reset new message count when messages change
   useEffect(() => {
     setNewMessageCount(0);
   }, [messages.length]);
@@ -72,7 +77,40 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         return;
       }
 
-      setMessages(data || []);
+      // Fetch reactions for these messages
+      const messageIds = (data || []).map(m => m.id);
+      let reactionsMap: Record<string, Reaction[]> = {};
+
+      if (messageIds.length > 0) {
+        const { data: reactionsData } = await supabase
+          .from('message_reactions')
+          .select('message_id, emoji, user_id')
+          .in('message_id', messageIds);
+
+        if (reactionsData) {
+          reactionsData.forEach(r => {
+            if (!reactionsMap[r.message_id]) reactionsMap[r.message_id] = [];
+            const existing = reactionsMap[r.message_id].find(e => e.emoji === r.emoji);
+            if (existing) {
+              existing.count++;
+              if (r.user_id === user?.id) existing.userReacted = true;
+            } else {
+              reactionsMap[r.message_id].push({
+                emoji: r.emoji,
+                count: 1,
+                userReacted: r.user_id === user?.id,
+              });
+            }
+          });
+        }
+      }
+
+      const messagesWithReactions = (data || []).map(m => ({
+        ...m,
+        reactions: reactionsMap[m.id] || [],
+      }));
+
+      setMessages(messagesWithReactions);
       markMessagesAsRead();
     } catch (error) {
       logger.error('Error:', error);
@@ -96,39 +134,27 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   const handleNewMessage = (message: Message) => {
     setMessages(prev => {
-      // Check if message already exists to prevent duplicates
-      if (prev.some(msg => msg.id === message.id)) {
-        return prev;
-      }
-      return [...prev, message];
+      if (prev.some(msg => msg.id === message.id)) return prev;
+      return [...prev, { ...message, reactions: [] }];
     });
-    
-    // Show notification for messages from other user
     if (message.sender_id !== user?.id) {
       setNewMessageCount(prev => prev + 1);
-      // Auto-mark as read since user is viewing the conversation
-      setTimeout(() => {
-        markMessagesAsRead();
-      }, 1000);
+      setTimeout(() => markMessagesAsRead(), 1000);
     }
   };
 
   const handleMessageUpdate = (message: Message) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === message.id ? message : msg
+    setMessages(prev => prev.map(msg =>
+      msg.id === message.id ? { ...msg, ...message } : msg
     ));
   };
 
   const handleTypingChange = (typing: boolean, userId: string) => {
-    if (userId !== user?.id) {
-      setOtherUserTyping(typing);
-    }
+    if (userId !== user?.id) setOtherUserTyping(typing);
   };
 
   const handleUserOnlineChange = (online: boolean, userId: string) => {
-    if (userId !== user?.id) {
-      setOtherUserOnline(online);
-    }
+    if (userId !== user?.id) setOtherUserOnline(online);
   };
 
   const sendMessage = async (content: string, messageType: 'text' | 'image' = 'text') => {
@@ -143,26 +169,17 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         ...(messageType === 'image' ? { media_url: content } : {})
       };
 
-      const { error } = await supabase
-        .from('messages')
-        .insert(insertData);
-
+      const { error } = await supabase.from('messages').insert(insertData);
       if (error) {
         logger.error('Error sending message:', error);
-        toast({
-          title: "Error",
-          description: "Failed to send message",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
         return;
       }
 
-      // Update conversation's last_message_at
       await supabase
         .from('conversations')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', match.conversation.id);
-
     } catch (error) {
       logger.error('Error:', error);
     }
@@ -170,22 +187,16 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   const handleTyping = (typing: boolean) => {
     setIsTyping(typing);
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
-    // Send typing indicator via presence
     const typingChannel = supabase.channel(`typing-${match.conversation.id}`);
-    typingChannel.track({ 
-      user_id: user?.id, 
+    typingChannel.track({
+      user_id: user?.id,
       typing: typing,
       timestamp: new Date().toISOString()
     });
 
     if (typing) {
-      // Auto-stop typing after 3 seconds
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
         typingChannel.track({ user_id: user?.id, typing: false });
@@ -194,11 +205,54 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   };
 
   const handleReaction = async (messageId: string, emoji: string) => {
-    // This would need a message_reactions table in a real implementation
-    toast({
-      title: "Feature coming soon!",
-      description: "Message reactions will be available in the next update.",
-    });
+    if (!user) return;
+
+    try {
+      // Check if reaction already exists
+      const { data: existing } = await supabase
+        .from('message_reactions')
+        .select('id')
+        .eq('message_id', messageId)
+        .eq('user_id', user.id)
+        .eq('emoji', emoji)
+        .maybeSingle();
+
+      if (existing) {
+        // Remove reaction (toggle off)
+        await supabase.from('message_reactions').delete().eq('id', existing.id);
+        setMessages(prev => prev.map(msg => {
+          if (msg.id !== messageId) return msg;
+          const reactions = (msg.reactions || []).map(r => {
+            if (r.emoji !== emoji) return r;
+            return { ...r, count: r.count - 1, userReacted: false };
+          }).filter(r => r.count > 0);
+          return { ...msg, reactions };
+        }));
+      } else {
+        // Add reaction
+        const { error } = await supabase
+          .from('message_reactions')
+          .insert({ message_id: messageId, user_id: user.id, emoji });
+
+        if (error) throw error;
+
+        setMessages(prev => prev.map(msg => {
+          if (msg.id !== messageId) return msg;
+          const reactions = [...(msg.reactions || [])];
+          const existing = reactions.find(r => r.emoji === emoji);
+          if (existing) {
+            existing.count++;
+            existing.userReacted = true;
+          } else {
+            reactions.push({ emoji, count: 1, userReacted: true });
+          }
+          return { ...msg, reactions };
+        }));
+      }
+    } catch (error) {
+      logger.error('Error toggling reaction:', error);
+      toast({ title: "Error", description: "Failed to react", variant: "destructive" });
+    }
   };
 
   if (isLoading) {
@@ -211,7 +265,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Realtime Messages Component */}
       <RealtimeMessages
         conversationId={match.conversation.id}
         onNewMessage={handleNewMessage}
@@ -226,22 +279,18 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft size={20} />
           </Button>
-          
+
           <div className="w-10 h-10 rounded-full overflow-hidden bg-muted">
             {(() => {
               const primary = match.other_user.profile_photos?.find((p: any) => p.is_primary);
               const fallback = match.other_user.profile_photos?.[0];
               const avatarUrl = primary?.photo_url || fallback?.photo_url || '/placeholder.svg';
               return (
-                <img
-                  src={avatarUrl}
-                  alt={match.other_user.first_name}
-                  className="w-full h-full object-cover"
-                />
+                <img src={avatarUrl} alt={match.other_user.first_name} className="w-full h-full object-cover" />
               );
             })()}
           </div>
-          
+
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold">{match.other_user.first_name}</h1>
@@ -252,20 +301,12 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
               )}
             </div>
             {otherUserTyping ? (
-              <LiveMessageIndicator
-                isOnline={otherUserOnline}
-                isTyping={otherUserTyping}
-                userName={match.other_user.first_name}
-              />
+              <LiveMessageIndicator isOnline={otherUserOnline} isTyping={otherUserTyping} userName={match.other_user.first_name} />
             ) : (
-              <ActivityStatus 
-                userId={match.other_user.id}
-                lastActive={match.other_user.last_active}
-              />
+              <ActivityStatus userId={match.other_user.id} lastActive={match.other_user.last_active} />
             )}
           </div>
 
-          {/* New message indicator */}
           {newMessageCount > 0 && (
             <div className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
               {newMessageCount} new
@@ -285,15 +326,11 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
                 <p className="text-muted-foreground text-xs mt-1">They can host — ask about their place for a date!</p>
               </div>
             )}
-            {/* Show venue suggestions as icebreaker for new conversations */}
             <VenueSuggestions />
           </div>
         ) : (
           messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+            <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
               <div className="max-w-xs lg:max-w-md">
                 <div
                   className={`px-4 py-2 rounded-lg ${
@@ -308,38 +345,25 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
                     <p className="text-sm">{message.content}</p>
                   )}
                   <div className="flex items-center justify-between mt-1">
-                    <p className={`text-xs ${
-                      message.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                    }`}>
-                      {new Date(message.created_at).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
+                    <p className={`text-xs ${message.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     {message.sender_id === user?.id && (
-                      <span className={`text-xs ${
-                        message.is_read ? 'text-primary-foreground/60' : 'text-primary-foreground/40'
-                      }`}>
+                      <span className={`text-xs ${message.is_read ? 'text-primary-foreground/60' : 'text-primary-foreground/40'}`}>
                         {message.is_read ? '✓✓' : '✓'}
                       </span>
                     )}
                   </div>
                 </div>
-                
-                {/* Message reactions */}
+
                 <div className="mt-1">
-                  <MessageReactions
-                    messageId={message.id}
-                    reactions={message.reactions}
-                    onReact={handleReaction}
-                  />
+                  <MessageReactions messageId={message.id} reactions={message.reactions} onReact={handleReaction} />
                 </div>
               </div>
             </div>
           ))
         )}
 
-        {/* Typing indicator bubble */}
         {otherUserTyping && (
           <div className="flex justify-start">
             <div className="bg-card border border-border shadow-sm px-4 py-3 rounded-lg">
@@ -351,11 +375,10 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
       <MessageInput
         onSendMessage={sendMessage}
         onTyping={handleTyping}
