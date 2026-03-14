@@ -357,6 +357,45 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string | null
@@ -602,6 +641,7 @@ export type Database = {
           max_distance: number | null
           occupation: string | null
           personality_traits: Json | null
+          privacy_settings: Json | null
           professional_badge: string | null
           relationship_goals:
             | Database["public"]["Enums"]["relationship_goal"][]
@@ -645,6 +685,7 @@ export type Database = {
           max_distance?: number | null
           occupation?: string | null
           personality_traits?: Json | null
+          privacy_settings?: Json | null
           professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
@@ -688,6 +729,7 @@ export type Database = {
           max_distance?: number | null
           occupation?: string | null
           personality_traits?: Json | null
+          privacy_settings?: Json | null
           professional_badge?: string | null
           relationship_goals?:
             | Database["public"]["Enums"]["relationship_goal"][]
@@ -1347,6 +1389,14 @@ export type Database = {
       }
       cleanup_fake_users: { Args: never; Returns: number }
       cleanup_inactive_accounts: { Args: never; Returns: number }
+      create_daily_reward: {
+        Args: {
+          p_reward_type: string
+          p_reward_value: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_notification: {
         Args: {
           notification_message: string
