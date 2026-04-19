@@ -23,8 +23,11 @@ interface Profile {
   professional_badge: string;
   has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  profile_videos?: { video_url: string }[];
   last_active?: string;
 }
+
+type Slide = { type: 'video'; url: string } | { type: 'photo'; url: string };
 
 interface SwipeCardProps {
   profile: Profile;
@@ -49,8 +52,12 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
   const photos = profile.profile_photos?.length > 0 
     ? profile.profile_photos 
     : [{ photo_url: '/placeholder.svg', is_primary: true }];
-  
-  const currentPhoto = photos[currentPhotoIndex]?.photo_url || '/placeholder.svg';
+
+  const slides: Slide[] = [
+    ...(profile.profile_videos?.map(v => ({ type: 'video' as const, url: v.video_url })) || []),
+    ...photos.map(p => ({ type: 'photo' as const, url: p.photo_url })),
+  ];
+  const currentSlide = slides[currentPhotoIndex] || { type: 'photo' as const, url: '/placeholder.svg' };
 
   const SWIPE_THRESHOLD = 120;
   const VELOCITY_THRESHOLD = 0.5;
@@ -126,7 +133,7 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
 
   const nextPhoto = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    if (currentPhotoIndex < photos.length - 1) setCurrentPhotoIndex(prev => prev + 1);
+    if (currentPhotoIndex < slides.length - 1) setCurrentPhotoIndex(prev => prev + 1);
   };
 
   const prevPhoto = (e: React.MouseEvent | React.TouchEvent) => {
@@ -187,15 +194,28 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
       onMouseUp={isTop ? handleMouseUp : undefined}
       onMouseLeave={isTop ? handleMouseLeave : undefined}
     >
-      {/* Full-bleed photo */}
+      {/* Full-bleed media */}
       <div className="absolute inset-0 bg-muted">
-        <img 
-          src={currentPhoto} 
-          alt={profile.first_name}
-          className="w-full h-full object-cover"
-          draggable={false}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
-        />
+        {currentSlide.type === 'video' ? (
+          <video
+            key={currentSlide.url}
+            src={currentSlide.url}
+            className="w-full h-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+          />
+        ) : (
+          <img 
+            src={currentSlide.url} 
+            alt={profile.first_name}
+            className="w-full h-full object-cover"
+            draggable={false}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
+          />
+        )}
       </div>
       
       {/* Top gradient for photo indicators */}
@@ -208,9 +228,9 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
       )} />
 
       {/* Photo indicators - pill style */}
-      {photos.length > 1 && (
+      {slides.length > 1 && (
         <div className="absolute top-4 left-4 right-4 flex gap-1.5 z-10">
-          {photos.map((_, idx) => (
+          {slides.map((_, idx) => (
             <div 
               key={idx}
               className={cn(
@@ -224,8 +244,8 @@ const SwipeCard = ({ profile, onSwipe, isTop = true, style, className, onTapProf
         </div>
       )}
 
-      {/* Photo navigation - tap zones */}
-      {photos.length > 1 && (
+      {/* Slide navigation - tap zones */}
+      {slides.length > 1 && (
         <>
           <button onClick={prevPhoto} className="absolute left-0 top-0 bottom-24 w-1/3 z-10" />
           <button onClick={nextPhoto} className="absolute right-0 top-0 bottom-24 w-1/3 z-10" />
