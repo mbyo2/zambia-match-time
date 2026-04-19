@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EducationLevel, RelationshipGoal } from '@/types/search';
+import ProfileVideoSection from './ProfileVideoSection';
 
 interface ProfileEditPageProps {
   onBack: () => void;
@@ -317,6 +318,9 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Videos */}
+        <ProfileVideoSection />
 
         {/* Profile Form */}
         <Card>

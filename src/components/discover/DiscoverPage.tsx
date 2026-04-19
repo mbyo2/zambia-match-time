@@ -34,6 +34,7 @@ interface Profile {
   professional_badge: string;
   has_accommodation_available: boolean;
   profile_photos: { photo_url: string; is_primary: boolean }[];
+  profile_videos?: { video_url: string }[];
 }
 
 interface DiscoverPageProps {
@@ -127,16 +128,23 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
       if (!profilesData || profilesData.length === 0) { setProfiles([]); setCurrentIndex(0); return; }
 
       const profileIds = profilesData.map(p => p.id);
-      const { data: photosData } = await supabase
-        .from('profile_photos')
-        .select('user_id, photo_url, is_primary')
-        .in('user_id', profileIds)
-        .order('is_primary', { ascending: false })
-        .order('order_index', { ascending: true });
+      const [{ data: photosData }, { data: videosData }] = await Promise.all([
+        supabase
+          .from('profile_photos')
+          .select('user_id, photo_url, is_primary')
+          .in('user_id', profileIds)
+          .order('is_primary', { ascending: false })
+          .order('order_index', { ascending: true }),
+        supabase
+          .from('profile_videos')
+          .select('user_id, video_url')
+          .in('user_id', profileIds),
+      ]);
 
       const profilesWithPhotos = profilesData.map(profile => ({
         ...profile,
-        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || []
+        profile_photos: photosData?.filter(photo => photo.user_id === profile.id) || [],
+        profile_videos: videosData?.filter(v => v.user_id === profile.id) || [],
       }));
 
       setProfiles(profilesWithPhotos);
