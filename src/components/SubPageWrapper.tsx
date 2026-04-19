@@ -19,8 +19,8 @@ const SubPageWrapper: React.FC<SubPageWrapperProps> = ({ title, onBack, children
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-background">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
