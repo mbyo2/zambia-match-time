@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Crown, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileView {
@@ -21,11 +21,11 @@ interface ProfileView {
 
 const ProfileViews = () => {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { canSeeWhoLikedYou } = useTierFeatures();
   const [views, setViews] = useState<ProfileView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isPremium = subscription.tier !== 'free';
+  const isPremium = canSeeWhoLikedYou;
 
   useEffect(() => {
     if (user) {

@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
 import { SearchPreferences } from '@/types/search';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 
 interface PremiumFiltersProps {
   preferences: SearchPreferences;
@@ -14,8 +14,8 @@ interface PremiumFiltersProps {
 }
 
 const PremiumFilters = ({ preferences, onUpdate }: PremiumFiltersProps) => {
-  const { subscription } = useSubscription();
-  const isPremium = subscription.tier !== 'free';
+  const { canUseAdvancedFilters } = useTierFeatures();
+  const isPremium = canUseAdvancedFilters;
 
   const bodyTypes = ['slim', 'average', 'athletic', 'curvy', 'plus_size'];
   const ethnicities = ['asian', 'black', 'hispanic', 'white', 'mixed', 'other'];

@@ -4,9 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Crown, Heart } from 'lucide-react';
 import { useSwipeLimits } from '@/hooks/useSwipeLimits';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 
 const SwipeLimitDisplay = () => {
   const { remainingSwipes, isPremium, isLoading } = useSwipeLimits();
+  const { tier } = useTierFeatures();
 
   if (isLoading) {
     return (
@@ -22,13 +24,14 @@ const SwipeLimitDisplay = () => {
   }
 
   if (isPremium) {
+    const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
     return (
       <Card className="mb-4 border-primary/20 bg-accent">
         <CardContent className="py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">Premium Active</span>
+              <span className="text-sm font-medium text-foreground">{tierLabel} Active</span>
             </div>
             <span className="text-sm text-muted-foreground">Unlimited swipes</span>
           </div>

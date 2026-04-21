@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { Heart, Lock, Crown, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,11 +16,11 @@ interface LikerProfile {
 
 const WhoLikedYou = () => {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { canSeeWhoLikedYou } = useTierFeatures();
   const [likers, setLikers] = useState<LikerProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isPremium = subscription.tier !== 'free';
+  const isPremium = canSeeWhoLikedYou;
 
   useEffect(() => {
     if (user) fetchLikers();

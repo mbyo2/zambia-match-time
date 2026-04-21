@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Lock, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,7 +20,8 @@ interface LikeProfile {
 
 const LikesGrid = () => {
   const { user } = useAuth();
-  const { subscription, createCheckoutSession } = useSubscription();
+  const { createCheckoutSession } = useSubscription();
+  const { canSeeWhoLikedYou } = useTierFeatures();
   const { toast } = useToast();
   const [likes, setLikes] = useState<LikeProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,7 +75,7 @@ const LikesGrid = () => {
     }
   };
 
-  const isPremium = subscription.tier !== 'free';
+  const isPremium = canSeeWhoLikedYou;
 
   if (isLoading) {
     return (
