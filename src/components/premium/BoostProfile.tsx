@@ -3,27 +3,27 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Clock } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
+import { Zap, Clock, Crown } from 'lucide-react';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const BoostProfile = () => {
-  const { subscription } = useSubscription();
+  const { canUseBoost, monthlyBoosts, tier } = useTierFeatures();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [lastBoost, setLastBoost] = useState<Date | null>(null);
 
-  const canBoost = subscription.tier !== 'free';
+  const canBoost = canUseBoost;
   const boostDuration = 30; // minutes
 
   const handleBoost = async () => {
     if (!canBoost) {
       toast({
-        title: "Premium Feature",
-        description: "Profile boost is available for premium users only!",
+        title: "Premium Plan Required",
+        description: "Profile boost is available for Premium or Elite members.",
         variant: "destructive",
       });
       return;
@@ -83,11 +83,17 @@ const BoostProfile = () => {
         <p className="text-sm text-muted-foreground">
           Boost your profile to be seen by up to 10x more people for the next {boostDuration} minutes.
         </p>
+        {canBoost && (
+          <p className="text-xs text-muted-foreground">
+            {monthlyBoosts === -1 ? 'Unlimited boosts' : `${monthlyBoosts} boosts / month`} included with your {tier} plan.
+          </p>
+        )}
         
         {!canBoost && (
-          <div className="bg-accent border border-border rounded-lg p-3">
+          <div className="bg-accent border border-border rounded-lg p-3 flex items-start gap-2">
+            <Crown className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
-              Upgrade to premium to use profile boost feature.
+              Upgrade to <span className="font-semibold text-foreground">Premium</span> to unlock 5 boosts per month, or <span className="font-semibold text-foreground">Elite</span> for unlimited boosts.
             </p>
           </div>
         )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { useToast } from '@/hooks/use-toast';
 
 interface SuperLikeProps {
@@ -11,12 +11,12 @@ interface SuperLikeProps {
 }
 
 const SuperLike = ({ profileId, onSuperLike, disabled }: SuperLikeProps) => {
-  const { subscription } = useSubscription();
+  const { canUseSuperLike } = useTierFeatures();
   const { toast } = useToast();
 
   const handleSuperLike = async () => {
-    if (subscription.tier === 'free') {
-      toast({ title: "Premium Feature", description: "Super likes are available for premium users only!", variant: "destructive" });
+    if (!canUseSuperLike) {
+      toast({ title: "Basic Plan Required", description: "Upgrade to Basic or higher to send Super Likes.", variant: "destructive" });
       return;
     }
     try {
