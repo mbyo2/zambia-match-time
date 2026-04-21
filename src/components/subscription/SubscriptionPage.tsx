@@ -3,8 +3,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Settings } from 'lucide-react';
+import { Crown, Settings, Check } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useTierFeatures } from '@/hooks/useTierFeatures';
 import SubscriptionPlans from './SubscriptionPlans';
 import LikesGrid from '../discover/LikesGrid';
 import BoostProfile from '../premium/BoostProfile';
@@ -12,8 +13,20 @@ import ProfileViews from '../social/ProfileViews';
 
 const SubscriptionPage = () => {
   const { subscription, createPortalSession } = useSubscription();
+  const features = useTierFeatures();
 
-  const isPremium = subscription.tier !== 'free';
+  const isPremium = features.isPaid;
+
+  const perks = [
+    { label: 'Unlimited swipes', enabled: features.dailySwipes === -1 },
+    { label: 'See who liked you', enabled: features.canSeeWhoLikedYou },
+    { label: 'Super likes', enabled: features.dailySuperLikes !== 0 },
+    { label: 'Advanced filters', enabled: features.canUseAdvancedFilters },
+    { label: 'Profile boost', enabled: features.canUseBoost },
+    { label: 'Read receipts', enabled: features.canSeeReadReceipts },
+    { label: 'Travel mode', enabled: features.hasTravelMode },
+    { label: 'Incognito mode', enabled: features.hasIncognitoMode },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-accent to-background py-8">
@@ -40,13 +53,30 @@ const SubscriptionPage = () => {
               <div className="text-center p-4 bg-card rounded-lg border border-border">
                 <p className="text-sm text-muted-foreground">Daily Swipes</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {subscription.tier === 'free' ? subscription.remainingSwipes : 'Unlimited'}
+                  {features.dailySwipes === -1 ? 'Unlimited' : subscription.remainingSwipes}
                 </p>
               </div>
               <div className="text-center p-4 bg-card rounded-lg border border-border">
                 <p className="text-sm text-muted-foreground">Status</p>
                 <p className="text-lg font-semibold capitalize text-foreground">{subscription.status}</p>
               </div>
+            </div>
+
+            {/* Per-tier perks summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+              {perks.map((perk) => (
+                <div
+                  key={perk.label}
+                  className={`flex items-center gap-2 text-xs p-2 rounded-md border ${
+                    perk.enabled
+                      ? 'border-primary/30 bg-primary/5 text-foreground'
+                      : 'border-border bg-muted/30 text-muted-foreground/60'
+                  }`}
+                >
+                  <Check className={`h-3 w-3 ${perk.enabled ? 'text-primary' : 'text-muted-foreground/40'}`} />
+                  <span>{perk.label}</span>
+                </div>
+              ))}
             </div>
             
             {isPremium && (
@@ -69,8 +99,8 @@ const SubscriptionPage = () => {
         {/* Likes Grid */}
         <LikesGrid />
 
-        {/* Subscription Plans */}
-        {!isPremium && <SubscriptionPlans />}
+        {/* Subscription Plans — always show so users can upgrade between tiers */}
+        <SubscriptionPlans />
       </div>
     </div>
   );
