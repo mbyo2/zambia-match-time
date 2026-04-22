@@ -113,8 +113,10 @@ const MatchCelebrationModal: React.FC<MatchCelebrationModalProps> = ({
   matchedProfile,
   onSendMessage,
   onKeepSwiping,
+  isSendingMessage = false,
 }) => {
   const [showContent, setShowContent] = useState(false);
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -176,21 +178,34 @@ const MatchCelebrationModal: React.FC<MatchCelebrationModalProps> = ({
             {/* Action buttons */}
             <div className="space-y-3 w-full max-w-xs mx-auto">
               <Button
-                onClick={() => {
-                  onSendMessage?.();
-                  onOpenChange(false);
+                onClick={async () => {
+                  // Guard against double-taps creating duplicate chats
+                  if (sendingRef.current || isSendingMessage) return;
+                  sendingRef.current = true;
+                  try {
+                    await onSendMessage?.();
+                  } finally {
+                    sendingRef.current = false;
+                    onOpenChange(false);
+                  }
                 }}
-                className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold text-base py-6 rounded-full shadow-lg"
+                disabled={isSendingMessage}
+                className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold text-base py-6 rounded-full shadow-lg disabled:opacity-70"
                 size="lg"
               >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Send a Message
+                {isSendingMessage ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                )}
+                {isSendingMessage ? 'Opening chat…' : 'Send a Message'}
               </Button>
               <Button
                 onClick={() => {
                   onKeepSwiping?.();
                   onOpenChange(false);
                 }}
+                disabled={isSendingMessage}
                 variant="ghost"
                 className="w-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 font-medium rounded-full"
               >
