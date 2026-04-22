@@ -261,6 +261,9 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
             if (!celebratedRef.current.has(currentProfile.id)) {
               celebratedRef.current.add(currentProfile.id);
               setMatchedProfile(currentProfile);
+              // Match id will arrive via realtime; reset so the modal doesn't
+              // reuse a stale id from a previous match.
+              setMatchedMatchId(null);
               setShowMatchModal(true);
             }
           }
