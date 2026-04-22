@@ -20,40 +20,33 @@ const BoostProfile = () => {
   const boostDuration = 30; // minutes
 
   const handleBoost = async () => {
-    if (!canBoost) {
-      toast({
-        title: "Premium Plan Required",
-        description: "Profile boost is available for Premium or Elite members.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('daily_limits')
-        .upsert({
-          user_id: user?.id,
-          date: new Date().toISOString().split('T')[0],
-          boosts_used: 1
-        }, {
-          onConflict: 'user_id,date'
-        });
-
+      // Server-side: validates tier (Premium+) and monthly quota.
+      const { data, error } = await supabase.rpc('consume_boost' as any, { p_duration_minutes: boostDuration });
       if (error) throw error;
-
+      const result = (data ?? {}) as { allowed?: boolean; reason?: string; required_tier?: string };
+      if (!result.allowed) {
+        if (result.reason === 'tier_required') {
+          toast({ title: 'Upgrade Required', description: `Boost requires ${result.required_tier ?? 'Premium'} or higher.`, variant: 'destructive' });
+        } else if (result.reason === 'monthly_limit_reached') {
+          toast({ title: 'Monthly Limit Reached', description: 'You have used all your boosts for this month.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Action Not Allowed', description: 'Could not boost your profile.', variant: 'destructive' });
+        }
+        return;
+      }
       setLastBoost(new Date());
       toast({
-        title: "Profile Boosted!",
+        title: 'Profile Boosted!',
         description: `Your profile will be shown to more people for the next ${boostDuration} minutes.`,
       });
     } catch (error) {
       console.error('Error boosting profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to boost profile",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to boost profile',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
