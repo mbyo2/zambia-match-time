@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
-import { useTierFeatures } from '@/hooks/useTierFeatures';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SuperLikeProps {
   profileId: string;
@@ -11,19 +11,28 @@ interface SuperLikeProps {
 }
 
 const SuperLike = ({ profileId, onSuperLike, disabled }: SuperLikeProps) => {
-  const { canUseSuperLike } = useTierFeatures();
   const { toast } = useToast();
 
   const handleSuperLike = async () => {
-    if (!canUseSuperLike) {
-      toast({ title: "Basic Plan Required", description: "Upgrade to Basic or higher to send Super Likes.", variant: "destructive" });
-      return;
-    }
     try {
+      // Server-side enforcement: tier + daily quota are validated in the RPC.
+      const { data, error } = await supabase.rpc('consume_super_like' as any);
+      if (error) throw error;
+      const result = (data ?? {}) as { allowed?: boolean; reason?: string; required_tier?: string };
+      if (!result.allowed) {
+        if (result.reason === 'tier_required') {
+          toast({ title: 'Upgrade Required', description: `Super Likes require ${result.required_tier ?? 'Basic'} or higher.`, variant: 'destructive' });
+        } else if (result.reason === 'daily_limit_reached') {
+          toast({ title: 'Daily Limit Reached', description: 'You have used all your Super Likes for today.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Action Not Allowed', description: 'Could not send Super Like.', variant: 'destructive' });
+        }
+        return;
+      }
       await onSuperLike(profileId);
-      toast({ title: "Super Like Sent!", description: "Your super like has been sent successfully." });
+      toast({ title: 'Super Like Sent!', description: 'Your super like has been sent successfully.' });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to send super like", variant: "destructive" });
+      toast({ title: 'Error', description: 'Failed to send super like', variant: 'destructive' });
     }
   };
 
