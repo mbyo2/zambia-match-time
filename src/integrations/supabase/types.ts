@@ -1522,6 +1522,10 @@ export type Database = {
           relationship_goals: string[]
         }[]
       }
+      get_or_create_conversation_for_match: {
+        Args: { p_match_id: string }
+        Returns: string
+      }
       get_safe_discovery_profiles: {
         Args: {
           p_age_max?: number

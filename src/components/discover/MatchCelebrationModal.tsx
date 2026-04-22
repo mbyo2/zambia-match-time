@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, Loader2 } from 'lucide-react';
 
 interface MatchedProfile {
   first_name: string;
@@ -12,8 +12,10 @@ interface MatchCelebrationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   matchedProfile: MatchedProfile | null;
-  onSendMessage?: () => void;
+  onSendMessage?: () => void | Promise<void>;
   onKeepSwiping?: () => void;
+  /** Disable the action buttons while a parent operation is in flight */
+  isSendingMessage?: boolean;
 }
 
 interface Particle {
