@@ -400,9 +400,40 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
         open={showMatchModal}
         onOpenChange={setShowMatchModal}
         matchedProfile={matchedProfile}
-        onSendMessage={() => {
-          setShowMatchModal(false);
-          onNavigateToMatches?.();
+        isSendingMessage={isOpeningChat}
+        onSendMessage={async () => {
+          if (isOpeningChat) return;
+          setIsOpeningChat(true);
+          try {
+            // Resolve match id (realtime may not have arrived yet on the swiper side)
+            let matchId = matchedMatchId;
+            if (!matchId && matchedProfile && user?.id) {
+              const { data: m } = await supabase
+                .from('matches')
+                .select('id')
+                .or(`and(user1_id.eq.${user.id},user2_id.eq.${matchedProfile.id}),and(user1_id.eq.${matchedProfile.id},user2_id.eq.${user.id})`)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+              matchId = m?.id ?? null;
+            }
+
+            // Idempotent: server uses an advisory lock + check-then-insert,
+            // so rapid double-taps return the same conversation id.
+            if (matchId) {
+              const { error } = await supabase.rpc(
+                'get_or_create_conversation_for_match' as any,
+                { p_match_id: matchId },
+              );
+              if (error) logger.error('Error ensuring conversation:', error);
+            }
+          } catch (e) {
+            logger.error('Error opening chat from match modal:', e);
+          } finally {
+            setIsOpeningChat(false);
+            setMatchedMatchId(null);
+            onNavigateToMatches?.();
+          }
         }}
         onKeepSwiping={() => setShowMatchModal(false)}
       />
