@@ -404,6 +404,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
         onSendMessage={async () => {
           if (isOpeningChat) return;
           setIsOpeningChat(true);
+          let success = false;
           try {
             // Resolve match id (realtime may not have arrived yet on the swiper side)
             let matchId = matchedMatchId;
@@ -425,14 +426,29 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
                 'get_or_create_conversation_for_match' as any,
                 { p_match_id: matchId },
               );
-              if (error) logger.error('Error ensuring conversation:', error);
+              if (error) {
+                logger.error('Error ensuring conversation:', error);
+              } else {
+                success = true;
+                setMatchedMatchId(null);
+              }
+            } else {
+              logger.error('No match id available to open chat');
             }
           } catch (e) {
             logger.error('Error opening chat from match modal:', e);
           } finally {
             setIsOpeningChat(false);
-            setMatchedMatchId(null);
-            onNavigateToMatches?.();
+            if (success) {
+              setShowMatchModal(false);
+              onNavigateToMatches?.();
+            } else {
+              toast({
+                title: "Couldn't open chat",
+                description: 'Something went wrong. Please try again.',
+                variant: 'destructive',
+              });
+            }
           }
         }}
         onKeepSwiping={() => setShowMatchModal(false)}
