@@ -55,6 +55,8 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const [isUndoing, setIsUndoing] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
   const [showMatchModal, setShowMatchModal] = useState(false);
+  // Track which matches/profiles we've already celebrated to prevent duplicates
+  const celebratedRef = useRef<Set<string>>(new Set());
   const [detailProfile, setDetailProfile] = useState<Profile | null>(null);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
