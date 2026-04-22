@@ -108,6 +108,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
           const cached = profiles.find(p => p.id === otherId);
           if (cached) {
             setMatchedProfile(cached);
+            setMatchedMatchId(m.id);
             setShowMatchModal(true);
             return;
           }
@@ -128,6 +129,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
               ...(prof as any),
               profile_photos: photos || [],
             } as any);
+            setMatchedMatchId(m.id);
             setShowMatchModal(true);
           }
         }
