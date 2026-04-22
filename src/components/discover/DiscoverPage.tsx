@@ -186,13 +186,16 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
         else if (action === 'super_like') incrementStat('super_likes_given');
 
         if (action === 'like' || action === 'super_like') {
-          const { data: matchData } = await supabase
-            .from('matches')
+          // Check for reciprocal like (they liked us first → match)
+          const { data: reciprocal } = await supabase
+            .from('swipes')
             .select('id')
-            .or(`and(user1_id.eq.${user?.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user?.id})`)
+            .eq('swiper_id', currentProfile.id)
+            .eq('swiped_id', user?.id as string)
+            .in('action', ['like', 'super_like'])
             .limit(1);
 
-          if (matchData && matchData.length > 0) {
+          if (reciprocal && reciprocal.length > 0) {
             setMatchedProfile(currentProfile);
             setShowMatchModal(true);
           }
