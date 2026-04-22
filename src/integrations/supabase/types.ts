@@ -1389,6 +1389,9 @@ export type Database = {
       }
       cleanup_fake_users: { Args: never; Returns: number }
       cleanup_inactive_accounts: { Args: never; Returns: number }
+      consume_boost: { Args: { p_duration_minutes?: number }; Returns: Json }
+      consume_super_like: { Args: never; Returns: Json }
+      consume_swipe: { Args: never; Returns: Json }
       create_daily_reward: {
         Args: {
           p_reward_type: string

@@ -45,23 +45,29 @@ export const useSwipeLimits = () => {
   };
 
   const consumeSwipe = async (): Promise<boolean> => {
-    if (!canSwipe()) {
-      toast({
-        title: "Daily Limit Reached",
-        description: "Upgrade to Basic or higher for unlimited swipes!",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     try {
-      await supabase.rpc('increment_swipe_count', { user_uuid: user?.id });
-      
-      // Only decrement when user has a finite limit
-      if (dailySwipes !== -1) {
-        setRemainingSwipes(prev => Math.max(0, prev - 1));
+      const { data, error } = await supabase.rpc('consume_swipe' as any);
+      if (error) {
+        console.error('Error consuming swipe:', error);
+        return false;
       }
-      
+      const result = (data ?? {}) as { allowed?: boolean; reason?: string; remaining?: number };
+      if (!result.allowed) {
+        toast({
+          title: result.reason === 'daily_limit_reached' ? 'Daily Limit Reached' : 'Action Not Allowed',
+          description: result.reason === 'daily_limit_reached'
+            ? 'Upgrade to Basic or higher for unlimited swipes!'
+            : 'You are not allowed to perform this action.',
+          variant: 'destructive',
+        });
+        if (typeof result.remaining === 'number' && result.remaining >= 0) {
+          setRemainingSwipes(result.remaining);
+        }
+        return false;
+      }
+      if (typeof result.remaining === 'number' && result.remaining >= 0) {
+        setRemainingSwipes(result.remaining);
+      }
       return true;
     } catch (error) {
       console.error('Error consuming swipe:', error);
