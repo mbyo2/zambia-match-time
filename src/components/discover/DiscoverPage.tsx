@@ -77,6 +77,56 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
     }
   }, [authLoading, user?.id]);
 
+  // Realtime: show match modal when a new match involving me is created
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel('new-matches-celebration')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'matches' },
+        async (payload) => {
+          const m: any = payload.new;
+          if (!m) return;
+          if (m.user1_id !== user.id && m.user2_id !== user.id) return;
+          const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
+
+          // Avoid duplicate modal if we already triggered for this profile
+          if (showMatchModal && matchedProfile?.id === otherId) return;
+
+          // Try to use a profile already in our stack
+          const cached = profiles.find(p => p.id === otherId);
+          if (cached) {
+            setMatchedProfile(cached);
+            setShowMatchModal(true);
+            return;
+          }
+
+          // Otherwise fetch minimal profile + primary photo
+          const [{ data: prof }, { data: photos }] = await Promise.all([
+            supabase.from('profiles').select('id, first_name').eq('id', otherId).single(),
+            supabase
+              .from('profile_photos')
+              .select('photo_url, is_primary')
+              .eq('user_id', otherId)
+              .order('is_primary', { ascending: false })
+              .limit(3),
+          ]);
+
+          if (prof) {
+            setMatchedProfile({
+              ...(prof as any),
+              profile_photos: photos || [],
+            } as any);
+            setShowMatchModal(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, profiles, showMatchModal, matchedProfile?.id]);
+
   const checkLocationAndLoadProfiles = async () => {
     if (!user?.id) { setLoading(false); return; }
     try {
@@ -186,13 +236,16 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
         else if (action === 'super_like') incrementStat('super_likes_given');
 
         if (action === 'like' || action === 'super_like') {
-          const { data: matchData } = await supabase
-            .from('matches')
+          // Check for reciprocal like (they liked us first → match)
+          const { data: reciprocal } = await supabase
+            .from('swipes')
             .select('id')
-            .or(`and(user1_id.eq.${user?.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user?.id})`)
+            .eq('swiper_id', currentProfile.id)
+            .eq('swiped_id', user?.id as string)
+            .in('action', ['like', 'super_like'])
             .limit(1);
 
-          if (matchData && matchData.length > 0) {
+          if (reciprocal && reciprocal.length > 0) {
             setMatchedProfile(currentProfile);
             setShowMatchModal(true);
           }
