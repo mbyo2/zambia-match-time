@@ -55,6 +55,8 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const [isUndoing, setIsUndoing] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
   const [showMatchModal, setShowMatchModal] = useState(false);
+  // Track which matches/profiles we've already celebrated to prevent duplicates
+  const celebratedRef = useRef<Set<string>>(new Set());
   const [detailProfile, setDetailProfile] = useState<Profile | null>(null);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [filters, setFilters] = useState({
@@ -91,8 +93,14 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
           if (m.user1_id !== user.id && m.user2_id !== user.id) return;
           const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
 
-          // Avoid duplicate modal if we already triggered for this profile
-          if (showMatchModal && matchedProfile?.id === otherId) return;
+          // De-dupe: by match id AND by other user id, so multiple inserts or
+          // a swipe-triggered modal can't be re-shown by realtime.
+          if (
+            celebratedRef.current.has(m.id) ||
+            celebratedRef.current.has(otherId)
+          ) return;
+          celebratedRef.current.add(m.id);
+          celebratedRef.current.add(otherId);
 
           // Try to use a profile already in our stack
           const cached = profiles.find(p => p.id === otherId);
@@ -125,7 +133,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id, profiles, showMatchModal, matchedProfile?.id]);
+  }, [user?.id, profiles]);
 
   const checkLocationAndLoadProfiles = async () => {
     if (!user?.id) { setLoading(false); return; }
@@ -246,8 +254,11 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
             .limit(1);
 
           if (reciprocal && reciprocal.length > 0) {
-            setMatchedProfile(currentProfile);
-            setShowMatchModal(true);
+            if (!celebratedRef.current.has(currentProfile.id)) {
+              celebratedRef.current.add(currentProfile.id);
+              setMatchedProfile(currentProfile);
+              setShowMatchModal(true);
+            }
           }
         }
       }
