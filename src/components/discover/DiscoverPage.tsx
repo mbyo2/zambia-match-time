@@ -248,8 +248,11 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
             .limit(1);
 
           if (reciprocal && reciprocal.length > 0) {
-            setMatchedProfile(currentProfile);
-            setShowMatchModal(true);
+            if (!celebratedRef.current.has(currentProfile.id)) {
+              celebratedRef.current.add(currentProfile.id);
+              setMatchedProfile(currentProfile);
+              setShowMatchModal(true);
+            }
           }
         }
       }
