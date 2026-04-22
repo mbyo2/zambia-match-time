@@ -186,7 +186,6 @@ const MatchCelebrationModal: React.FC<MatchCelebrationModalProps> = ({
                     await onSendMessage?.();
                   } finally {
                     sendingRef.current = false;
-                    onOpenChange(false);
                   }
                 }}
                 disabled={isSendingMessage}
