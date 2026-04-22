@@ -54,6 +54,8 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const [lastSwipe, setLastSwipe] = useState<{ profile: Profile; index: number; action: string } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
+  const [matchedMatchId, setMatchedMatchId] = useState<string | null>(null);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
   // Track which matches/profiles we've already celebrated to prevent duplicates
   const celebratedRef = useRef<Set<string>>(new Set());
@@ -106,6 +108,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
           const cached = profiles.find(p => p.id === otherId);
           if (cached) {
             setMatchedProfile(cached);
+            setMatchedMatchId(m.id);
             setShowMatchModal(true);
             return;
           }
@@ -126,6 +129,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
               ...(prof as any),
               profile_photos: photos || [],
             } as any);
+            setMatchedMatchId(m.id);
             setShowMatchModal(true);
           }
         }
@@ -257,6 +261,9 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
             if (!celebratedRef.current.has(currentProfile.id)) {
               celebratedRef.current.add(currentProfile.id);
               setMatchedProfile(currentProfile);
+              // Match id will arrive via realtime; reset so the modal doesn't
+              // reuse a stale id from a previous match.
+              setMatchedMatchId(null);
               setShowMatchModal(true);
             }
           }
@@ -393,9 +400,40 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
         open={showMatchModal}
         onOpenChange={setShowMatchModal}
         matchedProfile={matchedProfile}
-        onSendMessage={() => {
-          setShowMatchModal(false);
-          onNavigateToMatches?.();
+        isSendingMessage={isOpeningChat}
+        onSendMessage={async () => {
+          if (isOpeningChat) return;
+          setIsOpeningChat(true);
+          try {
+            // Resolve match id (realtime may not have arrived yet on the swiper side)
+            let matchId = matchedMatchId;
+            if (!matchId && matchedProfile && user?.id) {
+              const { data: m } = await supabase
+                .from('matches')
+                .select('id')
+                .or(`and(user1_id.eq.${user.id},user2_id.eq.${matchedProfile.id}),and(user1_id.eq.${matchedProfile.id},user2_id.eq.${user.id})`)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+              matchId = m?.id ?? null;
+            }
+
+            // Idempotent: server uses an advisory lock + check-then-insert,
+            // so rapid double-taps return the same conversation id.
+            if (matchId) {
+              const { error } = await supabase.rpc(
+                'get_or_create_conversation_for_match' as any,
+                { p_match_id: matchId },
+              );
+              if (error) logger.error('Error ensuring conversation:', error);
+            }
+          } catch (e) {
+            logger.error('Error opening chat from match modal:', e);
+          } finally {
+            setIsOpeningChat(false);
+            setMatchedMatchId(null);
+            onNavigateToMatches?.();
+          }
         }}
         onKeepSwiping={() => setShowMatchModal(false)}
       />
