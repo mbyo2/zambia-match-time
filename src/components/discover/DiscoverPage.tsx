@@ -54,6 +54,8 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const [lastSwipe, setLastSwipe] = useState<{ profile: Profile; index: number; action: string } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
+  const [matchedMatchId, setMatchedMatchId] = useState<string | null>(null);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
   // Track which matches/profiles we've already celebrated to prevent duplicates
   const celebratedRef = useRef<Set<string>>(new Set());
