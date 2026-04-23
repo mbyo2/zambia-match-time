@@ -125,4 +125,40 @@ describe("MatchCelebrationModal — retry after failure", () => {
       expect(screen.queryByRole("button", { name: /send a message/i })).not.toBeInTheDocument();
     });
   });
+
+  it("survives two consecutive RPC failures and succeeds on the third attempt", async () => {
+    const user = userEvent.setup();
+    const onSend = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("RPC failed #1"))
+      .mockRejectedValueOnce(new Error("RPC failed #2"))
+      .mockResolvedValueOnce(true);
+
+    render(<Harness onSend={onSend} />);
+
+    // Attempt 1 — fails
+    await user.click(await screen.findByRole("button", { name: /send a message/i }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send a message/i })).toBeEnabled();
+    });
+    expect(screen.getByRole("button", { name: /keep swiping/i })).toBeEnabled();
+    expect(screen.getAllByText("Alice").length).toBeGreaterThan(0);
+
+    // Attempt 2 — fails again
+    await user.click(screen.getByRole("button", { name: /send a message/i }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send a message/i })).toBeEnabled();
+    });
+    expect(screen.getByRole("button", { name: /keep swiping/i })).toBeEnabled();
+    expect(screen.getAllByText("Alice").length).toBeGreaterThan(0);
+
+    // Attempt 3 — succeeds, modal closes
+    await user.click(screen.getByRole("button", { name: /send a message/i }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(3));
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /send a message/i })).not.toBeInTheDocument();
+    });
+  });
 });
