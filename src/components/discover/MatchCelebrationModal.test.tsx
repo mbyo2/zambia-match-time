@@ -93,4 +93,34 @@ describe("MatchCelebrationModal — retry after failure", () => {
     });
     expect(screen.getAllByText("Alice").length).toBeGreaterThan(0);
   });
+  it("re-enables buttons and preserves match context when onSendMessage rejects (RPC throws)", async () => {
+    const user = userEvent.setup();
+    const onSend = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("RPC failed"))
+      .mockResolvedValueOnce(true);
+
+    render(<Harness onSend={onSend} />);
+
+    const sendBtn = await screen.findByRole("button", { name: /send a message/i });
+
+    // First click — RPC throws. The Harness's try/finally mirrors DiscoverPage:
+    // it must not crash the modal and must reset the sending state.
+    await user.click(sendBtn).catch(() => {});
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+
+    // Modal still open with same matched profile, both buttons re-enabled.
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send a message/i })).toBeEnabled();
+    });
+    expect(screen.getByRole("button", { name: /keep swiping/i })).toBeEnabled();
+    expect(screen.getAllByText("Alice").length).toBeGreaterThan(0);
+
+    // Retry succeeds with the same context.
+    await user.click(screen.getByRole("button", { name: /send a message/i }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /send a message/i })).not.toBeInTheDocument();
+    });
+  });
 });
