@@ -161,4 +161,43 @@ describe("MatchCelebrationModal — retry after failure", () => {
       expect(screen.queryByRole("button", { name: /send a message/i })).not.toBeInTheDocument();
     });
   });
+
+  it("guards against overlapping RPC calls from rapid clicks", async () => {
+    const user = userEvent.setup();
+    let resolveFirst: (v: boolean) => void = () => {};
+    let callCount = 0;
+    const onSend = vi.fn(() => {
+      callCount++;
+      // First call hangs until we resolve it; subsequent calls (if any leak
+      // through the guard) would resolve immediately and corrupt the count.
+      if (callCount === 1) {
+        return new Promise<boolean>((res) => { resolveFirst = res; });
+      }
+      return Promise.resolve(true);
+    });
+
+    render(<Harness onSend={onSend} />);
+    const sendBtn = await screen.findByRole("button", { name: /send a message/i });
+
+    // Fire several rapid clicks while the first RPC is in flight.
+    await user.click(sendBtn);
+    await user.click(sendBtn);
+    await user.click(sendBtn);
+    await user.click(sendBtn);
+
+    // Only the first click should have invoked onSend; the rest are guarded.
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /opening chat/i })).toBeDisabled();
+
+    // Resolve the first call as a failure — modal should re-enable for retry.
+    await act(async () => { resolveFirst(false); });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send a message/i })).toBeEnabled();
+    });
+    expect(onSend).toHaveBeenCalledTimes(1);
+
+    // Now a fresh click should fire exactly one new RPC.
+    await user.click(screen.getByRole("button", { name: /send a message/i }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(2));
+  });
 });
