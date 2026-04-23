@@ -34,6 +34,14 @@
 
     --radius: 0.5rem;
 
+    /* WhatsApp-style chat tokens (light) */
+    --chat-surface: 36 33% 94%;            /* warm beige chat background */
+    --bubble-out: 330 81% 60%;             /* matches brand primary */
+    --bubble-out-foreground: 0 0% 100%;
+    --bubble-in: 0 0% 100%;
+    --bubble-in-foreground: 222.2 84% 4.9%;
+    --tick-read: 199 89% 48%;              /* sky-blue read tick */
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -79,6 +87,15 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 330 81% 60%;
+
+    /* WhatsApp-style chat tokens (dark) */
+    --chat-surface: 222 35% 8%;
+    --bubble-out: 330 70% 45%;
+    --bubble-out-foreground: 0 0% 100%;
+    --bubble-in: 217 28% 18%;
+    --bubble-in-foreground: 210 40% 98%;
+    --tick-read: 199 89% 60%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 330 81% 60%;

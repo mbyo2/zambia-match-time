@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import MessageInput from '@/components/messaging/MessageInput';
+import MessageInput, { type SendPayload, type ReplyContext } from '@/components/messaging/MessageInput';
 import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
-import MessageReactions from '@/components/messaging/MessageReactions';
+import ChatBubble, { type BubbleMessage } from '@/components/messaging/ChatBubble';
 import VenueSuggestions from '@/components/venues/VenueSuggestions';
 import ActivityStatus from '@/components/social/ActivityStatus';
 import { logger } from '@/utils/logger';
+import { formatDaySeparator, sameDay } from '@/utils/chatTime';
 
 interface Reaction {
   emoji: string;
@@ -26,6 +27,8 @@ interface Message {
   is_read: boolean;
   message_type: 'text' | 'image' | 'voice' | 'video';
   media_url?: string | null;
+  duration_seconds?: number | null;
+  reply_to_id?: string | null;
   reactions?: Reaction[];
 }
 
@@ -43,6 +46,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
+  const [replyTo, setReplyTo] = useState<BubbleMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
