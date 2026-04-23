@@ -83,7 +83,7 @@ const ChatBubble: React.FC<Props> = ({
 
   return (
     <div
-      className={`group flex w-full ${isOutgoing ? 'justify-end' : 'justify-start'} px-2`}
+      className={`group flex w-full flex-col ${isOutgoing ? 'items-end' : 'items-start'} px-2`}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -159,19 +159,16 @@ const ChatBubble: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Reactions */}
-      {(message.reactions && message.reactions.length > 0) || true ? (
-        <div className="hidden" />
-      ) : null}
-
-      {/* External reactions row, kept visible below bubble */}
-      <div className={`absolute ${isOutgoing ? 'right-2' : 'left-2'} translate-y-5`}>
-        <MessageReactions
-          messageId={message.id}
-          reactions={message.reactions}
-          onReact={onReact}
-        />
-      </div>
+      {/* Reactions row sits just under the bubble */}
+      {message.reactions && message.reactions.length > 0 && (
+        <div className={`mt-1 ${isOutgoing ? 'mr-2' : 'ml-2'}`}>
+          <MessageReactions
+            messageId={message.id}
+            reactions={message.reactions}
+            onReact={onReact}
+          />
+        </div>
+      )}
     </div>
   );
 };
