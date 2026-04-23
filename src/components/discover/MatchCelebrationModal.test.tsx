@@ -30,6 +30,8 @@ const Harness = ({ onSend }: { onSend: () => Promise<boolean> }) => {
         let ok = false;
         try {
           ok = await onSend();
+        } catch {
+          ok = false;
         } finally {
           setSending(false);
           if (ok) {
