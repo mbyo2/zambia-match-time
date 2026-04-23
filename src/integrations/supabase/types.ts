@@ -401,33 +401,39 @@ export type Database = {
           content: string | null
           conversation_id: string
           created_at: string | null
+          duration_seconds: number | null
           id: string
           is_read: boolean | null
           media_url: string | null
           message_type: Database["public"]["Enums"]["message_type"] | null
           read_at: string | null
+          reply_to_id: string | null
           sender_id: string
         }
         Insert: {
           content?: string | null
           conversation_id: string
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           is_read?: boolean | null
           media_url?: string | null
           message_type?: Database["public"]["Enums"]["message_type"] | null
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id: string
         }
         Update: {
           content?: string | null
           conversation_id?: string
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           is_read?: boolean | null
           media_url?: string | null
           message_type?: Database["public"]["Enums"]["message_type"] | null
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -436,6 +442,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
