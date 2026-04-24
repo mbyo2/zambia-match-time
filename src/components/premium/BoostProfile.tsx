@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,10 +14,34 @@ const BoostProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [lastBoost, setLastBoost] = useState<Date | null>(null);
+  const [activeUntil, setActiveUntil] = useState<Date | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
 
   const canBoost = canUseBoost;
   const boostDuration = 30; // minutes
+
+  // Load active boost on mount and tick every second
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('boosts')
+        .select('expires_at')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data?.expires_at) setActiveUntil(new Date(data.expires_at));
+    })();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!activeUntil) return;
+    const i = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(i);
+  }, [activeUntil]);
 
   const handleBoost = async () => {
     setIsLoading(true);
@@ -36,7 +60,10 @@ const BoostProfile = () => {
         }
         return;
       }
-      setLastBoost(new Date());
+      const expires = (data as any)?.expires_at
+        ? new Date((data as any).expires_at)
+        : new Date(Date.now() + boostDuration * 60 * 1000);
+      setActiveUntil(expires);
       toast({
         title: 'Profile Boosted!',
         description: `Your profile will be shown to more people for the next ${boostDuration} minutes.`,
@@ -53,8 +80,11 @@ const BoostProfile = () => {
     }
   };
 
-  const isRecentlyBoosted = lastBoost && 
-    (new Date().getTime() - lastBoost.getTime()) < (boostDuration * 60 * 1000);
+  const isRecentlyBoosted = !!activeUntil && activeUntil.getTime() > now.getTime();
+  const remainingMs = isRecentlyBoosted ? activeUntil!.getTime() - now.getTime() : 0;
+  const remainingMin = Math.floor(remainingMs / 60000);
+  const remainingSec = Math.floor((remainingMs % 60000) / 1000);
+  const remainingLabel = `${remainingMin}:${String(remainingSec).padStart(2, '0')}`;
 
   return (
     <Card className="border-accent">
@@ -67,7 +97,7 @@ const BoostProfile = () => {
           {isRecentlyBoosted && (
             <Badge variant="secondary">
               <Clock size={12} className="mr-1" />
-              Active
+              {remainingLabel} left
             </Badge>
           )}
         </div>
@@ -102,7 +132,7 @@ const BoostProfile = () => {
               Boosting...
             </>
           ) : isRecentlyBoosted ? (
-            'Boost Active'
+            `Boost Active · ${remainingLabel}`
           ) : (
             <>
               <Zap size={16} className="mr-2" />
