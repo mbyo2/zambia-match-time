@@ -221,7 +221,6 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
   const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
     if (currentIndex >= profiles.length) return;
     const currentProfile = profiles[currentIndex];
-    setLastSwipe({ profile: currentProfile, index: currentIndex, action });
 
     if (user?.id && currentProfile.id === user.id) {
       setCurrentIndex(prev => prev + 1);
@@ -229,6 +228,36 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
     }
 
     if (!canSwipe()) return;
+
+    // Enforce Super Like tier + daily quota server-side BEFORE consuming the card
+    if (action === 'super_like') {
+      const { data, error } = await supabase.rpc('consume_super_like' as any);
+      if (error) {
+        toast({ title: 'Error', description: 'Could not send Super Like.', variant: 'destructive' });
+        return;
+      }
+      const result = (data ?? {}) as { allowed?: boolean; reason?: string; required_tier?: string };
+      if (!result.allowed) {
+        if (result.reason === 'tier_required') {
+          toast({
+            title: 'Upgrade Required',
+            description: `Super Likes need ${result.required_tier ?? 'Basic'} or higher.`,
+            variant: 'destructive',
+          });
+        } else if (result.reason === 'daily_limit_reached') {
+          toast({
+            title: 'Daily Limit Reached',
+            description: "You've used all your Super Likes for today.",
+            variant: 'destructive',
+          });
+        } else {
+          toast({ title: 'Super Like Unavailable', description: 'Try again later.', variant: 'destructive' });
+        }
+        return;
+      }
+    }
+
+    setLastSwipe({ profile: currentProfile, index: currentIndex, action });
 
     const previousIndex = currentIndex;
     setCurrentIndex(prev => prev + 1);
