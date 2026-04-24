@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MessageInput, { type SendPayload, type ReplyContext } from '@/components/messaging/MessageInput';
 import RealtimeMessages from '@/components/messaging/RealtimeMessages';
@@ -48,6 +48,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [replyTo, setReplyTo] = useState<BubbleMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -161,22 +162,28 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     if (userId !== user?.id) setOtherUserOnline(online);
   };
 
-  const sendMessage = async (content: string, messageType: 'text' | 'image' = 'text') => {
-    if (!content.trim() || !user) return;
-
+  const sendMessage = async (payload: SendPayload) => {
+    if (!user) return;
     try {
       const insertData: any = {
         conversation_id: match.conversation.id,
         sender_id: user.id,
-        content: messageType === 'image' ? null : content.trim(),
-        message_type: messageType,
-        ...(messageType === 'image' ? { media_url: content } : {})
+        message_type: payload.type,
+        reply_to_id: payload.replyToId ?? null,
       };
+      if (payload.type === 'text') {
+        insertData.content = payload.content;
+      } else if (payload.type === 'image') {
+        insertData.media_url = payload.mediaUrl;
+      } else if (payload.type === 'voice') {
+        insertData.media_url = payload.mediaUrl;
+        insertData.duration_seconds = payload.durationSeconds;
+      }
 
       const { error } = await supabase.from('messages').insert(insertData);
       if (error) {
         logger.error('Error sending message:', error);
-        toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+        toast({ title: 'Error', description: 'Failed to send message', variant: 'destructive' });
         return;
       }
 
@@ -184,6 +191,8 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         .from('conversations')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', match.conversation.id);
+
+      setReplyTo(null);
     } catch (error) {
       logger.error('Error:', error);
     }
@@ -267,6 +276,29 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     );
   }
 
+  const otherFirstName = match.other_user.first_name as string;
+  const senderName = (sid: string) => (sid === user?.id ? 'You' : otherFirstName);
+
+  const replyContext: ReplyContext | null = replyTo
+    ? {
+        id: replyTo.id,
+        senderName: senderName(replyTo.sender_id),
+        preview:
+          replyTo.message_type === 'image' ? '📷 Photo'
+          : replyTo.message_type === 'voice' ? '🎤 Voice message'
+          : (replyTo.content || ''),
+      }
+    : null;
+
+  const jumpTo = (id: string) => {
+    const el = messageRefs.current[id];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-primary');
+      setTimeout(() => el.classList.remove('ring-2', 'ring-primary'), 1200);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <RealtimeMessages
@@ -320,7 +352,7 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto py-3 space-y-1 bg-chat-surface">
         {messages.length === 0 ? (
           <div className="text-center space-y-6 mt-8">
             <p className="text-muted-foreground">Start the conversation! 👋</p>
@@ -333,39 +365,47 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             <VenueSuggestions />
           </div>
         ) : (
-          messages.map((message) => (
-            <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-              <div className="max-w-xs lg:max-w-md">
-                <div
-                  className={`px-4 py-2 rounded-lg ${
-                    message.sender_id === user?.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card border border-border shadow-sm'
-                  }`}
-                >
-                  {message.message_type === 'image' && message.media_url ? (
-                    <img src={message.media_url} alt="Shared image" className="max-w-full rounded-lg max-h-60 object-cover" />
-                  ) : (
-                    <p className="text-sm">{message.content}</p>
-                  )}
-                  <div className="flex items-center justify-between mt-1">
-                    <p className={`text-xs ${message.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    {message.sender_id === user?.id && (
-                      <span className={`text-xs ${message.is_read ? 'text-primary-foreground/60' : 'text-primary-foreground/40'}`}>
-                        {message.is_read ? '✓✓' : '✓'}
-                      </span>
-                    )}
-                  </div>
-                </div>
+          messages.map((message, idx) => {
+            const prev = messages[idx - 1];
+            const next = messages[idx + 1];
+            const isOutgoing = message.sender_id === user?.id;
+            const showDaySeparator = !prev || !sameDay(prev.created_at, message.created_at);
+            // tail when next message is from different sender or is far apart in time
+            const showTail = !next
+              || next.sender_id !== message.sender_id
+              || (new Date(next.created_at).getTime() - new Date(message.created_at).getTime()) > 60_000;
 
-                <div className="mt-1">
-                  <MessageReactions messageId={message.id} reactions={message.reactions} onReact={handleReaction} />
+            const repliedTo = message.reply_to_id
+              ? messages.find(m => m.id === message.reply_to_id) ?? null
+              : null;
+
+            return (
+              <React.Fragment key={message.id}>
+                {showDaySeparator && (
+                  <div className="flex justify-center my-3">
+                    <span className="text-[11px] uppercase tracking-wide bg-card border border-border text-muted-foreground rounded-full px-3 py-1 shadow-sm">
+                      {formatDaySeparator(message.created_at)}
+                    </span>
+                  </div>
+                )}
+                <div
+                  ref={(el) => { messageRefs.current[message.id] = el; }}
+                  className="transition-shadow rounded-2xl"
+                >
+                  <ChatBubble
+                    message={message as BubbleMessage}
+                    isOutgoing={isOutgoing}
+                    showTail={showTail}
+                    repliedTo={repliedTo as BubbleMessage | null}
+                    repliedToSenderName={repliedTo ? senderName(repliedTo.sender_id) : undefined}
+                    onReply={(m) => setReplyTo(m)}
+                    onReact={handleReaction}
+                    onJumpTo={jumpTo}
+                  />
                 </div>
-              </div>
-            </div>
-          ))
+              </React.Fragment>
+            );
+          })
         )}
 
         {otherUserTyping && (
@@ -384,11 +424,13 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
       </div>
 
       <MessageInput
-        onSendMessage={sendMessage}
+        onSend={sendMessage}
         onTyping={handleTyping}
         disabled={false}
         conversationId={match.conversation.id}
         userId={user?.id}
+        replyContext={replyContext}
+        onCancelReply={() => setReplyTo(null)}
       />
     </div>
   );
