@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, MessageSquare } from 'lucide-react';
 import ChatView from './ChatView';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import WhoLikedYou from '@/components/discover/WhoLikedYou';
 
 interface Match {
   id: string;
@@ -248,8 +250,13 @@ const MatchesPage = () => {
         <h1 className="text-2xl font-bold text-foreground mb-6 text-center">
           Messages 💬
         </h1>
-
-        {matchesWithDetails.length === 0 ? (
+        <Tabs defaultValue="messages" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="likes">Likes</TabsTrigger>
+          </TabsList>
+          <TabsContent value="messages">
+            {matchesWithDetails.length === 0 ? (
           <Card className="text-center py-8">
             <CardContent>
               <MessageSquare className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
@@ -322,7 +329,12 @@ const MatchesPage = () => {
               </Card>
             ))}
           </div>
-        )}
+            )}
+          </TabsContent>
+          <TabsContent value="likes">
+            <WhoLikedYou />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
