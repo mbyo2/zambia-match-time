@@ -10,7 +10,8 @@ import IcebreakerPromptsSection from '@/components/prompts/IcebreakerPromptsSect
 import ProfileOverview from './ProfileOverview';
 import ProfileSettings from './ProfileSettings';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { Edit, Gift, Trophy, MessageCircle } from 'lucide-react';
+import { Edit, Gift, Trophy, MessageCircle, Zap } from 'lucide-react';
+import BoostProfile from '@/components/premium/BoostProfile';
 
 interface ProfilePageProps {
   setCurrentTab: (tab: string) => void;
@@ -89,7 +90,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="stats">
             <Trophy className="mr-2 h-4 w-4" />
@@ -98,6 +99,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <TabsTrigger value="prompts">
             <MessageCircle className="mr-2 h-4 w-4" />
             Prompts
+          </TabsTrigger>
+          <TabsTrigger value="boost">
+            <Zap className="mr-2 h-4 w-4" />
+            Boost
           </TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -118,6 +123,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
 
         <TabsContent value="prompts">
           <IcebreakerPromptsSection />
+        </TabsContent>
+
+        <TabsContent value="boost">
+          <BoostProfile />
         </TabsContent>
 
         <TabsContent value="settings">
