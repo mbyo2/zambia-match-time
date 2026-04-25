@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
+import { Navigate } from 'react-router-dom';
 import AuthForm from '@/components/auth/AuthForm';
-import MainApp from '@/components/MainApp';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -14,7 +14,7 @@ const Index = () => {
     );
   }
 
-  return user ? <MainApp /> : <AuthForm />;
+  return user ? <Navigate to="/app/discover" replace /> : <AuthForm />;
 };
 
 export default Index;
