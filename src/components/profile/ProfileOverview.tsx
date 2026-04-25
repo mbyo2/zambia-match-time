@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Edit, CheckCircle, Shield } from 'lucide-react';
+import { User, Edit, CheckCircle, Shield, Eye } from 'lucide-react';
 import PhotoUploadSection from './PhotoUploadSection';
 import ProfileCompletionBanner from './ProfileCompletionBanner';
 
@@ -77,6 +77,14 @@ const ProfileOverview: React.FC<ProfileOverviewProps> = ({
             >
               <CheckCircle className="mr-2 h-4 w-4" />
               Verify Profile
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => onNavigate('profile-views')}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Who Viewed Me
             </Button>
             <Button
               variant="outline"
