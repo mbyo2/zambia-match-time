@@ -246,7 +246,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft size={20} />
           </Button>
           <h1 className="text-2xl font-bold text-foreground">Edit Profile</h1>
@@ -412,7 +412,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Button variant="outline" onClick={onBack}>
+              <Button variant="outline" onClick={handleBack}>
                 Cancel
               </Button>
             </div>
