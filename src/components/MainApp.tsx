@@ -23,6 +23,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Flame, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ProfileViews from './social/ProfileViews';
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
@@ -135,6 +136,7 @@ const MainApp = () => {
     admin: { title: 'Admin Panel', component: <DevActions /> },
     subscription: { title: 'Subscription', component: <SubscriptionPage /> },
     'manage-venues': { title: 'Manage Venues', component: <AccommodationsPage /> },
+    'profile-views': { title: 'Profile Views', component: <ProfileViews /> },
   };
 
   if (currentTab === 'admin' && !isSuperAdmin) {
