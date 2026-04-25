@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { useFileUpload } from '@/hooks/useFileUpload';
@@ -16,7 +17,7 @@ import { EducationLevel, RelationshipGoal } from '@/types/search';
 import ProfileVideoSection from './ProfileVideoSection';
 
 interface ProfileEditPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 interface ProfilePhoto {
@@ -28,6 +29,8 @@ interface ProfilePhoto {
 
 const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const handleBack = onBack ?? (() => navigate('/app/profile'));
   const { toast } = useToast();
   const { uploadFile, deleteFile, isUploading, uploadProgress } = useFileUpload();
   const [isLoading, setIsLoading] = useState(false);
@@ -243,7 +246,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft size={20} />
           </Button>
           <h1 className="text-2xl font-bold text-foreground">Edit Profile</h1>
@@ -409,7 +412,7 @@ const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Button variant="outline" onClick={onBack}>
+              <Button variant="outline" onClick={handleBack}>
                 Cancel
               </Button>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDailyRewards } from '@/hooks/useDailyRewards';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,12 +14,27 @@ import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Edit, Gift, Trophy, MessageCircle, Zap } from 'lucide-react';
 import BoostProfile from '@/components/premium/BoostProfile';
 
-interface ProfilePageProps {
-  setCurrentTab: (tab: string) => void;
-}
-
-const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
+const ProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  // Map old tab slugs to new URL routes
+  const navigateTo = (tab: string) => {
+    const routeMap: Record<string, string> = {
+      'profile-edit': '/app/profile/edit',
+      'profile-views': '/app/profile/views',
+      'verification': '/app/settings/verification',
+      'security': '/app/settings/security',
+      'moderation': '/app/settings/moderation',
+      'privacy': '/app/settings/privacy',
+      'terms': '/app/settings/terms',
+      'safety': '/app/settings/safety',
+      'guidelines': '/app/settings/guidelines',
+      'admin': '/app/settings/admin',
+      'subscription': '/app/settings/subscription',
+      'manage-venues': '/app/settings/manage-venues',
+    };
+    navigate(routeMap[tab] ?? '/app/profile');
+  };
   const { todayReward } = useDailyRewards();
   const { isSuperAdmin } = useSuperAdmin();
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -82,7 +98,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
               Daily Reward!
             </Button>
           )}
-          <Button onClick={() => setCurrentTab('profile-edit')}>
+          <Button onClick={() => navigateTo('profile-edit')}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
@@ -113,7 +129,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
             profile={profile}
             photos={photos}
             onPhotosUpdate={fetchPhotos}
-            onNavigate={setCurrentTab}
+            onNavigate={navigateTo}
           />
         </TabsContent>
 
@@ -133,7 +149,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ setCurrentTab }) => {
           <ProfileSettings
             isSuperAdmin={isSuperAdmin}
             isLodgeManager={isLodgeManager}
-            onNavigate={setCurrentTab}
+            onNavigate={navigateTo}
           />
         </TabsContent>
       </Tabs>

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
@@ -37,12 +38,9 @@ interface Profile {
   profile_videos?: { video_url: string }[];
 }
 
-interface DiscoverPageProps {
-  onNavigateToMatches?: () => void;
-}
-
-const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
+const DiscoverPage = () => {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
@@ -470,7 +468,7 @@ const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
             setIsOpeningChat(false);
             if (success) {
               setShowMatchModal(false);
-              onNavigateToMatches?.();
+              navigate('/app/matches');
             } else {
               toast({
                 title: "Couldn't open chat",
