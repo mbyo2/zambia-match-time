@@ -37,11 +37,7 @@ interface Profile {
   profile_videos?: { video_url: string }[];
 }
 
-interface DiscoverPageProps {
-  onNavigateToMatches?: () => void;
-}
-
-const DiscoverPage = ({ onNavigateToMatches }: DiscoverPageProps) => {
+const DiscoverPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
