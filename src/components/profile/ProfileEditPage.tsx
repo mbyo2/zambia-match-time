@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { useFileUpload } from '@/hooks/useFileUpload';
@@ -16,7 +17,7 @@ import { EducationLevel, RelationshipGoal } from '@/types/search';
 import ProfileVideoSection from './ProfileVideoSection';
 
 interface ProfileEditPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 interface ProfilePhoto {
@@ -28,6 +29,8 @@ interface ProfilePhoto {
 
 const ProfileEditPage: React.FC<ProfileEditPageProps> = ({ onBack }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const handleBack = onBack ?? (() => navigate('/app/profile'));
   const { toast } = useToast();
   const { uploadFile, deleteFile, isUploading, uploadProgress } = useFileUpload();
   const [isLoading, setIsLoading] = useState(false);
