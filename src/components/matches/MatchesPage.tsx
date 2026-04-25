@@ -4,9 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, MessageSquare } from 'lucide-react';
+import { MessageCircle, MessageSquare, Search } from 'lucide-react';
 import ChatView from './ChatView';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import WhoLikedYou from '@/components/discover/WhoLikedYou';
 
@@ -44,6 +45,7 @@ const MatchesPage = () => {
   const [matchesWithDetails, setMatchesWithDetails] = useState<MatchWithDetails[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<MatchWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -256,6 +258,15 @@ const MatchesPage = () => {
             <TabsTrigger value="likes">Likes</TabsTrigger>
           </TabsList>
           <TabsContent value="messages">
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or message"
+                className="pl-9"
+              />
+            </div>
             {matchesWithDetails.length === 0 ? (
           <Card className="text-center py-8">
             <CardContent>
@@ -270,7 +281,15 @@ const MatchesPage = () => {
           </Card>
         ) : (
           <div className="space-y-2">
-            {matchesWithDetails.map((match) => (
+            {matchesWithDetails
+              .filter((match) => {
+                const q = searchQuery.trim().toLowerCase();
+                if (!q) return true;
+                const nameHit = match.other_user.first_name?.toLowerCase().includes(q);
+                const msgHit = match.lastMessage?.content?.toLowerCase().includes(q);
+                return nameHit || msgHit;
+              })
+              .map((match) => (
               <Card 
                 key={match.id} 
                 className="cursor-pointer hover:shadow-lg transition-shadow"
