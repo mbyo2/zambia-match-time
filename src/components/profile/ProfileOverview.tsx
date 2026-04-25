@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { User, Edit, CheckCircle, Shield, Eye } from 'lucide-react';
 import PhotoUploadSection from './PhotoUploadSection';
 import ProfileCompletionBanner from './ProfileCompletionBanner';
@@ -76,7 +77,13 @@ const ProfileOverview: React.FC<ProfileOverviewProps> = ({
               onClick={() => onNavigate('verification')}
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              Verify Profile
+              {profile?.is_verified ? 'Verified Profile' : 'Verify Profile'}
+              {profile?.is_verified && (
+                <Badge variant="secondary" className="ml-auto">Verified</Badge>
+              )}
+              {!profile?.is_verified && profile?.verification_status === 'pending' && (
+                <Badge variant="outline" className="ml-auto">Pending</Badge>
+              )}
             </Button>
             <Button
               variant="outline"
