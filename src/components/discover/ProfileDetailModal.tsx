@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MapPin, Briefcase, GraduationCap, Ruler, Shield, Heart, X, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ProfilePromptResponses from '@/components/prompts/ProfilePromptResponses';
 
 interface Profile {
   id: string;
@@ -204,6 +205,9 @@ const ProfileDetailModal = ({ profile, open, onOpenChange, onSwipe }: ProfileDet
                 </div>
               </div>
             )}
+
+            {/* Icebreaker prompt responses */}
+            <ProfilePromptResponses userId={profile.id} />
 
             {profile.has_accommodation_available && (
               <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-lg px-3 py-2">
