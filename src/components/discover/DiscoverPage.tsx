@@ -468,7 +468,7 @@ const DiscoverPage = () => {
             setIsOpeningChat(false);
             if (success) {
               setShowMatchModal(false);
-              onNavigateToMatches?.();
+              navigate('/app/matches');
             } else {
               toast({
                 title: "Couldn't open chat",
