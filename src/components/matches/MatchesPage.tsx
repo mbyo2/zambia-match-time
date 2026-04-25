@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import WhoLikedYou from '@/components/discover/WhoLikedYou';
+import StoryTray from '@/components/stories/StoryTray';
 
 interface Match {
   id: string;
@@ -258,6 +259,7 @@ const MatchesPage = () => {
             <TabsTrigger value="likes">Likes</TabsTrigger>
           </TabsList>
           <TabsContent value="messages">
+            <StoryTray />
             <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
