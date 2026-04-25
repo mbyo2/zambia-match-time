@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStats } from '@/hooks/useUserStats';
@@ -39,6 +40,7 @@ interface Profile {
 
 const DiscoverPage = () => {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { incrementStat } = useUserStats();
   const { canSwipe, consumeSwipe } = useSwipeLimits();
