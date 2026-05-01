@@ -135,6 +135,51 @@ export type Database = {
           },
         ]
       }
+      calls: {
+        Row: {
+          accepted_at: string | null
+          call_type: Database["public"]["Enums"]["call_type"]
+          callee_id: string
+          caller_id: string
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          match_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          call_type?: Database["public"]["Enums"]["call_type"]
+          callee_id: string
+          caller_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          match_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status"]
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          call_type?: Database["public"]["Enums"]["call_type"]
+          callee_id?: string
+          caller_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          match_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -1678,6 +1723,14 @@ export type Database = {
     Enums: {
       accommodation_type: "hotel" | "apartment" | "resort" | "villa" | "cabin"
       app_role: "lodge_manager" | "admin"
+      call_status:
+        | "ringing"
+        | "accepted"
+        | "declined"
+        | "missed"
+        | "ended"
+        | "cancelled"
+      call_type: "audio" | "video"
       education_level:
         | "high_school"
         | "some_college"
@@ -1826,6 +1879,15 @@ export const Constants = {
     Enums: {
       accommodation_type: ["hotel", "apartment", "resort", "villa", "cabin"],
       app_role: ["lodge_manager", "admin"],
+      call_status: [
+        "ringing",
+        "accepted",
+        "declined",
+        "missed",
+        "ended",
+        "cancelled",
+      ],
+      call_type: ["audio", "video"],
       education_level: [
         "high_school",
         "some_college",
