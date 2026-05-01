@@ -372,6 +372,13 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
             )}
           </div>
 
+          <Button variant="ghost" size="icon" onClick={() => startCall('audio')} disabled={startingCall} aria-label="Audio call">
+            <Phone size={20} />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => startCall('video')} disabled={startingCall} aria-label="Video call">
+            <Video size={20} />
+          </Button>
+
           {newMessageCount > 0 && (
             <div className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
               {newMessageCount} new
