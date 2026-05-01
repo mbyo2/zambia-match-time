@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Phone, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CallModal from '@/components/calls/CallModal';
+import type { CallType } from '@/hooks/useWebRTCCall';
 import MessageInput, { type SendPayload, type ReplyContext } from '@/components/messaging/MessageInput';
 import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
@@ -47,6 +49,8 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [replyTo, setReplyTo] = useState<BubbleMessage | null>(null);
+  const [activeCall, setActiveCall] = useState<{ id: string; type: CallType } | null>(null);
+  const [startingCall, setStartingCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
@@ -268,6 +272,31 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     }
   };
 
+  const startCall = async (callType: CallType) => {
+    if (!user || startingCall) return;
+    setStartingCall(true);
+    try {
+      const { data, error } = await supabase
+        .from('calls')
+        .insert({
+          match_id: match.id,
+          caller_id: user.id,
+          callee_id: match.other_user.id,
+          call_type: callType,
+          status: 'ringing',
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      setActiveCall({ id: data.id, type: callType });
+    } catch (e: any) {
+      logger.error('Failed to start call', e);
+      toast({ title: 'Could not start call', description: e?.message || 'Try again', variant: 'destructive' });
+    } finally {
+      setStartingCall(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -342,6 +371,13 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
               <ActivityStatus userId={match.other_user.id} lastActive={match.other_user.last_active} />
             )}
           </div>
+
+          <Button variant="ghost" size="icon" onClick={() => startCall('audio')} disabled={startingCall} aria-label="Audio call">
+            <Phone size={20} />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => startCall('video')} disabled={startingCall} aria-label="Video call">
+            <Video size={20} />
+          </Button>
 
           {newMessageCount > 0 && (
             <div className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
@@ -432,6 +468,23 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         replyContext={replyContext}
         onCancelReply={() => setReplyTo(null)}
       />
+
+      {activeCall && user && (
+        <CallModal
+          open
+          callId={activeCall.id}
+          selfId={user.id}
+          role="caller"
+          callType={activeCall.type}
+          peerName={match.other_user.first_name}
+          peerPhotoUrl={
+            match.other_user.profile_photos?.find((p: any) => p.is_primary)?.photo_url
+            || match.other_user.profile_photos?.[0]?.photo_url
+            || null
+          }
+          onClose={() => setActiveCall(null)}
+        />
+      )}
     </div>
   );
 };

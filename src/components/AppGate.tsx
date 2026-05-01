@@ -6,6 +6,7 @@ import { logger } from '@/utils/logger';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import ProfileSetup from './profile/ProfileSetup';
 import AuthForm from './auth/AuthForm';
+import IncomingCallListener from './calls/IncomingCallListener';
 
 const AppGate = () => {
   const { user, loading } = useAuth();
@@ -75,7 +76,12 @@ const AppGate = () => {
     return <Navigate to="/app/discover" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <IncomingCallListener />
+    </>
+  );
 };
 
 export default AppGate;
