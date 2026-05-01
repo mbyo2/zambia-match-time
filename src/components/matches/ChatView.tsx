@@ -432,6 +432,23 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         replyContext={replyContext}
         onCancelReply={() => setReplyTo(null)}
       />
+
+      {activeCall && user && (
+        <CallModal
+          open
+          callId={activeCall.id}
+          selfId={user.id}
+          role="caller"
+          callType={activeCall.type}
+          peerName={match.other_user.first_name}
+          peerPhotoUrl={
+            match.other_user.profile_photos?.find((p: any) => p.is_primary)?.photo_url
+            || match.other_user.profile_photos?.[0]?.photo_url
+            || null
+          }
+          onClose={() => setActiveCall(null)}
+        />
+      )}
     </div>
   );
 };
