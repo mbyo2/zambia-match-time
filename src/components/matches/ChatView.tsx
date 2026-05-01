@@ -272,6 +272,31 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     }
   };
 
+  const startCall = async (callType: CallType) => {
+    if (!user || startingCall) return;
+    setStartingCall(true);
+    try {
+      const { data, error } = await supabase
+        .from('calls')
+        .insert({
+          match_id: match.id,
+          caller_id: user.id,
+          callee_id: match.other_user.id,
+          call_type: callType,
+          status: 'ringing',
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      setActiveCall({ id: data.id, type: callType });
+    } catch (e: any) {
+      logger.error('Failed to start call', e);
+      toast({ title: 'Could not start call', description: e?.message || 'Try again', variant: 'destructive' });
+    } finally {
+      setStartingCall(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
