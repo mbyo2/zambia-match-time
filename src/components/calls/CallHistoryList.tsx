@@ -94,11 +94,27 @@ const CallHistoryList: React.FC = () => {
     <div className="space-y-2">
       {calls.map(c => {
         const outgoing = c.caller_id === user?.id;
-        const missed = c.status === 'missed' || (c.status === 'cancelled' && !outgoing) || c.status === 'declined';
-        const Icon = c.call_type === 'video' ? Video : (missed ? PhoneMissed : (outgoing ? PhoneOutgoing : PhoneIncoming));
-        const dur = c.duration_seconds
-          ? `${Math.floor(c.duration_seconds / 60)}:${String(c.duration_seconds % 60).padStart(2, '0')}`
-          : (missed ? 'Missed' : c.status);
+        // Missed = incoming call the user never picked up (callee perspective)
+        const missed = !outgoing && (c.status === 'missed' || c.status === 'cancelled' || c.status === 'ringing');
+        // Status label
+        let label: string;
+        if (c.status === 'accepted' || c.status === 'ended') {
+          label = c.duration_seconds
+            ? `${Math.floor(c.duration_seconds / 60)}:${String(c.duration_seconds % 60).padStart(2, '0')}`
+            : 'Ended';
+        } else if (missed) {
+          label = 'Missed';
+        } else if (c.status === 'declined') {
+          label = outgoing ? 'Declined' : 'Declined by you';
+        } else if (c.status === 'cancelled') {
+          label = outgoing ? 'Cancelled' : 'Missed';
+        } else if (c.status === 'ringing') {
+          label = outgoing ? 'No answer' : 'Missed';
+        } else {
+          label = c.status;
+        }
+        const DirIcon = missed ? PhoneMissed : (outgoing ? PhoneOutgoing : PhoneIncoming);
+        const Icon = c.call_type === 'video' ? Video : DirIcon;
         return (
           <Card key={c.id}>
             <CardContent className="p-3 flex items-center gap-3">
@@ -110,7 +126,7 @@ const CallHistoryList: React.FC = () => {
                   <Icon className={`h-4 w-4 ${missed ? 'text-destructive' : 'text-muted-foreground'}`} />
                   <p className="font-medium truncate">{c.peer?.first_name || 'Unknown'}</p>
                 </div>
-                <p className="text-xs text-muted-foreground capitalize">{c.call_type} · {dur}</p>
+                <p className={`text-xs capitalize ${missed ? 'text-destructive' : 'text-muted-foreground'}`}>{c.call_type} · {label}</p>
               </div>
               <p className="text-xs text-muted-foreground flex-shrink-0">
                 {new Date(c.started_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
