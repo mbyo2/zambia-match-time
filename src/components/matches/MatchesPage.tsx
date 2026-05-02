@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import WhoLikedYou from '@/components/discover/WhoLikedYou';
 import StoryTray from '@/components/stories/StoryTray';
+import CallHistoryList from '@/components/calls/CallHistoryList';
 
 interface Match {
   id: string;
@@ -254,8 +255,9 @@ const MatchesPage = () => {
           Messages 💬
         </h1>
         <Tabs defaultValue="messages" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="calls">Calls</TabsTrigger>
             <TabsTrigger value="likes">Likes</TabsTrigger>
           </TabsList>
           <TabsContent value="messages">
@@ -354,6 +356,9 @@ const MatchesPage = () => {
           </TabsContent>
           <TabsContent value="likes">
             <WhoLikedYou />
+          </TabsContent>
+          <TabsContent value="calls">
+            <CallHistoryList />
           </TabsContent>
         </Tabs>
       </div>
