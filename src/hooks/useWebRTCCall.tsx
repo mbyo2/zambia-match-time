@@ -115,7 +115,15 @@ export function useWebRTCCall({ callId, selfId, role, callType, enabled, onRemot
           if (ev.candidate) sendSignal('ice', ev.candidate.toJSON());
         };
         pc.onconnectionstatechange = () => {
-          if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+          const s = pc.connectionState;
+          if (s === 'disconnected') {
+            // Try ICE restart (caller side) before tearing down
+            if (role === 'caller') {
+              pc.createOffer({ iceRestart: true })
+                .then(o => pc.setLocalDescription(o).then(() => sendSignal('offer', o)))
+                .catch(() => {});
+            }
+          } else if (s === 'failed' || s === 'closed') {
             if (phase !== 'ended') hangup('ended');
           }
         };

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Video } from 'lucide-react';
 import CallModal from './CallModal';
@@ -28,13 +27,20 @@ const IncomingCallListener: React.FC = () => {
   const [incoming, setIncoming] = useState<IncomingCall | null>(null);
   const [callerInfo, setCallerInfo] = useState<CallerInfo | null>(null);
   const [active, setActive] = useState<IncomingCall | null>(null);
-  const ringRef = useRef<HTMLAudioElement | null>(null);
+  const incomingRef = useRef<IncomingCall | null>(null);
+  useEffect(() => { incomingRef.current = incoming; }, [incoming]);
 
   // Pre-build a ringtone using WebAudio (so we don't ship an mp3)
   useEffect(() => {
     if (!incoming) return;
     const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!Ctx) return;
+    // Vibrate in a ringing pattern on supported devices
+    const vibrate = () => {
+      try { (navigator as any).vibrate?.([600, 400, 600, 1500]); } catch {}
+    };
+    vibrate();
+    const vi = setInterval(vibrate, 3000);
+    if (!Ctx) return () => { clearInterval(vi); try { (navigator as any).vibrate?.(0); } catch {} };
     const ctx = new Ctx();
     let stopped = false;
     const playBeep = () => {
@@ -51,7 +57,13 @@ const IncomingCallListener: React.FC = () => {
     };
     playBeep();
     const i = setInterval(playBeep, 1500);
-    return () => { stopped = true; clearInterval(i); ctx.close().catch(() => {}); };
+    return () => {
+      stopped = true;
+      clearInterval(i);
+      clearInterval(vi);
+      try { (navigator as any).vibrate?.(0); } catch {}
+      ctx.close().catch(() => {});
+    };
   }, [incoming]);
 
   const fetchCaller = useCallback(async (callerId: string) => {
@@ -95,15 +107,28 @@ const IncomingCallListener: React.FC = () => {
         { event: 'UPDATE', schema: 'public', table: 'calls', filter: `callee_id=eq.${user.id}` },
         (payload) => {
           const call = payload.new as any;
-          // Caller cancelled before we accepted
-          if (incoming && call.id === incoming.id && ['cancelled', 'ended'].includes(call.status)) {
+          // Caller cancelled before we accepted (use ref to avoid stale closure)
+          const cur = incomingRef.current;
+          if (cur && call.id === cur.id && ['cancelled', 'ended', 'missed'].includes(call.status)) {
             setIncoming(null);
           }
         },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, fetchCaller, incoming]);
+  }, [user, fetchCaller]);
+
+  // Auto-mark missed after 45s of ringing
+  useEffect(() => {
+    if (!incoming) return;
+    const t = setTimeout(async () => {
+      try {
+        await supabase.from('calls').update({ status: 'missed' }).eq('id', incoming.id);
+      } catch (e) { logger.error('auto-miss failed', e); }
+      setIncoming(null);
+    }, 45000);
+    return () => clearTimeout(t);
+  }, [incoming]);
 
   const accept = async () => {
     if (!incoming) return;
@@ -126,34 +151,52 @@ const IncomingCallListener: React.FC = () => {
 
   return (
     <>
-      <Dialog open={!!incoming} onOpenChange={(v) => { if (!v) decline(); }}>
-        <DialogContent className="max-w-sm">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-muted ring-4 ring-primary/30 animate-pulse">
-              <img
-                src={callerInfo?.photo_url || '/placeholder.svg'}
-                alt={callerInfo?.first_name || 'Caller'}
-                className="w-full h-full object-cover"
-              />
+      {incoming && (
+        <div className="fixed inset-0 z-[100] bg-gradient-to-b from-background via-background to-primary/10 flex flex-col items-center justify-between py-16 px-6 animate-in fade-in duration-300">
+          <div className="flex flex-col items-center gap-6 mt-12">
+            <p className="text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              {incoming.call_type === 'video' ? <Video size={14} /> : <Phone size={14} />}
+              Incoming {incoming.call_type} call
+            </p>
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              <div className="relative w-40 h-40 rounded-full overflow-hidden bg-muted ring-4 ring-primary/40">
+                <img
+                  src={callerInfo?.photo_url || '/placeholder.svg'}
+                  alt={callerInfo?.first_name || 'Caller'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
-            <div className="text-center">
-              <h2 className="text-xl font-semibold">{callerInfo?.first_name || 'Someone'}</h2>
-              <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
-                {incoming?.call_type === 'video' ? <Video size={14} /> : <Phone size={14} />}
-                Incoming {incoming?.call_type} call…
-              </p>
+            <h2 className="text-3xl font-semibold text-foreground">{callerInfo?.first_name || 'Someone'}</h2>
+          </div>
+          <div className="flex items-center justify-center gap-16 w-full pb-8">
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                size="icon"
+                variant="destructive"
+                onClick={decline}
+                className="h-16 w-16 rounded-full shadow-lg"
+                aria-label="Decline call"
+              >
+                <PhoneOff className="h-7 w-7" />
+              </Button>
+              <span className="text-xs text-muted-foreground">Decline</span>
             </div>
-            <div className="flex items-center justify-center gap-6 w-full pt-2">
-              <Button size="icon" variant="destructive" onClick={decline} className="h-14 w-14 rounded-full">
-                <PhoneOff />
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                size="icon"
+                onClick={accept}
+                className="h-16 w-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg animate-pulse"
+                aria-label="Accept call"
+              >
+                <Phone className="h-7 w-7" />
               </Button>
-              <Button size="icon" onClick={accept} className="h-14 w-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white">
-                <Phone />
-              </Button>
+              <span className="text-xs text-muted-foreground">Accept</span>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {active && user && (
         <CallModal
