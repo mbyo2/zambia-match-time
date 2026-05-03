@@ -16,6 +16,7 @@ const MainLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [missedCallCount, setMissedCallCount] = useState(0);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
@@ -27,8 +28,23 @@ const MainLayout = () => {
     if (count !== null && count !== undefined) setUnreadCount(count);
   };
 
+  const fetchMissedCallCount = async () => {
+    if (!user) return;
+    const lastSeen = localStorage.getItem('calls:lastSeenAt') || '1970-01-01';
+    const { count } = await supabase
+      .from('calls')
+      .select('*', { count: 'exact', head: true })
+      .eq('callee_id', user.id)
+      .in('status', ['missed', 'cancelled'])
+      .gt('created_at', lastSeen);
+    if (count !== null && count !== undefined) setMissedCallCount(count);
+  };
+
   useEffect(() => {
-    if (user) fetchUnreadCount();
+    if (user) {
+      fetchUnreadCount();
+      fetchMissedCallCount();
+    }
   }, [user]);
 
   useEffect(() => {
@@ -38,16 +54,26 @@ const MainLayout = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
         fetchUnreadCount();
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls', filter: `callee_id=eq.${user.id}` }, () => {
+        fetchMissedCallCount();
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   useEffect(() => {
     if (location.pathname.startsWith('/app/matches')) {
-      const t = setTimeout(() => setUnreadCount(0), 1500);
+      const t = setTimeout(() => {
+        setUnreadCount(0);
+        // Clear missed-call badge when user is on the Calls tab
+        if (location.search.includes('tab=calls')) {
+          localStorage.setItem('calls:lastSeenAt', new Date().toISOString());
+          setMissedCallCount(0);
+        }
+      }, 1500);
       return () => clearTimeout(t);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Hide bottom nav on sub-pages (anything beyond the 3 main tabs)
   const isMainTab = tabs.some(t => location.pathname === t.to);
@@ -82,9 +108,9 @@ const MainLayout = () => {
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
                     <span className="text-[10px] font-medium">{label}</span>
-                    {id === 'matches' && unreadCount > 0 && (
+                    {id === 'matches' && (unreadCount + missedCallCount) > 0 && (
                       <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                        {(unreadCount + missedCallCount) > 99 ? '99+' : (unreadCount + missedCallCount)}
                       </span>
                     )}
                   </>
