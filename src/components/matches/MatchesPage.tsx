@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,11 +44,24 @@ interface MatchWithDetails extends Match {
 
 const MatchesPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'calls' || searchParams.get('tab') === 'likes'
+    ? (searchParams.get('tab') as string)
+    : 'messages';
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [matches, setMatches] = useState<Match[]>([]);
   const [matchesWithDetails, setMatchesWithDetails] = useState<MatchWithDetails[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<MatchWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && t !== activeTab && ['messages', 'calls', 'likes'].includes(t)) {
+      setActiveTab(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -254,7 +268,16 @@ const MatchesPage = () => {
         <h1 className="text-2xl font-bold text-foreground mb-6 text-center">
           Messages 💬
         </h1>
-        <Tabs defaultValue="messages" className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v);
+            const next = new URLSearchParams(searchParams);
+            if (v === 'messages') next.delete('tab'); else next.set('tab', v);
+            setSearchParams(next, { replace: true });
+          }}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="calls">Calls</TabsTrigger>
