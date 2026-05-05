@@ -400,6 +400,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
               </div>
             )}
             <VenueSuggestions />
+            {match?.id && (
+              <div className="max-w-md mx-auto">
+                <AiIcebreakerSuggestions
+                  matchId={match.id}
+                  onPick={(text) => sendMessage({ type: 'text', content: text })}
+                />
+              </div>
+            )}
           </div>
         ) : (
           messages.map((message, idx) => {
@@ -469,13 +477,6 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
         replyContext={replyContext}
         onCancelReply={() => setReplyTo(null)}
       />
-
-      {messages.length === 0 && match?.id && (
-        <AiIcebreakerSuggestions
-          matchId={match.id}
-          onPick={(text) => sendMessage({ type: 'text', content: text })}
-        />
-      )}
 
       {activeCall && user && (
         <CallModal
