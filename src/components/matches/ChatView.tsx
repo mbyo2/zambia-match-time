@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import CallModal from '@/components/calls/CallModal';
 import type { CallType } from '@/hooks/useWebRTCCall';
 import MessageInput, { type SendPayload, type ReplyContext } from '@/components/messaging/MessageInput';
+import AiIcebreakerSuggestions from '@/components/messaging/AiIcebreakerSuggestions';
 import RealtimeMessages from '@/components/messaging/RealtimeMessages';
 import LiveMessageIndicator from '@/components/messaging/LiveMessageIndicator';
 import ChatBubble, { type BubbleMessage } from '@/components/messaging/ChatBubble';
@@ -399,6 +400,14 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
               </div>
             )}
             <VenueSuggestions />
+            {match?.id && (
+              <div className="max-w-md mx-auto">
+                <AiIcebreakerSuggestions
+                  matchId={match.id}
+                  onPick={(text) => sendMessage({ type: 'text', content: text })}
+                />
+              </div>
+            )}
           </div>
         ) : (
           messages.map((message, idx) => {
