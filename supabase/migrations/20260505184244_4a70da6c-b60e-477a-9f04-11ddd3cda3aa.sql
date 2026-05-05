@@ -1,0 +1,1 @@
+ALTER FUNCTION public.fuzz_distance(numeric) SET search_path = public;
