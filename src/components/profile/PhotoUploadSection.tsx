@@ -46,6 +46,25 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onPhoto
       .from('profile-photos')
       .getPublicUrl(data.path);
 
+    // Free AI moderation via Lovable AI Gateway (Gemini Flash vision).
+    // If unsafe, remove the just-uploaded object and reject.
+    try {
+      const { data: mod } = await supabase.functions.invoke('moderate-image', {
+        body: { image_url: publicUrl },
+      });
+      if (mod && mod.safe === false) {
+        await supabase.storage.from('profile-photos').remove([data.path]);
+        toast({
+          title: 'Photo rejected',
+          description: mod.reason || 'This image violates our community guidelines.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+    } catch {
+      // Fail-open on moderation outage so users aren't blocked entirely.
+    }
+
     return publicUrl;
   }, [user]);
 
