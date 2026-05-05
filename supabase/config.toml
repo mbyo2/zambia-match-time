@@ -49,6 +49,9 @@ verify_jwt = false
 [functions.delete-account]
 verify_jwt = true
 
+[functions.moderate-image]
+verify_jwt = true
+
 [realtime]
 enabled = true
 port = 54323
