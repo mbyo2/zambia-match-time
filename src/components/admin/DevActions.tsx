@@ -77,6 +77,7 @@ const DevActions = () => {
         <div className="space-y-6">
             <AdminDashboard />
             <AdminPanel />
+            <AdminErrorLogs />
             
             <Card>
                 <CardHeader>
