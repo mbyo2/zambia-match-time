@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from 'lucide-react';
 import AdminPanel from './AdminPanel';
 import AdminDashboard from './AdminDashboard';
+import AdminErrorLogs from './AdminErrorLogs';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const DevActions = () => {
