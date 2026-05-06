@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,21 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    // Free in-DB error tracking (no Sentry needed). Best-effort, never throws.
+    try {
+      supabase.auth.getUser().then(({ data }) => {
+        supabase.from('client_error_logs').insert({
+          user_id: data.user?.id ?? null,
+          message: error.message?.slice(0, 1000) ?? 'unknown',
+          stack: (error.stack ?? '').slice(0, 4000),
+          url: typeof window !== 'undefined' ? window.location.href : null,
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+          context: { componentStack: errorInfo.componentStack?.slice(0, 2000) ?? null },
+        }).then(() => {});
+      });
+    } catch {
+      // ignore
+    }
   }
 
   private handleReset = () => {
