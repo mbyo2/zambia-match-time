@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { useWebRTCCall, type CallType, type CallRole } from '@/hooks/useWebRTCCall';
 
 interface CallModalProps {
@@ -23,7 +23,7 @@ const CallModal: React.FC<CallModalProps> = ({
   const [elapsed, setElapsed] = useState(0);
 
   const {
-    phase, micOn, camOn, localStream, remoteStream, error,
+    phase, micOn, camOn, localStream, remoteStream, error, quality,
     toggleMic, toggleCam, hangup,
   } = useWebRTCCall({
     callId, selfId, role, callType,
@@ -68,6 +68,22 @@ const CallModal: React.FC<CallModalProps> = ({
     : phase === 'ended' ? 'Call ended'
     : '';
 
+  const QualityBadge = () => {
+    if (phase !== 'connected' || quality === 'unknown') return null;
+    const cfg = {
+      good: { label: 'Good', icon: Wifi, cls: 'text-emerald-500' },
+      fair: { label: 'Fair', icon: Wifi, cls: 'text-amber-500' },
+      poor: { label: 'Poor', icon: WifiOff, cls: 'text-destructive' },
+    }[quality as 'good' | 'fair' | 'poor'];
+    const Icon = cfg.icon;
+    return (
+      <div className={`flex items-center gap-1 text-xs ${cfg.cls}`} aria-label={`Connection: ${cfg.label}`}>
+        <Icon className="h-3 w-3" />
+        <span>{cfg.label}</span>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleHangup(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-background border-border">
@@ -86,6 +102,17 @@ const CallModal: React.FC<CallModalProps> = ({
               </div>
               <h2 className="text-2xl font-semibold text-foreground">{peerName}</h2>
               <p className="text-sm text-muted-foreground">{statusLabel}</p>
+              <QualityBadge />
+              {!micOn && phase === 'connected' && (
+                <p className="text-xs text-amber-500 flex items-center gap-1">
+                  <MicOff className="h-3 w-3" /> Your mic is muted
+                </p>
+              )}
+              {quality === 'poor' && phase === 'connected' && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> Weak network — audio/video may degrade
+                </p>
+              )}
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
             </div>
           )}
@@ -96,8 +123,10 @@ const CallModal: React.FC<CallModalProps> = ({
               <div className="bg-background/70 backdrop-blur rounded-full px-3 py-1 text-sm text-foreground">
                 {peerName}
               </div>
-              <div className="bg-background/70 backdrop-blur rounded-full px-3 py-1 text-xs text-foreground">
-                {statusLabel}
+              <div className="bg-background/70 backdrop-blur rounded-full px-3 py-1 text-xs text-foreground flex items-center gap-2">
+                {!micOn && <MicOff className="h-3 w-3 text-amber-500" aria-label="Muted" />}
+                <span>{statusLabel}</span>
+                <QualityBadge />
               </div>
             </div>
           )}
