@@ -588,6 +588,33 @@ export type Database = {
           },
         ]
       }
+      onboarding_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          metadata: Json | null
+          step: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          metadata?: Json | null
+          step: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          metadata?: Json | null
+          step?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_photos: {
         Row: {
           created_at: string | null
@@ -1459,6 +1486,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      ban_user: {
+        Args: { p_reason?: string; p_user_id: string }
+        Returns: Json
+      }
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
@@ -1478,6 +1509,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_expired_stories: { Args: never; Returns: number }
       cleanup_fake_users: { Args: never; Returns: number }
       cleanup_inactive_accounts: { Args: never; Returns: number }
       consume_boost: { Args: { p_duration_minutes?: number }; Returns: Json }
@@ -1511,6 +1543,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      export_user_data: { Args: never; Returns: Json }
       fuzz_distance:
         | {
             Args: { exact_distance: number }
@@ -1748,6 +1781,7 @@ export type Database = {
         Args: { p_content: string; p_user_id?: string }
         Returns: string
       }
+      unmatch: { Args: { p_match_id: string }; Returns: Json }
       users_are_matched: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean

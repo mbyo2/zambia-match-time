@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, Eye, Heart, MessageSquare, Users } from 'lucide-react';
+import { Shield, AlertTriangle, Eye, Heart, MessageSquare, Users, ListChecks } from 'lucide-react';
 
 const SafetyCenter = () => {
   const safetyTips = [
@@ -99,6 +99,30 @@ const SafetyCenter = () => {
           <p className="text-sm"><strong>Emergency:</strong> 911 (Zambia) / 999 (Zambia Police)</p>
           <p className="text-sm"><strong>Gender-Based Violence Hotline:</strong> 116</p>
           <p className="text-sm"><strong>Lifeline Zambia:</strong> +260 211 256 774</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5" />
+            First-Date Checklist
+          </CardTitle>
+          <CardDescription>Run through this before meeting someone for the first time.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2 text-sm">
+            <li>✅ Video call them at least once before meeting in person</li>
+            <li>✅ Choose a public, well-lit venue (café, restaurant, park)</li>
+            <li>✅ Tell a trusted friend or family member where you'll be and when</li>
+            <li>✅ Share your live location with someone you trust during the date</li>
+            <li>✅ Plan your own transport — never rely on your date for a ride home</li>
+            <li>✅ Keep your phone charged and accessible at all times</li>
+            <li>✅ Have a "check-in" code-word with a friend in case you need rescue</li>
+            <li>✅ Stay sober enough to make safe judgement calls</li>
+            <li>✅ Don't share your home address until you fully trust them</li>
+            <li>✅ Trust your instincts — leave any time you feel unsafe</li>
+          </ul>
         </CardContent>
       </Card>
     </div>

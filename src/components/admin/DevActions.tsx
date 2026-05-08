@@ -9,6 +9,7 @@ import { Terminal } from 'lucide-react';
 import AdminPanel from './AdminPanel';
 import AdminDashboard from './AdminDashboard';
 import AdminErrorLogs from './AdminErrorLogs';
+import AdminReportsQueue from './AdminReportsQueue';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 const DevActions = () => {
@@ -77,6 +78,7 @@ const DevActions = () => {
         <div className="space-y-6">
             <AdminDashboard />
             <AdminPanel />
+            <AdminReportsQueue />
             <AdminErrorLogs />
             
             <Card>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
+import DataExportCard from './DataExportCard';
 import {
   Shield,
   CheckCircle,
@@ -81,6 +82,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           </CardContent>
         </Card>
       ))}
+      <DataExportCard />
 
       {(isLodgeManager || isSuperAdmin) && (
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => onNavigate('manage-venues')}>
