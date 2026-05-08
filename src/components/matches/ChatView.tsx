@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, Phone, Video } from 'lucide-react';
+import { ArrowLeft, X, Phone, Video, MoreVertical, UserMinus, Flag } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import CallModal from '@/components/calls/CallModal';
 import type { CallType } from '@/hooks/useWebRTCCall';
@@ -298,6 +304,17 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
     }
   };
 
+  const handleUnmatch = async () => {
+    if (!confirm(`Unmatch ${match.other_user.first_name}? You won't see each other anymore.`)) return;
+    const { error } = await (supabase as any).rpc('unmatch', { p_match_id: match.id });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Unmatched', description: `You and ${match.other_user.first_name} have been unmatched.` });
+    onBack();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -379,6 +396,23 @@ const ChatView: React.FC<ChatViewProps> = ({ match, onBack }) => {
           <Button variant="ghost" size="icon" onClick={() => startCall('video')} disabled={startingCall} aria-label="Video call">
             <Video size={20} />
           </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="More options">
+                <MoreVertical size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={handleUnmatch}
+                className="text-destructive focus:text-destructive"
+              >
+                <UserMinus className="mr-2 h-4 w-4" />
+                Unmatch
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {newMessageCount > 0 && (
             <div className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
