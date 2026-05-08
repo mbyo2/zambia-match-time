@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,44 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const completedRef = useRef(false);
+
+  const trackEvent = (step: number, event: 'started' | 'completed' | 'abandoned' | 'step_viewed', metadata: any = {}) => {
+    if (!user) return;
+    void (supabase as any).from('onboarding_events').insert({
+      user_id: user.id,
+      step,
+      event,
+      metadata,
+    });
+  };
+
+  // Track step viewed
+  useEffect(() => {
+    trackEvent(currentStep, currentStep === 0 ? 'started' : 'step_viewed');
+  }, [currentStep, user?.id]);
+
+  // Track abandonment on unmount/page leave
+  useEffect(() => {
+    const handleAbandon = () => {
+      if (!completedRef.current && user) {
+        const blob = new Blob([JSON.stringify({
+          user_id: user.id,
+          step: currentStep,
+          event: 'abandoned',
+          metadata: { last_step: currentStep },
+        })], { type: 'application/json' });
+        // Best-effort beacon
+        try { navigator.sendBeacon?.(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/onboarding_events`, blob); } catch {}
+      }
+    };
+    window.addEventListener('beforeunload', handleAbandon);
+    return () => {
+      window.removeEventListener('beforeunload', handleAbandon);
+      if (!completedRef.current) trackEvent(currentStep, 'abandoned', { last_step: currentStep });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [profileData, setProfileData] = useState({
     first_name: '',
@@ -115,6 +153,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         logger.error('Profile update error:', error);
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       } else {
+        completedRef.current = true;
+        trackEvent(steps.length - 1, 'completed');
         toast({ title: 'Welcome to MatchTime! 🎉', description: 'Your profile is ready.' });
         onComplete();
       }
