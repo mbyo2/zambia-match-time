@@ -5,6 +5,7 @@ import { logger } from '@/utils/logger';
 export type CallType = 'audio' | 'video';
 export type CallRole = 'caller' | 'callee';
 export type CallPhase = 'idle' | 'ringing' | 'connecting' | 'connected' | 'ended';
+export type CallQuality = 'good' | 'fair' | 'poor' | 'unknown';
 
 interface UseWebRTCCallOptions {
   callId: string;
@@ -47,11 +48,13 @@ export function useWebRTCCall({ callId, selfId, role, callType, enabled, onRemot
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quality, setQuality] = useState<CallQuality>('unknown');
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const lastStatsRef = useRef<{ packetsLost: number; packetsReceived: number; ts: number } | null>(null);
 
   const sendSignal = useCallback((type: string, payload: any) => {
     channelRef.current?.send({
@@ -202,5 +205,44 @@ export function useWebRTCCall({ callId, selfId, role, callType, enabled, onRemot
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, callId, selfId, role, callType]);
 
-  return { phase, micOn, camOn, localStream, remoteStream, error, toggleMic, toggleCam, hangup };
+  // Periodic connection-quality sampling
+  useEffect(() => {
+    if (phase !== 'connected') return;
+    const interval = setInterval(async () => {
+      const pc = pcRef.current;
+      if (!pc) return;
+      try {
+        const stats = await pc.getStats();
+        let packetsLost = 0;
+        let packetsReceived = 0;
+        let rtt = 0;
+        stats.forEach((report: any) => {
+          if (report.type === 'inbound-rtp' && !report.isRemote) {
+            packetsLost += report.packetsLost ?? 0;
+            packetsReceived += report.packetsReceived ?? 0;
+          }
+          if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+            rtt = Math.max(rtt, (report.currentRoundTripTime ?? 0) * 1000);
+          }
+        });
+        const prev = lastStatsRef.current;
+        const now = Date.now();
+        let lossRate = 0;
+        if (prev) {
+          const dLost = packetsLost - prev.packetsLost;
+          const dRecv = packetsReceived - prev.packetsReceived;
+          lossRate = dRecv > 0 ? dLost / (dLost + dRecv) : 0;
+        }
+        lastStatsRef.current = { packetsLost, packetsReceived, ts: now };
+
+        let q: CallQuality = 'good';
+        if (rtt > 500 || lossRate > 0.1) q = 'poor';
+        else if (rtt > 250 || lossRate > 0.03) q = 'fair';
+        setQuality(q);
+      } catch { /* ignore */ }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [phase]);
+
+  return { phase, micOn, camOn, localStream, remoteStream, error, quality, toggleMic, toggleCam, hangup };
 }
